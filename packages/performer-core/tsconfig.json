@@ -1,0 +1,34 @@
+{
+  // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    "lib": ["dom", "esnext"],
+    "importHelpers": true,
+    "sourceMap": true,
+    "declaration": true,
+    "skipLibCheck": true,
+
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+
+    "jsx": "react-jsx",
+    "jsxImportSource": "@performer/core",
+    "paths": {
+      "@performer/core/jsx-runtime": ["./src/jsx/index.ts"],
+    }
+  },
+  "include": [
+    "test",
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+}

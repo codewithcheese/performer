@@ -1,0 +1,74 @@
+{
+  "name": "@performer/core",
+  "version": "0.0.1",
+  "description": "",
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "prepare": "tshy",
+    "watch": "tshy --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/lodash": "^4.14.200",
+    "@types/node": "^18.15.3",
+    "dotenv": "^16.3.1",
+    "prettier": "^3.0.3",
+    "rollup": "^2.68.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-generate-package-json": "^3.2.0",
+    "rollup-plugin-rename": "^1.0.1",
+    "rollup-plugin-typescript2": "^0.31.2",
+    "tshy": "^1.8.2",
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
+  },
+  "dependencies": {
+    "@preact/signals-core": "^1.5.1",
+    "langchain": "^0.0.201",
+    "lodash": "^4.17.21",
+    "loglevel": "^1.8.1",
+    "openai": "^4.20.1",
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.21.4"
+  },
+  "tshy": {
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      ".": "./src/index.ts",
+      "./jsx-runtime": "./src/jsx/index.ts",
+      "./jsx-dev-runtime": "./src/jsx/index.ts"
+    }
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./jsx-runtime": {
+      "import": {
+        "types": "./dist/esm/jsx/index.d.ts",
+        "default": "./dist/esm/jsx/index.js"
+      }
+    },
+    "./jsx-dev-runtime": {
+      "import": {
+        "types": "./dist/esm/jsx/index.d.ts",
+        "default": "./dist/esm/jsx/index.js"
+      }
+    }
+  }
+}
