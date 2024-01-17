@@ -1,14 +1,5 @@
 node_modules
 
-# Sveltekit
-
-build
-.svelte-kit
-package/
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
-
-
 # Logs
 logs
 *.log
@@ -33,9 +24,9 @@ lerna-debug.log*
 .env.*
 !.env.example
 
-dist/
-
 # tshy
 .tshy
-.tshy-build
+dist/
+.tshy/
+.tshy-build/
 src/package.json

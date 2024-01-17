@@ -79,7 +79,7 @@ export class Performer {
       .finally(() => console.log("wait for input complete"));
     this.throwOnError =
       throwOnError === undefined
-        ? process.env["VITEST"] !== undefined
+        ? globalThis.process && process.env["VITEST"] != null
         : throwOnError;
   }
 
