@@ -1,14 +1,18 @@
-import { CoreMessage } from '../message.js';
-import { resolveMessages } from '../render.js';
-import { useRenderScope } from './use-render-scope.js';
+import { PerformerMessage } from "../message.js";
+import { resolveMessages } from "../render.js";
+import { useRenderScope } from "./use-render-scope.js";
 
-export type MessageHook = CoreMessage[];
+export type MessageHook = PerformerMessage[];
 
 export type UseMessagesHookRecord = {
-	messages?: MessageHook;
+  messages?: MessageHook;
 };
 
 export function useMessages() {
-	const scope = useRenderScope();
-	return resolveMessages(scope.session.node, scope.node, scope.session.logConfig);
+  const scope = useRenderScope();
+  return resolveMessages(
+    scope.performer.node,
+    scope.node,
+    scope.performer.logConfig,
+  );
 }

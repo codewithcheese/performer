@@ -1,11 +1,11 @@
-import type { Component } from './component.js';
-import { CoreMessage } from './message.js';
+import type { Component } from "./component.js";
+import { PerformerMessage } from "./message.js";
 
-export type CoreElement = {
-	type: Component<any> | CoreMessage['role'];
-	props: Record<string, any>;
+export type PerformerElement = {
+  type: Component<any> | PerformerMessage["role"];
+  props: Record<string, any>;
 };
 
 export function Fragment(props: any) {
-	return props.children;
+  return props.children;
 }

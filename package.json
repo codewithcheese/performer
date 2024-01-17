@@ -1,3 +1,6 @@
 {
-  "name": "performer"
+  "name": "performer",
+  "scripts": {
+    "watch": "pnpm --recursive --parallel run watch"
+  }
 }

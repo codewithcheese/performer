@@ -36,5 +36,6 @@ lerna-debug.log*
 dist/
 
 # tshy
+.tshy
 .tshy-build
 src/package.json
