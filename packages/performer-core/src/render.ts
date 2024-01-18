@@ -4,10 +4,11 @@ import { setRenderScope, clearRenderScope } from "./hooks/use-render-scope.js";
 import type { Performer } from "./performer.js";
 import type { PerformerMessage } from "./message.js";
 import log from "loglevel";
-import _ from "lodash";
+import * as _ from "lodash";
 import { View } from "./component.js";
 import { effect } from "@preact/signals-core";
 import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
+import { createMessageEvent } from "./event.js";
 
 export async function render(performer: Performer) {
   try {
@@ -271,8 +272,10 @@ async function renderElement(
     }
   } else {
     // else intrinsic
+    const message = nodeToMessage(node);
+    performer.announce(createMessageEvent(message));
     if (node.props.onMessage && node.props.onMessage instanceof Function) {
-      node.props.onMessage(nodeToMessage(node));
+      node.props.onMessage();
     }
     performer.queueRender();
   }

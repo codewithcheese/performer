@@ -35,7 +35,7 @@ export function createMessageEvent(message: PerformerMessage): PerformerEvent {
   };
 }
 
-export function isPerformerMessage(event: unknown): event is PerformerEvent {
+export function isPerformerEvent(event: unknown): event is PerformerEvent {
   return (
     typeof event === "object" &&
     event != null &&
@@ -46,15 +46,15 @@ export function isPerformerMessage(event: unknown): event is PerformerEvent {
 }
 
 export function isMessageEvent(event: unknown): event is MessageEvent {
-  return isPerformerMessage(event) && event.type === "MESSAGE";
+  return isPerformerEvent(event) && event.type === "MESSAGE";
 }
 
 export function isLifecycleEvent(event: unknown): event is LifecycleEvent {
-  return isPerformerMessage(event) && event.type === "LIFECYCLE";
+  return isPerformerEvent(event) && event.type === "LIFECYCLE";
 }
 
 export function isErrorEvent(event: unknown): event is ErrorEvent {
-  return isPerformerMessage(event) && event.type === "ERROR";
+  return isPerformerEvent(event) && event.type === "ERROR";
 }
 
 export type PerformerEvent = MessageEvent | ErrorEvent | LifecycleEvent;

@@ -20,7 +20,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "@performer/core",
     "paths": {
-      "@performer/core/jsx-runtime": ["./src/jsx/index.ts"],
+      "@performer/core/jsx-runtime": ["./src/jsx/index.ts"]
     }
   },
   "include": [
