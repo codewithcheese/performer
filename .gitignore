@@ -30,3 +30,6 @@ dist/
 .tshy/
 .tshy-build/
 src/package.json
+
+# CI
+.pnpm-store
