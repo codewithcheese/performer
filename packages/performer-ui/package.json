@@ -1,6 +1,11 @@
 {
   "name": "@performer/ui",
-  "private": false,
+  "description": "A simple chat UI for testing your Performer apps",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codewithcheese/performer",
+    "directory": "packages/performer-ui"
+  },
   "bin": {
     "performer-ui": "./bin/ui.js"
   },

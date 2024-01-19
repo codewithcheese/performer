@@ -1,0 +1,44 @@
+{
+  "name": "create-performer",
+  "version": "0.0.0",
+  "description": "A CLI for creating new Performer projects",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codewithcheese/performer",
+    "directory": "packages/create-performer"
+  },
+  "scripts": {
+    "prepare": "tshy"
+  },
+  "devDependencies": {
+    "tiny-glob": "^0.2.9",
+    "tshy": "^1.8.2",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
+  },
+  "tshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
+      }
+    }
+  },
+  "main": "./dist/commonjs/index.js",
+  "types": "./dist/commonjs/index.d.ts",
+  "type": "module",
+  "dependencies": {
+    "@clack/prompts": "^0.7.0"
+  }
+}

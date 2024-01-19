@@ -1,0 +1,23 @@
+{
+    "name": "examples",
+    "type": "module",
+    "scripts": {
+        "test": "vitest",
+        "cli": "cli",
+        "chat": "cli run --dir ./src/chat/index.tsx"
+    },
+    "devDependencies": {
+        "@types/jsdom": "^21.1.6",
+        "cli": "workspace:*",
+        "core": "workspace:*",
+        "vitest": "^0.34.6"
+    },
+    "dependencies": {
+        "jsdom": "^23.2.0",
+        "langchain": "^0.0.201",
+        "sqlite3": "5.1.7-rc.0",
+        "tsx": "^4.5.0",
+        "typeorm": "^0.3.17",
+        "zod": "^3.22.4"
+    }
+}

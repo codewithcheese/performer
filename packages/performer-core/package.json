@@ -1,7 +1,12 @@
 {
   "name": "@performer/core",
   "version": "0.0.2",
-  "description": "",
+  "description": "A reactive component framework for build AI applications, chatbots and agents",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codewithcheese/performer",
+    "directory": "packages/performer-core"
+  },
   "files": [
     "dist",
     "src",
