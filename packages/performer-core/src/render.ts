@@ -12,17 +12,7 @@ import { createMessageEvent } from "./event.js";
 
 export async function render(performer: Performer) {
   try {
-    let next: ReturnType<typeof findNextElementToRender>;
-    if (!performer.node) {
-      next = {
-        element: performer.element,
-        parent: undefined,
-        prevSibling: undefined,
-        nextSibling: undefined,
-      };
-    } else {
-      next = findNextElementToRender(performer.node);
-    }
+    let next = findNextElementToRender(performer.element, performer.node);
     if (next === "SIDE_EFFECT") {
       performer.queueRender();
     } else if (next) {
@@ -49,89 +39,79 @@ type NextElement = {
 };
 
 export function findNextElementToRender(
-  parent: PerformerNode,
+  element: PerformerElement,
+  node?: PerformerNode,
+  parent?: PerformerNode,
+  prevSibling?: PerformerNode,
 ): NextElement | "SIDE_EFFECT" | null {
+  if (!node || !nodeMatchesElement(node, element)) {
+    return {
+      element,
+      parent: parent,
+      prevSibling: prevSibling,
+      nextSibling: node?.nextSibling,
+      child: node?.child,
+    };
+  }
+
   let index = 0;
-  let node: PerformerNode | undefined = parent.child;
-  let prevSibling: PerformerNode | undefined = undefined;
-  const children = parent.childElements || [];
-  while (index < children.length) {
-    const element = children[index];
-    if (!node || !nodeMatchesElement(node, element)) {
-      return {
-        element,
-        parent: parent,
-        prevSibling,
-        nextSibling: node?.nextSibling,
-        child: node?.child,
-      };
+  let childNode: PerformerNode | undefined = node.child;
+  let childPrevSibling: PerformerNode | undefined = undefined;
+  const childElements = node.childElements || [];
+  while (index < childElements.length) {
+    const childElement = childElements[index];
+    const nextElement = findNextElementToRender(
+      childElement,
+      childNode,
+      node,
+      childPrevSibling,
+    );
+    if (nextElement) {
+      return nextElement;
     }
-
-    if (node.childElements?.length) {
-      if (!node.child) {
-        return {
-          element: node.childElements[0],
-          parent: node,
-          prevSibling: undefined,
-          nextSibling: undefined,
-        };
-      } else {
-        const nextElement = findNextElementToRender(node);
-        if (nextElement) {
-          return nextElement;
-        }
-      }
+    if (childPrevSibling) {
+      childPrevSibling.nextSibling = childNode;
     }
-
-    if (node.hooks.afterChildren) {
-      const update = node.hooks.afterChildren();
-      if (update) return "SIDE_EFFECT";
-    }
-
-    prevSibling = node;
-    node = node.nextSibling;
+    childPrevSibling = childNode;
+    childNode = childNode?.nextSibling;
 
     index += 1;
   }
 
   // detach remaining node siblings
-  while (node) {
+  while (childNode) {
     log.debug(
-      `Free node ${typeof node.type === "string" ? node.type : node.type.name}`,
+      `Free node ${typeof childNode.type === "string" ? childNode.type : childNode.type.name}`,
     );
-    let next: PerformerNode | undefined = node.nextSibling;
-    if (node.parent?.child === node) {
-      node.parent.child = undefined;
-    }
-    if (node.prevSibling) {
-      node.prevSibling.nextSibling = undefined;
-    }
-    node.parent = undefined;
-    node.prevSibling = undefined;
-    node.nextSibling = undefined;
-    if (node.disposeView) {
-      node.disposeView();
-    }
-    node = next;
+    childNode = freeNode(childNode, node);
+  }
+
+  if (node.hooks.afterChildren) {
+    const update = node.hooks.afterChildren();
+    if (update) return "SIDE_EFFECT";
   }
 
   return null;
 }
 
-function validateElement(element: PerformerElement) {
-  if (
-    element == null ||
-    Array.isArray(element) ||
-    typeof element !== "object"
-  ) {
-    const invalidType =
-      element == null
-        ? "null"
-        : Array.isArray(element)
-          ? "array"
-          : typeof element;
-    throw Error(`Invalid child element type "${invalidType}"`);
+function freeNode(node: PerformerNode, parent: PerformerNode) {
+  let next: PerformerNode | undefined = node.nextSibling;
+  if (parent.child === node) {
+    parent.child = undefined;
   }
+  if (node.parent?.child === node) {
+    node.parent.child = undefined;
+  }
+  if (node.prevSibling) {
+    node.prevSibling.nextSibling = undefined;
+  }
+  node.parent = undefined;
+  node.prevSibling = undefined;
+  node.nextSibling = undefined;
+  if (node.disposeView) {
+    node.disposeView();
+  }
+  return next;
 }
 
 export function resolveMessages(
@@ -275,7 +255,7 @@ async function renderElement(
     const message = nodeToMessage(node);
     performer.announce(createMessageEvent(message));
     if (node.props.onMessage && node.props.onMessage instanceof Function) {
-      node.props.onMessage();
+      node.props.onMessage(message);
     }
     performer.queueRender();
   }
