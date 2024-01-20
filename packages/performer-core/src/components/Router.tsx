@@ -58,7 +58,7 @@ export function Decision({
   operation = "append",
 }: {
   instruction: string;
-  operation: "append" | "goto";
+  operation?: "append" | "goto";
 }) {
   const decision = useState<string>("");
   const next = useState<string | null>(null);
