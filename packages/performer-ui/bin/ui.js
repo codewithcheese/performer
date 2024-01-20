@@ -14,12 +14,16 @@ const appPath = path.join(process.cwd(), args[0]);
 console.log("Starting Performer UI...", appPath);
 
 const vite = spawn(
-  path.join(__dirname, "../node_modules/.bin/vite"),
+  path.join(
+    process.cwd(),
+    "./node_modules/@performer/ui/node_modules/.bin/vite",
+  ),
   ["--port", 3011],
   {
-    env: { PERFORMER_APP_PATH: appPath },
+    env: { VITE_PERFORMER_APP_PATH: appPath },
     stdio: "inherit",
     shell: true,
+    cwd: path.join(process.cwd(), "./node_modules/@performer/ui/"),
   },
 );
 
