@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "inlineSources": true,
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "noUncheckedIndexedAccess": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "es2022",
+        "jsx": "react-jsx",
+        "jsxImportSource": "@performer/core"
+    }
+}
