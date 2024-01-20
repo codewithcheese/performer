@@ -63,7 +63,6 @@ test("should update prop when signal changes", async () => {
     expect(message, "Message should not be null").not.toBeNull();
     return () => {};
   }
-
   function App() {
     const message = useState<PerformerMessage | null>(null);
     return () => (
@@ -205,6 +204,12 @@ test("should unlink messages when removed by conditional", async () => {
   }
   const app = (
     <Temp>
+      <Container>
+        <user>Hello, world!</user>
+        <Container>
+          <user>Goodbye, world!</user>
+        </Container>
+      </Container>
       <Message>Help the user</Message>
       <Message>What is the population of Australia?</Message>
     </Temp>
@@ -217,8 +222,8 @@ test("should unlink messages when removed by conditional", async () => {
   });
   expect(
     messages.length,
-    "Expect 2 messages before they are unlinked by `If`",
-  ).toEqual(2);
+    "Expect 4 messages before they are unlinked by `If`",
+  ).toEqual(4);
 
   resetFinished(performer);
   const predicate = performer.node!.hooks["state-0"];

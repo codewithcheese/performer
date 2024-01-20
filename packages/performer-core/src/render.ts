@@ -45,13 +45,19 @@ export function findNextElementToRender(
   prevSibling?: PerformerNode,
 ): NextElement | "SIDE_EFFECT" | null {
   if (!node || !nodeMatchesElement(node, element)) {
-    return {
+    const next = {
       element,
       parent: parent,
       prevSibling: prevSibling,
       nextSibling: node?.nextSibling,
       child: node?.child,
     };
+    if (node) {
+      // do not free children, the new node will be linked in place and then children
+      // re-evaluated on next renders
+      freeNode(node, parent, false);
+    }
+    return next;
   }
 
   let index = 0;
@@ -78,12 +84,9 @@ export function findNextElementToRender(
     index += 1;
   }
 
-  // detach remaining node siblings
-  while (childNode) {
-    log.debug(
-      `Free node ${typeof childNode.type === "string" ? childNode.type : childNode.type.name}`,
-    );
-    childNode = freeNode(childNode, node);
+  // detach remaining node siblings and their children
+  if (childNode) {
+    freeNode(childNode, node, true);
   }
 
   if (node.hooks.afterChildren) {
@@ -94,24 +97,43 @@ export function findNextElementToRender(
   return null;
 }
 
-function freeNode(node: PerformerNode, parent: PerformerNode) {
-  let next: PerformerNode | undefined = node.nextSibling;
-  if (parent.child === node) {
-    parent.child = undefined;
+function freeNode(
+  node: PerformerNode,
+  parent?: PerformerNode,
+  freeRemaining: boolean = false,
+) {
+  try {
+    log.debug(`Free node`, logNode(node));
+    // dispose view so that its no longer reactive
+    if (node.disposeView) {
+      node.disposeView();
+    }
+    if (!freeRemaining) {
+      return;
+    }
+    if (freeRemaining && node.child) {
+      freeNode(node.child, node, freeRemaining);
+    }
+    if (freeRemaining && node.nextSibling) {
+      freeNode(node.nextSibling, node, freeRemaining);
+    }
+  } finally {
+    // unlink node
+    // when parent had 1 or more children but now has 0
+    // all previous children will be freed, the parent.child should be unassigned
+    if (parent?.child === node) {
+      parent.child = undefined;
+    }
+    // if number of children reduced then this node might be an orphaned sibling
+    // detach it from the remaining siblings
+    if (node.prevSibling) {
+      node.prevSibling.nextSibling = undefined;
+    }
+    node.parent = undefined;
+    node.prevSibling = undefined;
+    node.child = undefined;
+    node.nextSibling = undefined;
   }
-  if (node.parent?.child === node) {
-    node.parent.child = undefined;
-  }
-  if (node.prevSibling) {
-    node.prevSibling.nextSibling = undefined;
-  }
-  node.parent = undefined;
-  node.prevSibling = undefined;
-  node.nextSibling = undefined;
-  if (node.disposeView) {
-    node.disposeView();
-  }
-  return next;
 }
 
 export function resolveMessages(
@@ -213,9 +235,11 @@ async function renderElement(
   if (prevSibling) {
     prevSibling.nextSibling = node;
   } else if (parent) {
+    // if no prevSibling then must be first child
     parent.child = node;
   }
   if (nextSibling) {
+    node.nextSibling = nextSibling;
     nextSibling.prevSibling = node;
   }
   if (node.type instanceof Function) {

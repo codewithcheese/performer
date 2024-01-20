@@ -79,10 +79,6 @@ export function logResolveMessages(
 ) {
   if (!config.showResolveMessages) return;
   if (node) {
-    log.debug(
-      `Resolving messages for ${typeof node.type === "string" ? node.type : node.type.name}`,
-    );
-  } else {
-    log.debug(`Finished resolving messages`);
+    log.debug(`Resolving messages`, logNode(node));
   }
 }
