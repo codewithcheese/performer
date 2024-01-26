@@ -49,7 +49,7 @@ export function Fragment({ children }: any) {
 type Props = Record<string, any> & { children?: any };
 
 export function jsx<Type extends Component<P>, P extends Props>(
-  type: Type,
+  type: Type | PerformerMessage["role"],
   props: P,
 ): PerformerElement {
   if (type === undefined) {
@@ -65,18 +65,26 @@ export function jsx<Type extends Component<P>, P extends Props>(
     props.children = [];
   } else if (typeof props.children === "object") {
     if (Array.isArray(props.children)) {
-      const countString = props.children.filter(
-        (prop: any) => typeof prop === "string",
+      const children = props.children.flat(9);
+      const countString = children.filter(
+        (child: any) => child == null || typeof child === "string",
       ).length;
-      if (countString && countString !== props.children.length) {
+      if (countString && countString !== children.length) {
         // throw if only subset is string
+        const strIndex = children.findIndex(
+          (child) => child == null || typeof child === "string",
+        );
+        const objIndex = children.findIndex(
+          (child) => typeof child === "object",
+        );
         throw Error(
-          `Element children cannot contain both text and objects. Found in ${type.name}`,
+          `Element children cannot contain both strings (index: ${strIndex}) and objects (index: ${objIndex}). ` +
+            `Found in ${typeof type === "string" ? type : type.name}`,
         );
       } else if (countString) {
         // concatenate if all are string
         // @ts-ignore
-        props.content = props.children.join("");
+        props.content = children.join("");
         props.children = [];
       }
     } else {
