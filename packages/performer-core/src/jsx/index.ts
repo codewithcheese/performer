@@ -19,16 +19,19 @@ export namespace JSX {
   // fixme infer
   export type IntrinsicElements = {
     user: IntrinsicProps &
-      ({ content: UserMessage["content"] } | { children: string });
+      ({ content: UserMessage["content"] } | { children: string | string[] });
     assistant: IntrinsicProps &
       Omit<AssistantMessage, "content" | "role"> &
-      ({ content: AssistantMessage["content"] } | { children: string });
+      (
+        | { content: AssistantMessage["content"] }
+        | { children: string | string[] }
+      );
     system: IntrinsicProps &
       ({ content: SystemMessage["content"] } | { children: string | string[] });
     tool: IntrinsicProps &
       (
         | { id: ToolMessage["id"]; content?: ToolMessage["content"] }
-        | { children: string }
+        | { children: string | string[] }
       );
   };
 }
