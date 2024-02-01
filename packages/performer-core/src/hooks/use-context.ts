@@ -57,5 +57,3 @@ export type ProviderHookRecord = {
 export type ContextHookRecord = {
   [key in ContextHookKey]?: unknown;
 };
-
-export type UseContextHookRecord = ProviderHookRecord & ContextHookRecord;

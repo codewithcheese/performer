@@ -1,4 +1,5 @@
 import type { PerformerElement } from "./element.js";
+import { createUseHook } from "./hooks/index.js";
 
 export type Props = Record<string, any>;
 
@@ -19,5 +20,6 @@ export type Component<P extends Props> = {
       content?: string;
       controller?: AbortController;
     },
+    use: ReturnType<typeof createUseHook>,
   ): View | Promise<View>;
 };

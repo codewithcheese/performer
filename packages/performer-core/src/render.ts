@@ -1,5 +1,5 @@
 import { type PerformerElement } from "./element.js";
-import { type PerformerNode, createNode } from "./node.js";
+import { type PerformerNode, createNode, SerializedNode } from "./node.js";
 import { setRenderScope, clearRenderScope } from "./hooks/use-render-scope.js";
 import type { Performer } from "./performer.js";
 import type { PerformerMessage } from "./message.js";
@@ -9,12 +9,17 @@ import { View } from "./component.js";
 import { effect } from "@preact/signals-core";
 import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
 import { createMessageEvent } from "./event.js";
+import { createUseHook } from "./hooks/index.js";
+import { vi } from "vitest";
 
 export async function render(performer: Performer) {
   try {
     let next = findNextElementToRender(performer.element, performer.node);
     if (next === "SIDE_EFFECT") {
       performer.queueRender();
+    } else if (next === "VIEW_PENDING") {
+      // wait for next render
+      return;
     } else if (next) {
       await renderElement(performer, next);
     } else {
@@ -43,7 +48,7 @@ export function findNextElementToRender(
   node?: PerformerNode,
   parent?: PerformerNode,
   prevSibling?: PerformerNode,
-): NextElement | "SIDE_EFFECT" | null {
+): NextElement | "SIDE_EFFECT" | null | "VIEW_PENDING" {
   if (!node || !nodeMatchesElement(node, element)) {
     const next = {
       element,
@@ -58,6 +63,10 @@ export function findNextElementToRender(
       freeNode(node, parent, false);
     }
     return next;
+  }
+
+  if (!node.viewResolved) {
+    return "VIEW_PENDING";
   }
 
   let index = 0;
@@ -95,6 +104,95 @@ export function findNextElementToRender(
   }
 
   return null;
+}
+
+export async function renderElement(
+  performer: Performer,
+  { element, parent, prevSibling, nextSibling, child }: NextElement,
+  serialized?: SerializedNode,
+): Promise<PerformerNode> {
+  const node = createNode({ element, parent, prevSibling, child, serialized });
+  log.debug(`Create node`, logNode(node));
+  if (!parent) {
+    performer.node = node;
+  }
+  // link node in place
+  if (prevSibling) {
+    prevSibling.nextSibling = node;
+  } else if (parent) {
+    // if no prevSibling then must be first child
+    parent.child = node;
+  }
+  if (nextSibling) {
+    node.nextSibling = nextSibling;
+    nextSibling.prevSibling = node;
+  }
+  if (node.type instanceof Function) {
+    // call component and get view function
+    let viewPromised: Promise<unknown>;
+    try {
+      const scope = setRenderScope({ performer, node, nonce: 0 });
+      const use = createUseHook(scope, performer.abortController);
+      const componentReturn = node.type(node.props, use);
+      if (!(componentReturn instanceof Promise)) {
+        viewPromised = Promise.resolve(componentReturn);
+      } else {
+        viewPromised = componentReturn;
+      }
+    } finally {
+      clearRenderScope();
+    }
+    const requiresInput =
+      node.hooks.input && node.hooks.input.state === "pending";
+    if (requiresInput) {
+      performer.setInputNode(node);
+      viewPromised.then((view) => {
+        node.viewResolved = true;
+        registerView(performer, node, view);
+      });
+    } else {
+      const view = await viewPromised;
+      node.viewResolved = true;
+      registerView(performer, node, view);
+    }
+  } else {
+    // else intrinsic
+    node.viewResolved = true;
+    if (!node.isHydrating) {
+      const message = nodeToMessage(node);
+      performer.announce(createMessageEvent(message));
+      if (node.props.onMessage && node.props.onMessage instanceof Function) {
+        node.props.onMessage(message);
+      }
+      performer.queueRender();
+    }
+  }
+  return node;
+}
+
+function registerView(
+  performer: Performer,
+  node: PerformerNode,
+  view: unknown,
+) {
+  if (!view) {
+    if (!node.isHydrating) {
+      performer.queueRender();
+    }
+    return;
+  } else if (!(view instanceof Function)) {
+    throw Error(
+      `Component ${logNode(node)} did not return a function. Components must return a function when using JSX.`,
+    );
+  }
+  // register view as an effect
+  node.disposeView = effect(() => {
+    const viewUpdate = view();
+    node.childElements = normalizeChildren(viewUpdate);
+    if (!node.isHydrating) {
+      performer.queueRender();
+    }
+  });
 }
 
 function freeNode(
@@ -222,70 +320,6 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
   );
 }
 
-async function renderElement(
-  performer: Performer,
-  { element, parent, prevSibling, nextSibling, child }: NextElement,
-): Promise<PerformerNode> {
-  const node = createNode({ element, parent, prevSibling, child });
-  log.debug(`Create node`, logNode(node));
-  if (!parent) {
-    performer.node = node;
-  }
-  // link node in place
-  if (prevSibling) {
-    prevSibling.nextSibling = node;
-  } else if (parent) {
-    // if no prevSibling then must be first child
-    parent.child = node;
-  }
-  if (nextSibling) {
-    node.nextSibling = nextSibling;
-    nextSibling.prevSibling = node;
-  }
-  if (node.type instanceof Function) {
-    // call component and get view function
-    let viewPromised: unknown | Promise<unknown>;
-    try {
-      setRenderScope({ performer, node, nonce: 0 });
-      viewPromised = node.type({
-        ...node.props,
-        controller: performer.abortController,
-      });
-    } finally {
-      clearRenderScope();
-    }
-    const requiresInput = node.hooks.input != null;
-    if (requiresInput) {
-      performer.setInputNode(node);
-    }
-    const view = await viewPromised;
-    if (view) {
-      if (!(view instanceof Function)) {
-        throw Error(
-          `Component ${node.type.name} did not return a function. Components must return a function when using JSX.`,
-        );
-      }
-      // register view as an effect
-      node.disposeView = effect(() => {
-        const viewUpdate = view();
-        node.childElements = normalizeChildren(viewUpdate);
-        performer.queueRender();
-      });
-    } else {
-      performer.queueRender();
-    }
-  } else {
-    // else intrinsic
-    const message = nodeToMessage(node);
-    performer.announce(createMessageEvent(message));
-    if (node.props.onMessage && node.props.onMessage instanceof Function) {
-      node.props.onMessage(message);
-    }
-    performer.queueRender();
-  }
-  return node;
-}
-
 function normalizeChildren(children: ReturnType<View>): PerformerElement[] {
   if (!children || typeof children === "string") {
     return [];
@@ -295,83 +329,3 @@ function normalizeChildren(children: ReturnType<View>): PerformerElement[] {
     return [children];
   }
 }
-
-// export function serialize(node: CoreNode): any {
-// 	return traverse(node, (key, value, _path) => {
-// 		if (key[0] === '_') {
-// 			return;
-// 		}
-// 		if (key === 'type' && value instanceof Function) {
-// 			return value.name;
-// 		}
-// 		if (['child', 'nextSibling'].includes(key)) {
-// 			return value;
-// 		}
-// 		if (['parent', 'prevSibling'].includes(key)) {
-// 			return;
-// 		}
-// 		if (value instanceof Set) {
-// 			return Array.from(value);
-// 		}
-// 		if (
-// 			typeof value === 'object' ||
-// 			typeof value === 'string' ||
-// 			typeof value === 'number' ||
-// 			typeof value === 'boolean' ||
-// 			value == null
-// 		) {
-// 			return value;
-// 		}
-// 	});
-// }
-//
-// export function hydrate(
-// 	session: RunSession,
-// 	serialized: Record<string, any>,
-// 	parent?: any,
-// 	prevSibling?: any
-// ): CoreNode {
-// 	if (!(serialized.type in ComponentMap)) {
-// 		throw Error(`${serialized.type} not in ComponentMap`);
-// 	}
-// 	const node: any = {
-// 		..._.omit(serialized, 'parent', 'prevSibling', 'child', 'nextSibling'),
-// 		type: ComponentMap[serialized.type],
-// 		_typeName: serialized.type
-// 	};
-// 	if (node.props === undefined) {
-// 		node.props = {};
-// 	}
-// 	if (parent) {
-// 		node.parent = parent;
-// 	}
-// 	if (prevSibling) {
-// 		node.prevSibling = prevSibling;
-// 	}
-// 	if (node.dependsOn) {
-// 		node.dependsOn = new Set(node.dependsOn);
-// 	}
-// 	if (node.props.children) {
-// 		node.props.children = node.props.children.map((child: any) => {
-// 			if (!(child.type in ComponentMap)) {
-// 				throw Error(`${child.type} not in ComponentMap`);
-// 			}
-// 			return {
-// 				...child,
-// 				type: ComponentMap[child.type],
-// 				_typeName: child.type
-// 			};
-// 		});
-// 	}
-// 	// render after parent assignment, before children or siblings
-// 	setCurrentSession(session);
-// 	// renderElement(node);
-// 	clearCurrentSession();
-// 	if (serialized.child) {
-// 		node.child = hydrate(session, serialized.child, node);
-// 	}
-// 	if (serialized.nextSibling) {
-// 		node.nextSibling = hydrate(session, serialized.nextSibling, parent, node);
-// 	}
-// 	return node;
-// }

@@ -10,6 +10,7 @@ import {
   UserMessage,
 } from "../../src/index.js";
 import { ChatOpenAI } from "langchain/chat_models/openai";
+import { testHydration } from "../util/test-hydration.js";
 
 test("should accept user input", async () => {
   const userMessage: UserMessage = {
@@ -32,6 +33,7 @@ test("should accept user input", async () => {
   assert(isTextContent(messages[0].content[0]));
   expect(messages[0].content[0].type).toEqual("text");
   expect(messages[0].content[0].text).toEqual("Hello, world!");
+  await testHydration(performer);
 });
 
 test.skipIf(process.env.TEST_SLOW === undefined)(

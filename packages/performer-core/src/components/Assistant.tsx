@@ -34,14 +34,10 @@ export type AssistantProps = {
   onMessage?: (message: PerformerMessage) => void;
 };
 
-export const Assistant: Component<AssistantProps> = async ({
-  model,
-  toolChoice = "auto",
-  tools = [],
-  content,
-  onMessage = () => {},
-  controller,
-}) => {
+export const Assistant: Component<AssistantProps> = async (
+  { model, toolChoice = "auto", tools = [], content, onMessage = () => {} },
+  use,
+) => {
   const announce = useAnnounce();
   const messages = useMessages();
   const newMessages: PerformerMessage[] = [];
@@ -54,9 +50,6 @@ export const Assistant: Component<AssistantProps> = async ({
     newMessages.push(message);
     onMessage(message);
   } else {
-    if (!model) {
-      model = new ChatOpenAI();
-    }
     let options = {};
 
     if (tools.length) {
@@ -85,15 +78,21 @@ export const Assistant: Component<AssistantProps> = async ({
     }
 
     const lcMessages = toLangchain(messages);
-    const chat = model.bind({ signal: controller?.signal, ...options });
-    const iterable = await chat.stream(lcMessages);
-    const transformStream = new TransformStream<BaseMessage, PerformerMessage>(
-      fromLangchain,
-    );
-    const message = await handleChatModelResponse(
-      iterable.pipeThrough(transformStream),
-      announce,
-    );
+    const message = await use(async (controller) => {
+      if (!model) {
+        model = new ChatOpenAI();
+      }
+      const chat = model.bind({ signal: controller.signal, ...options });
+      const iterable = await chat.stream(lcMessages);
+      const transformStream = new TransformStream<
+        BaseMessage,
+        PerformerMessage
+      >(fromLangchain);
+      return await handleChatModelResponse(
+        iterable.pipeThrough(transformStream),
+        announce,
+      );
+    });
     if (message) {
       newMessages.push(message);
       onMessage(message);

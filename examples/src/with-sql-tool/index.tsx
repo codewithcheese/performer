@@ -1,7 +1,7 @@
 /**
  * Based on https://js.langchain.com/docs/modules/chains/popular/sqlite
  */
-import { Assistant, Tool, User } from "@performer/core";
+import { Assistant, Tool, UseHook, User } from "@performer/core";
 import { DataSource } from "typeorm";
 import { SqlDatabase } from "langchain/sql_db";
 import { z } from "zod";
@@ -33,7 +33,7 @@ class SQLSelectTool implements Tool {
   }
 }
 
-export async function App() {
+export async function App({}, use: UseHook) {
   const datasource = new DataSource({
     type: "sqlite",
     database: path.join(__dirname, "Chinook.db"),
@@ -44,7 +44,7 @@ export async function App() {
     appDataSource: datasource,
   });
 
-  const schema = await db.getTableInfo();
+  const schema = await use(() => db.getTableInfo());
   const tools = [new SQLSelectTool(db)];
 
   return () => (

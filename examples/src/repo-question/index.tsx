@@ -1,18 +1,24 @@
-import { Assistant } from "@performer/core";
+import { Assistant, type UseHook } from "@performer/core";
 
-async function Repos({ user }: { user: string }) {
+async function fetchRepos(user: string) {
   const response = await fetch(
     `https://api.github.com/users/${user}/repos?sort=updated`,
   );
-  const repos = await response.json();
+  return response.json();
+}
+
+async function Repos({ user }: { user: string }, use: UseHook) {
+  const repos = await use(fetchRepos, user);
+
   return () => (
     <system>
-      {user} GitHub Repositories
+      Answer questions about the {user}'s GitHub respositories
+      {user}'s GitHub Repositories:
       {repos.map(
-        (repo: any) => `
-        ${repo.full_name}
-        ${repo.description}
-        `,
+        (repo: any) => `  
+        ${repo.full_name}  
+        ${repo.description}  
+        \n`,
       )}
     </system>
   );

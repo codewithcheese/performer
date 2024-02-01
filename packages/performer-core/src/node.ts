@@ -2,6 +2,7 @@ import type { Component } from "./component.js";
 import type { PerformerElement } from "./element.js";
 import type { HookRecord } from "./hooks/index.js";
 import { PerformerMessage } from "./message.js";
+import { hydrateHooks } from "./hydration.js";
 
 export type PerformerNode = {
   type: Component<any> | PerformerMessage["role"];
@@ -9,15 +10,22 @@ export type PerformerNode = {
   props: Record<string, any>;
   hooks: Record<string, unknown> & HookRecord;
   element: PerformerElement;
-  childElements?: PerformerElement[];
-  disposeView?: () => void;
-  dependsOn: Set<string>;
+  childElements?: PerformerElement[] | undefined;
+  viewResolved: boolean;
+  disposeView?: () => void | undefined;
+  isHydrating: boolean;
 
   // linked tree
-  parent?: PerformerNode;
-  child?: PerformerNode;
-  prevSibling?: PerformerNode;
-  nextSibling?: PerformerNode;
+  parent: PerformerNode | undefined;
+  child: PerformerNode | undefined;
+  prevSibling: PerformerNode | undefined;
+  nextSibling: PerformerNode | undefined;
+};
+
+export type SerializedNode = {
+  type: string;
+  hooks: Record<string, unknown> & HookRecord;
+  children: SerializedNode[];
 };
 
 export function createNode({
@@ -25,27 +33,28 @@ export function createNode({
   parent,
   prevSibling,
   child,
+  serialized,
 }: {
   element: PerformerElement;
   parent?: PerformerNode;
   prevSibling?: PerformerNode;
   child?: PerformerNode;
+  serialized?: SerializedNode;
 }): PerformerNode {
-  const node: PerformerNode = {
+  return {
     type: element.type,
     _typeName:
       typeof element.type === "string" ? element.type : element.type.name,
     props: element.props,
     element,
-    hooks: {},
-    dependsOn: new Set(),
-    prevSibling,
+    hooks: serialized ? hydrateHooks(serialized.hooks) : {},
+    viewResolved: false,
+    isHydrating: !!serialized,
+    parent,
     child,
+    prevSibling,
+    nextSibling: undefined,
   };
-  if (parent) {
-    node.parent = parent;
-  }
-  return node;
 }
 
 export function getNearestParent(

@@ -12,3 +12,4 @@ export * from "./node.js";
 export * from "./render.js";
 export * from "./performer.js";
 export * from "./components/index.js";
+export * from "./hydration.js";

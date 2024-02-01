@@ -5,6 +5,7 @@ import {
   AIMessageChunk,
   SystemMessage as LCSystemMessage,
 } from "langchain/schema";
+import { jsx } from "./jsx/index.js";
 
 export type PerformerMessage =
   | UserMessage
@@ -187,4 +188,10 @@ export function readTextContent(message: PerformerMessage) {
         .filter(isTextContent)
         .map((content) => content.text)
         .join(" ");
+}
+
+export function messagesToElements(messages: PerformerMessage[]) {
+  return messages.map((message) => {
+    return jsx(message.role, message);
+  });
 }

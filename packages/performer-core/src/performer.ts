@@ -10,6 +10,7 @@ import type { PerformerEvent } from "./event.js";
 import type { PerformerMessage } from "./message.js";
 import log from "loglevel";
 import { LogConfig, logEvent, logNode } from "./util/log.js";
+import { PendingInputState } from "./hooks/index.js";
 
 type RunProps = {
   id?: string;
@@ -18,46 +19,47 @@ type RunProps = {
   throwOnError?: boolean;
 };
 
+export type PendingInputNode = PerformerNode & {
+  hooks: { input: PendingInputState };
+};
+
 type EventHandler = (event: PerformerEvent) => void;
 
 export class Performer {
-  id: string;
   element: PerformerElement;
   node?: PerformerNode;
   errors: Error[] = [];
-  inputQueue: PerformerMessage[] = [];
-  inputNode: PerformerNode | undefined;
+
   private eventHandler: EventHandler | undefined;
-  hasFinished: boolean = false;
+
   finish: () => void = () => {};
-  // todo add deadline
+  hasFinished: boolean = false;
   waitUntilFinished: Promise<void>;
-  inputResolver: () => void = () => {};
-  waitForInput: Promise<void>;
+
+  // todo add deadline
+  inputQueue: PerformerMessage[] = [];
+  inputNode: PendingInputNode | undefined;
+  listen: () => void = () => {};
+  waitUntilListening: Promise<void>;
 
   abortController = new AbortController();
 
-  nodes: Map<PerformerElement, PerformerNode> = new Map();
-  depsInUse: Set<string> = new Set<string>();
-  config: Record<string, any> = {};
   throwOnError = false;
 
   renderQueued = false;
-  rendering: ReturnType<typeof render> | null = null;
+  renderPromised: ReturnType<typeof render> | null = null;
 
   logConfig: LogConfig = {
     showUpdateEvents: true,
     showResolveMessages: false,
   };
 
-  constructor({ id, element, node, throwOnError }: RunProps) {
-    this.id = id || crypto.randomUUID();
+  constructor({ element, throwOnError }: RunProps) {
     this.element = element;
-    this.node = node;
     this.waitUntilFinished = new Promise<void>(
       (resolve) =>
         (this.finish = () => {
-          log.debug(`Session finished ${this.id}`);
+          log.debug(`Performer finished`);
           if (!this.hasFinished) {
             this.announce({
               sid: crypto.randomUUID(),
@@ -72,11 +74,11 @@ export class Performer {
           resolve();
         }),
     ).catch(console.error);
-    this.waitForInput = new Promise<void>(
-      (resolve) => (this.inputResolver = resolve),
+    this.waitUntilListening = new Promise<void>(
+      (resolve) => (this.listen = resolve),
     )
       .catch(console.error)
-      .finally(() => console.log("wait for input complete"));
+      .finally(() => console.log("Listening..."));
     this.throwOnError =
       throwOnError === undefined
         ? globalThis.process && process.env["VITEST"] != null
@@ -84,7 +86,7 @@ export class Performer {
   }
 
   start() {
-    this.rendering = render(this);
+    this.renderPromised = render(this);
   }
 
   abort() {
@@ -109,17 +111,17 @@ export class Performer {
     if (this.renderQueued) {
       return;
     }
-    if (this.rendering) {
+    if (this.renderPromised) {
       this.renderQueued = true;
-      this.rendering.finally(() => {
+      this.renderPromised.finally(() => {
         this.renderQueued = false;
-        this.rendering = render(this);
+        this.renderPromised = render(this);
       });
     } else {
       this.renderQueued = true;
       Promise.resolve().then(() => {
         this.renderQueued = false;
-        this.rendering = render(this);
+        this.renderPromised = render(this);
       });
     }
   }
@@ -131,18 +133,26 @@ export class Performer {
   setInputNode(node: PerformerNode) {
     log.debug("Input node", logNode(node));
     // if input already queue then deliver to node immediately
+    const inputNode = node;
+    if (!inputNode.hooks.input) {
+      throw Error("Cannot set input not without input hook");
+    }
+    if (inputNode.hooks.input.state !== "pending") {
+      throw Error("Cannot set input, input state not pending");
+    }
     if (this.inputQueue.length) {
-      node.hooks.input!.resolve([...this.inputQueue]);
+      inputNode.hooks.input.resolve([...this.inputQueue]);
     } else {
-      this.inputNode = node;
-      this.inputResolver();
+      this.inputNode = inputNode as PendingInputNode;
+      this.listen();
     }
   }
 
   input(event: PerformerEvent) {
     if (event.type === "MESSAGE") {
       if (this.inputNode) {
-        this.inputNode.hooks.input!.resolve([event.payload]);
+        this.inputNode.hooks.input.resolve([event.payload]);
+        this.inputNode = undefined;
       } else {
         this.inputQueue.push(event.payload);
       }
@@ -167,13 +177,14 @@ export class Performer {
   }
 
   async waitUntilSettled() {
-    return Promise.race([this.waitForInput, this.waitUntilFinished]).finally(
-      () => {
-        this.waitForInput = new Promise<void>(
-          (resolve) => (this.inputResolver = resolve),
-        ).catch(console.error);
-      },
-    );
+    return Promise.race([
+      this.waitUntilListening,
+      this.waitUntilFinished,
+    ]).finally(() => {
+      this.waitUntilListening = new Promise<void>(
+        (resolve) => (this.listen = resolve),
+      ).catch(console.error);
+    });
   }
 
   /**

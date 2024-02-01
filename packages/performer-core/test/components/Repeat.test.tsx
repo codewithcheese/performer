@@ -6,6 +6,7 @@ import {
   Performer,
   useState,
 } from "../../src/index.js";
+import { testHydration } from "../util/test-hydration.js";
 
 test("should repeat 2 times", async () => {
   const app = (
@@ -49,7 +50,7 @@ test("should repeat 2 times", async () => {
   ).toEqual(undefined);
   const messages = resolveMessages(performer.node);
   console.log(messages);
-  // testHydration(performer);
+  await testHydration(performer);
 }, 10_000);
 
 test("should stop repeating using stop prop", async () => {
@@ -77,5 +78,5 @@ test("should stop repeating using stop prop", async () => {
   await performer.waitUntilSettled();
   const messages = resolveMessages(performer.node);
   expect(messages.length).toEqual(5);
-  // testHydration(performer);
+  await testHydration(performer);
 }, 10_000);
