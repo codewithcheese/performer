@@ -116,4 +116,5 @@ export interface PerformerEventMap {
   message: MessageEvent;
   error: ErrorEvent;
   lifecycle: LifecycleEvent;
+  "*": PerformerEvent;
 }

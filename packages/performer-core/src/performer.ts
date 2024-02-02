@@ -17,7 +17,10 @@ import type { PerformerMessage } from "./message.js";
 import log from "loglevel";
 import { LogConfig, logEvent, logNode } from "./util/log.js";
 import { PendingInputState } from "./hooks/index.js";
-import { TypedEventTarget } from "./util/typed-event-target.js";
+import {
+  TypedEventListenerOrEventListenerObject,
+  TypedEventTarget,
+} from "./util/typed-event-target.js";
 
 type RunProps = {
   id?: string;
@@ -143,21 +146,6 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
       throw Error(`Input of event type ${event.type} not supported.`);
     }
   }
-
-  /**
-   * Events
-   */
-
-  // announce(event: PerformerEvent) {
-  //   logEvent(event, this.logConfig);
-  //   if (this.eventHandler) {
-  //     this.eventHandler(event);
-  //   }
-  // }
-  //
-  // addEventHandler(handler: EventHandler) {
-  //   this.eventHandler = handler;
-  // }
 
   async waitUntilSettled() {
     if (this.hasFinished) {

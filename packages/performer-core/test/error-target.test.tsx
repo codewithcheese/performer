@@ -14,10 +14,25 @@ test("should stringify", () => {
   );
 });
 
-test("should wildcard", () => {
+test("should support wildcard", () => {
   const eventTarget = new TypedEventTarget<PerformerEventMap>();
-  eventTarget.addEventListener("*" as any, (evt: any) => {
-    console.log(evt);
+  let count = 0;
+  let errorCount = 0;
+  const listener = () => {
+    count += 1;
+  };
+  eventTarget.addEventListener("error", () => {
+    errorCount += 1;
   });
-  eventTarget.dispatchEvent(new ErrorEvent({ message: "Yikes" }));
+  eventTarget.addEventListener("*", listener);
+  eventTarget.dispatchEvent(new ErrorEvent({ message: "1" }));
+  expect(count).toEqual(1);
+  expect(errorCount).toEqual(1);
+  eventTarget.dispatchEvent(new ErrorEvent({ message: "2" }));
+  expect(count).toEqual(2);
+  expect(errorCount).toEqual(2);
+  eventTarget.removeEventListener("*", listener);
+  eventTarget.dispatchEvent(new ErrorEvent({ message: "3" }));
+  expect(count).toEqual(2);
+  expect(errorCount).toEqual(3);
 });

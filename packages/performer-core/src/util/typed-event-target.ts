@@ -40,21 +40,6 @@ type ValueIsEvent<T> = {
   [key in keyof T]: Event;
 };
 
-export interface TypedEventTarget<M extends ValueIsEvent<M>> {
-  addEventListener: <T extends keyof M & string>(
-    type: T,
-    listener: TypedEventListenerOrEventListenerObject<M, T> | null,
-    options?: boolean | AddEventListenerOptions,
-  ) => void;
-
-  removeEventListener: <T extends keyof M & string>(
-    type: T,
-    callback: TypedEventListenerOrEventListenerObject<M, T> | null,
-    options?: EventListenerOptions | boolean,
-  ) => void;
-
-  dispatchEvent: (event: Event) => boolean;
-}
 export class TypedEventTarget<M extends ValueIsEvent<M>> extends EventTarget {
   // public dispatchTypedEvent<E extends Event & { type: keyof M }>(
   //   event: E,
@@ -63,4 +48,43 @@ export class TypedEventTarget<M extends ValueIsEvent<M>> extends EventTarget {
   //   // You might need to adjust the implementation to correctly handle the dispatching logic.
   //   return super.dispatchEvent(event as Event);
   // }
+
+  wildcardListeners = new Set<
+    TypedEventListenerOrEventListenerObject<any, any>
+  >();
+
+  addEventListener<T extends keyof M & string>(
+    type: T,
+    listener: TypedEventListenerOrEventListenerObject<M, T> | null,
+    options?: boolean | AddEventListenerOptions,
+  ): void {
+    if (listener && type === "*") {
+      this.wildcardListeners.add(listener);
+    } else {
+      super.addEventListener(type, listener as any, options);
+    }
+  }
+
+  removeEventListener<T extends keyof M & string>(
+    type: T,
+    callback: TypedEventListenerOrEventListenerObject<M, T> | null,
+    options?: EventListenerOptions | boolean,
+  ): void {
+    if (callback && type === "*") {
+      this.wildcardListeners.delete(callback);
+    } else {
+      super.removeEventListener(type, callback as any, options);
+    }
+  }
+
+  dispatchEvent(event: CustomEvent): boolean {
+    for (const listener of this.wildcardListeners) {
+      if (typeof listener === "function") {
+        listener(event);
+      } else if ("handleEvent" in listener) {
+        listener.handleEvent(event);
+      }
+    }
+    return super.dispatchEvent(event);
+  }
 }
