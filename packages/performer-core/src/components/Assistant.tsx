@@ -27,7 +27,7 @@ export interface Tool {
 }
 
 export type AssistantProps = {
-  model?: BaseChatModel; // rollup error  TS2305: Module '"langchain/chat_models/base"' has no exported member 'BaseChatModel'.
+  model?: BaseChatModel;
   content?: string;
   toolChoice?: "auto" | "none" | Tool;
   tools?: Tool[];
@@ -95,7 +95,6 @@ export const Assistant: Component<AssistantProps> = async (
     });
     if (message) {
       newMessages.push(message);
-      onMessage(message);
     }
 
     if (isAssistantMessage(message) && message.tool_calls) {
@@ -110,7 +109,6 @@ export const Assistant: Component<AssistantProps> = async (
         );
         if (toolMessage) {
           newMessages.push(toolMessage);
-          onMessage(toolMessage);
         }
       }
     }
@@ -120,19 +118,26 @@ export const Assistant: Component<AssistantProps> = async (
     return newMessages.map((message) => {
       switch (message.role) {
         case "tool":
-          return <tool id={message.id} content={message.content} />;
+          return (
+            <tool
+              onMessage={onMessage}
+              id={message.id}
+              content={message.content}
+            />
+          );
         case "assistant":
           return (
             <assistant
+              onMessage={onMessage}
               tool_calls={message.tool_calls}
               function_call={message.function_call}
               content={message.content}
             />
           );
         case "user":
-          return <user content={message.content} />;
+          return <user onMessage={onMessage} content={message.content} />;
         case "system":
-          return <system content={message.content} />;
+          return <system onMessage={onMessage} content={message.content} />;
         default:
           throw Error("Unknown message role: " + (message as any).role);
       }
@@ -202,7 +207,6 @@ async function handleChatModelResponse(
       }
     }
     if (aggregate) {
-      announce(new MessageEvent({ payload: aggregate }));
       return aggregate;
     }
   } else if (isMessage(msgOrStream)) {

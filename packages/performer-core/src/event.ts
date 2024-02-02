@@ -99,7 +99,10 @@ export class ErrorEvent extends TypedCustomEvent<{ message: string }> {
 }
 
 export class MessageEvent extends TypedCustomEvent<
-  { payload: PerformerMessage } | { delta: PerformerMessage }
+  { uid: string } & (
+    | { payload: PerformerMessage }
+    | { delta: PerformerMessage }
+  )
 > {
   static type = "message" as const;
 }
