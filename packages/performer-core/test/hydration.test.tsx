@@ -1,7 +1,7 @@
 import { assert, expect, test } from "vitest";
 import {
   createContextId,
-  createMessageEvent,
+  MessageEvent,
   initContext,
   isTextContent,
   messagesToElements,
@@ -50,7 +50,7 @@ test("should serialize when listening, for input and accept input when hydrated"
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
-  hydratedPerformer.input(createMessageEvent(userMessage));
+  hydratedPerformer.input(new MessageEvent({ payload: userMessage }));
   await hydratedPerformer.waitUntilSettled();
   expect(hydratedPerformer.hasFinished).toEqual(true);
   // expect original performer node still undefined
@@ -74,7 +74,7 @@ test("should use hydrated input instead of listening again", async () => {
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
-  performer.input(createMessageEvent(userMessage));
+  performer.input(new MessageEvent({ payload: userMessage }));
   await performer.waitUntilSettled();
   expect(performer.node?.child?.type).toEqual("user");
   expect(performer.hasFinished).toEqual(true);

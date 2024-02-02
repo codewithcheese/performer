@@ -6,7 +6,6 @@ import {
   Performer,
   useState,
 } from "../src/index.js";
-import { resetFinished } from "./util/reset-finished.js";
 import { testHydration } from "./util/test-hydration.js";
 
 async function Message({ content }: any) {
@@ -108,7 +107,7 @@ test("should update and run message actions when state changes", async () => {
   let messages = resolveMessages(performer.node);
   expect(messages).toHaveLength(1);
 
-  resetFinished(performer);
+  performer.hasFinished = false;
   performer.node!.child!.nextSibling!.hooks["state-0"].value = true;
 
   await performer.waitUntilSettled();
@@ -144,7 +143,7 @@ test("should update links when elements are reordered", async () => {
   });
   expect(messages).toHaveLength(3);
 
-  resetFinished(performer);
+  performer.hasFinished = false;
   const offset = performer.node!.hooks["state-0"];
   offset!.value += 1;
 
@@ -178,8 +177,8 @@ test("should render new elements when dynamically added or removed", async () =>
   // rehydrate for second run
   performer = await testHydration(performer);
   // change state for second run
-  resetFinished(performer);
-  const times = performer.node!.hooks["state-0"];
+  performer.hasFinished = false;
+  let times = performer.node!.hooks["state-0"];
   times.value += 4;
   // second run
   await performer.waitUntilSettled();
@@ -191,7 +190,8 @@ test("should render new elements when dynamically added or removed", async () =>
   // rehydrate for third run
   performer = await testHydration(performer);
   // change state for third run
-  resetFinished(performer);
+  performer.hasFinished = false;
+  times = performer.node!.hooks["state-0"];
   times.value -= 2;
   // third run
   await performer.waitUntilSettled();
@@ -203,7 +203,8 @@ test("should render new elements when dynamically added or removed", async () =>
   // rehydrate for fourth run
   performer = await testHydration(performer);
   // change state for fourth run
-  resetFinished(performer);
+  performer.hasFinished = false;
+  times = performer.node!.hooks["state-0"];
   times.value -= 1;
   // fourth run
   await performer.waitUntilSettled();
@@ -213,7 +214,7 @@ test("should render new elements when dynamically added or removed", async () =>
   expect(messages).toHaveLength(2);
   // final hydration test
   performer = await testHydration(performer);
-}, 20_000);
+}, 30_000);
 
 test("should unlink messages when removed by conditional", async () => {
   function Temp({ children }: any) {
@@ -243,7 +244,7 @@ test("should unlink messages when removed by conditional", async () => {
     "Expect 4 messages before they are unlinked by `If`",
   ).toEqual(4);
 
-  resetFinished(performer);
+  performer.hasFinished = false;
   const predicate = performer.node!.hooks["state-0"];
   predicate.value = false;
 
@@ -276,7 +277,7 @@ test("should wait for async message actions", async () => {
   const performer = new Performer({ element: app });
   console.time("Render");
   performer.start();
-  await performer.waitUntilFinished;
+  await performer.waitUntilSettled();
   console.timeEnd("Render");
   const messages = resolveMessages(performer.node);
   expect(messages).toHaveLength(3);

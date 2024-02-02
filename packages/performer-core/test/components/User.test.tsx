@@ -1,13 +1,13 @@
 import { assert, expect, test } from "vitest";
 import {
   Assistant,
-  createMessageEvent,
   isImageContent,
   isTextContent,
-  resolveMessages,
   Performer,
+  resolveMessages,
   User,
   UserMessage,
+  MessageEvent,
 } from "../../src/index.js";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { testHydration } from "../util/test-hydration.js";
@@ -23,7 +23,7 @@ test("should accept user input", async () => {
   const performer = new Performer({ element: app });
   performer.start();
   expect(performer.hasFinished).toEqual(false);
-  performer.input(createMessageEvent(userMessage));
+  performer.input(new MessageEvent({ payload: userMessage }));
   await performer.waitUntilSettled();
   assert(performer.node?.type instanceof Function);
   expect(performer.node?.type.name).toEqual("User");
@@ -54,15 +54,17 @@ test.skipIf(process.env.TEST_SLOW === undefined)(
     const imageUrl =
       "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Capybara_%28Hydrochoerus_hydrochaeris%29.JPG/1000px-Capybara_%28Hydrochoerus_hydrochaeris%29.JPG";
     performer.input(
-      createMessageEvent({
-        role: "user",
-        content: [
-          { type: "text", text: "What is the animal in the image?" },
-          {
-            type: "image_url",
-            image_url: imageUrl,
-          },
-        ],
+      new MessageEvent({
+        payload: {
+          role: "user",
+          content: [
+            { type: "text", text: "What is the animal in the image?" },
+            {
+              type: "image_url",
+              image_url: imageUrl,
+            },
+          ],
+        },
       }),
     );
     await performer.waitUntilFinished;

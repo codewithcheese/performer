@@ -1,10 +1,5 @@
-import { assert, expect, test } from "vitest";
-import {
-  Assistant,
-  createMessageEvent,
-  Performer,
-  User,
-} from "../src/index.js";
+import { expect, test } from "vitest";
+import { Performer, User, MessageEvent } from "../src/index.js";
 
 // todo update serialization then remove skip
 // test.skip('should resume session', async () => {
@@ -48,9 +43,11 @@ test("should wait for input before performer is finished", async () => {
   expect(performer.inputNode).toBeDefined();
   expect(performer.hasFinished).toEqual(false);
   performer.input(
-    createMessageEvent({
-      role: "user",
-      content: [{ type: "text", text: "Hold me close" }],
+    new MessageEvent({
+      payload: {
+        role: "user",
+        content: [{ type: "text", text: "Hold me close" }],
+      },
     }),
   );
   await performer.waitUntilSettled();
@@ -71,25 +68,31 @@ test("should wait for multiple inputs", async () => {
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
   performer.input(
-    createMessageEvent({
-      role: "user",
-      content: [{ type: "text", text: "Hold me close" }],
+    new MessageEvent({
+      payload: {
+        role: "user",
+        content: [{ type: "text", text: "Hold me close" }],
+      },
     }),
   );
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
   performer.input(
-    createMessageEvent({
-      role: "user",
-      content: [{ type: "text", text: "Hold me close" }],
+    new MessageEvent({
+      payload: {
+        role: "user",
+        content: [{ type: "text", text: "Hold me close" }],
+      },
     }),
   );
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
   performer.input(
-    createMessageEvent({
-      role: "user",
-      content: [{ type: "text", text: "Hold me close" }],
+    new MessageEvent({
+      payload: {
+        role: "user",
+        content: [{ type: "text", text: "Hold me close" }],
+      },
     }),
   );
   await performer.waitUntilSettled();

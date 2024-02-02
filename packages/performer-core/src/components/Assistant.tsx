@@ -15,7 +15,7 @@ import {
 import type { BaseChatModel } from "langchain/chat_models/base";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { PerformerEvent, createMessageEvent } from "../event.js";
+import { PerformerEvent, MessageEvent } from "../event.js";
 import { useAnnounce } from "../hooks/use-announce.js";
 
 export interface Tool {
@@ -158,12 +158,7 @@ async function handleChatModelResponse(
   if (isAsyncIterable(msgOrStream)) {
     for await (const chunk of msgOrStream) {
       if (isMessage(chunk)) {
-        announce({
-          sid,
-          op: "update",
-          type: "MESSAGE",
-          payload: chunk,
-        });
+        announce(new MessageEvent({ delta: chunk }));
         if (!aggregate) {
           aggregate = { ...chunk };
         } else {
@@ -207,16 +202,11 @@ async function handleChatModelResponse(
       }
     }
     if (aggregate) {
-      announce({
-        sid,
-        op: "close",
-        type: "MESSAGE",
-        payload: aggregate,
-      });
+      announce(new MessageEvent({ payload: aggregate }));
       return aggregate;
     }
   } else if (isMessage(msgOrStream)) {
-    announce(createMessageEvent(msgOrStream));
+    announce(new MessageEvent({ payload: msgOrStream }));
     return msgOrStream;
   }
   return;

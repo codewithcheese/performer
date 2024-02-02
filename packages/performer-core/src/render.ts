@@ -1,6 +1,6 @@
 import { type PerformerElement } from "./element.js";
-import { type PerformerNode, createNode, SerializedNode } from "./node.js";
-import { setRenderScope, clearRenderScope } from "./hooks/use-render-scope.js";
+import { createNode, type PerformerNode, SerializedNode } from "./node.js";
+import { clearRenderScope, setRenderScope } from "./hooks/use-render-scope.js";
 import type { Performer } from "./performer.js";
 import type { PerformerMessage } from "./message.js";
 import log from "loglevel";
@@ -8,9 +8,8 @@ import * as _ from "lodash";
 import { View } from "./component.js";
 import { effect } from "@preact/signals-core";
 import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
-import { createMessageEvent } from "./event.js";
 import { createUseHook } from "./hooks/index.js";
-import { vi } from "vitest";
+import { ErrorEvent, MessageEvent } from "./event.js";
 
 export async function render(performer: Performer) {
   try {
@@ -30,7 +29,7 @@ export async function render(performer: Performer) {
     if (performer.throwOnError) {
       throw error;
     } else {
-      performer.onError(error);
+      performer.dispatchEvent(new ErrorEvent(error));
     }
   }
 }
@@ -160,7 +159,7 @@ export async function renderElement(
     node.viewResolved = true;
     if (!node.isHydrating) {
       const message = nodeToMessage(node);
-      performer.announce(createMessageEvent(message));
+      performer.dispatchEvent(new MessageEvent({ payload: message }));
       if (node.props.onMessage && node.props.onMessage instanceof Function) {
         node.props.onMessage(message);
       }

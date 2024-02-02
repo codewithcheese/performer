@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   Component,
-  createMessageEvent,
   isMessageEvent,
-  isPerformerEvent,
   isTextContent,
   Performer,
   PerformerEvent,
   PerformerMessage,
+  MessageEvent,
 } from "@performer/core";
 import { jsx } from "@performer/core/jsx-runtime";
 
@@ -20,7 +19,9 @@ export function usePerformerClient(app: Component<any> | null) {
       return;
     }
     performer.input(
-      createMessageEvent({ role: "user", content: [{ type: "text", text }] }),
+      new MessageEvent({
+        payload: { role: "user", content: [{ type: "text", text }] },
+      }),
     );
   }
 

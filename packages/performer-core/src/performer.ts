@@ -6,11 +6,18 @@
 import type { PerformerElement } from "./element.js";
 import type { PerformerNode } from "./node.js";
 import { render } from "./render.js";
-import type { PerformerEvent } from "./event.js";
+import {
+  PerformerEvent,
+  PerformerEventMap,
+  ErrorEvent,
+  LifecycleEvent,
+  isMessageEvent,
+} from "./event.js";
 import type { PerformerMessage } from "./message.js";
 import log from "loglevel";
 import { LogConfig, logEvent, logNode } from "./util/log.js";
 import { PendingInputState } from "./hooks/index.js";
+import { TypedEventTarget } from "./util/typed-event-target.js";
 
 type RunProps = {
   id?: string;
@@ -23,24 +30,18 @@ export type PendingInputNode = PerformerNode & {
   hooks: { input: PendingInputState };
 };
 
-type EventHandler = (event: PerformerEvent) => void;
+export class Performer extends TypedEventTarget<PerformerEventMap> {
+  #uid: string;
 
-export class Performer {
   element: PerformerElement;
   node?: PerformerNode;
-  errors: Error[] = [];
+  errors: ErrorEvent[] = [];
 
-  private eventHandler: EventHandler | undefined;
-
-  finish: () => void = () => {};
   hasFinished: boolean = false;
-  waitUntilFinished: Promise<void>;
 
   // todo add deadline
   inputQueue: PerformerMessage[] = [];
   inputNode: PendingInputNode | undefined;
-  listen: () => void = () => {};
-  waitUntilListening: Promise<void>;
 
   abortController = new AbortController();
 
@@ -50,39 +51,21 @@ export class Performer {
   renderPromised: ReturnType<typeof render> | null = null;
 
   logConfig: LogConfig = {
-    showUpdateEvents: true,
+    showDeltaEvents: true,
     showResolveMessages: false,
   };
 
   constructor({ element, throwOnError }: RunProps) {
+    super();
+    this.#uid = crypto.randomUUID();
     this.element = element;
-    this.waitUntilFinished = new Promise<void>(
-      (resolve) =>
-        (this.finish = () => {
-          log.debug(`Performer finished`);
-          if (!this.hasFinished) {
-            this.announce({
-              sid: crypto.randomUUID(),
-              op: "once",
-              type: "LIFECYCLE",
-              payload: {
-                state: "finished",
-              },
-            });
-          }
-          this.hasFinished = true;
-          resolve();
-        }),
-    ).catch(console.error);
-    this.waitUntilListening = new Promise<void>(
-      (resolve) => (this.listen = resolve),
-    )
-      .catch(console.error)
-      .finally(() => console.log("Listening..."));
     this.throwOnError =
       throwOnError === undefined
         ? globalThis.process && process.env["VITEST"] != null
         : throwOnError;
+    this.addEventListener("error", (error) => {
+      this.errors.push(error);
+    });
   }
 
   start() {
@@ -91,16 +74,14 @@ export class Performer {
 
   abort() {
     // todo test action abort
-    this.announce({
-      sid: crypto.randomUUID(),
-      op: "once",
-      type: "LIFECYCLE",
-      payload: {
-        state: "aborted",
-      },
-    });
+    this.dispatchEvent(new LifecycleEvent({ state: "aborted" }));
     this.abortController.abort();
     this.finish();
+  }
+
+  finish() {
+    this.hasFinished = true;
+    this.dispatchEvent(new LifecycleEvent({ state: "finished" }));
   }
 
   get aborted() {
@@ -144,17 +125,19 @@ export class Performer {
       inputNode.hooks.input.resolve([...this.inputQueue]);
     } else {
       this.inputNode = inputNode as PendingInputNode;
-      this.listen();
+      this.dispatchEvent(new LifecycleEvent({ state: "listening" }));
     }
   }
 
   input(event: PerformerEvent) {
-    if (event.type === "MESSAGE") {
+    if (isMessageEvent(event)) {
+      const message =
+        "payload" in event.detail ? event.detail.payload : event.detail.delta;
       if (this.inputNode) {
-        this.inputNode.hooks.input.resolve([event.payload]);
+        this.inputNode.hooks.input.resolve([message]);
         this.inputNode = undefined;
       } else {
-        this.inputQueue.push(event.payload);
+        this.inputQueue.push(message);
       }
     } else {
       throw Error(`Input of event type ${event.type} not supported.`);
@@ -165,49 +148,33 @@ export class Performer {
    * Events
    */
 
-  announce(event: PerformerEvent) {
-    logEvent(event, this.logConfig);
-    if (this.eventHandler) {
-      this.eventHandler(event);
-    }
-  }
-
-  addEventHandler(handler: EventHandler) {
-    this.eventHandler = handler;
-  }
+  // announce(event: PerformerEvent) {
+  //   logEvent(event, this.logConfig);
+  //   if (this.eventHandler) {
+  //     this.eventHandler(event);
+  //   }
+  // }
+  //
+  // addEventHandler(handler: EventHandler) {
+  //   this.eventHandler = handler;
+  // }
 
   async waitUntilSettled() {
-    return Promise.race([
-      this.waitUntilListening,
-      this.waitUntilFinished,
-    ]).finally(() => {
-      this.waitUntilListening = new Promise<void>(
-        (resolve) => (this.listen = resolve),
-      ).catch(console.error);
-    });
-  }
-
-  /**
-   * Errors
-   */
-
-  onError(error: unknown) {
-    if (typeof error === "string") {
-      error = new Error(error);
+    if (this.hasFinished) {
+      return;
     }
-    if (!(error instanceof Error)) {
-      error = new Error("Unknown error");
+    if (this.inputNode) {
+      return;
     }
-    if (error instanceof Error) {
-      this.errors.push(error);
-      this.announce({
-        type: "ERROR",
-        op: "once",
-        sid: crypto.randomUUID(),
-        payload: {
-          message: error.message,
-        },
+    return new Promise<void>((resolve) => {
+      this.addEventListener("lifecycle", (event) => {
+        if (
+          event.detail.state === "listening" ||
+          event.detail.state === "finished"
+        ) {
+          resolve();
+        }
       });
-    }
+    });
   }
 }
