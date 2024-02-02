@@ -3,8 +3,10 @@ import type { PerformerElement } from "./element.js";
 import type { HookRecord } from "./hooks/index.js";
 import { PerformerMessage } from "./message.js";
 import { hydrateHooks } from "./hydration.js";
+import { nanoid } from "nanoid";
 
 export type PerformerNode = {
+  uid: string;
   type: Component<any> | PerformerMessage["role"];
   _typeName: string;
   props: Record<string, any>;
@@ -23,6 +25,7 @@ export type PerformerNode = {
 };
 
 export type SerializedNode = {
+  uid: string;
   type: string;
   hooks: Record<string, unknown> & HookRecord;
   children: SerializedNode[];
@@ -42,6 +45,7 @@ export function createNode({
   serialized?: SerializedNode;
 }): PerformerNode {
   return {
+    uid: serialized ? serialized.uid : nanoid(),
     type: element.type,
     _typeName:
       typeof element.type === "string" ? element.type : element.type.name,

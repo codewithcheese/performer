@@ -3,9 +3,7 @@ import type { Performer } from "./performer.js";
 import type { PerformerElement } from "./element.js";
 import { renderElement } from "./render.js";
 import { Signal } from "@preact/signals-core";
-import * as wasi from "wasi";
 import { walk } from "./util/walk.js";
-import { has } from "lodash";
 
 export async function hydrate(
   performer: Performer,
@@ -64,6 +62,7 @@ export async function hydrate(
 
 export function serialize(node: PerformerNode): SerializedNode {
   const serializedNode: SerializedNode = {
+    uid: node.uid,
     type: typeof node.type === "string" ? node.type : node.type.name,
     hooks: {},
     children: [],
