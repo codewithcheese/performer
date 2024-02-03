@@ -12,7 +12,6 @@ test("should wait for input before performer is finished", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(
     new MessageEvent({
-      uid: nanoid(),
       payload: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
@@ -38,7 +37,6 @@ test("should wait for multiple inputs", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(
     new MessageEvent({
-      uid: nanoid(),
       payload: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
@@ -49,7 +47,6 @@ test("should wait for multiple inputs", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(
     new MessageEvent({
-      uid: nanoid(),
       payload: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
@@ -60,7 +57,6 @@ test("should wait for multiple inputs", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(
     new MessageEvent({
-      uid: nanoid(),
       payload: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],

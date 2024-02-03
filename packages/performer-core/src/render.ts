@@ -14,7 +14,7 @@ import * as _ from "lodash";
 import { View } from "./component.js";
 import { effect } from "@preact/signals-core";
 import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
-import { createUseHook } from "./hooks/index.js";
+import { createUseResourceHook } from "./hooks/index.js";
 import { ErrorEvent, MessageEvent } from "./event.js";
 
 export async function render(performer: Performer) {
@@ -137,8 +137,11 @@ export async function renderElement(
     let viewPromised: Promise<unknown>;
     try {
       const scope = setRenderScope({ performer, node, nonce: 0 });
-      const use = createUseHook(scope, performer.abortController);
-      const componentReturn = node.type(node.props, use);
+      const useResource = createUseResourceHook(
+        scope,
+        performer.abortController,
+      );
+      const componentReturn = node.type(node.props, { useResource });
       if (!(componentReturn instanceof Promise)) {
         viewPromised = Promise.resolve(componentReturn);
       } else {
@@ -236,9 +239,7 @@ function dispatchMessageElement(
   if (!message) {
     message = nodeToMessage(node);
   }
-  performer.dispatchEvent(
-    new MessageEvent({ uid: node.uid, payload: message }),
-  );
+  performer.dispatchEvent(new MessageEvent({ payload: message }));
   if (node.props.onMessage && node.props.onMessage instanceof Function) {
     node.props.onMessage(message);
   }

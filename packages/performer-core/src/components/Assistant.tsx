@@ -34,7 +34,7 @@ export type AssistantProps = {
 
 export const Assistant: Component<AssistantProps> = async (
   { model, toolChoice = "auto", tools = [], onMessage = () => {} },
-  use,
+  { useResource },
 ) => {
   const messages = useMessages();
 
@@ -65,7 +65,7 @@ export const Assistant: Component<AssistantProps> = async (
   }
 
   const lcMessages = toLangchain(messages);
-  const message = await use(async (controller) => {
+  const message = await useResource(async (controller) => {
     if (!model) {
       model = new ChatOpenAI();
     }

@@ -6,7 +6,7 @@ import {
   isTextContent,
   messagesToElements,
   Performer,
-  UseHook,
+  UseResourceHook,
   useInput,
   UserMessage,
   useState,
@@ -15,10 +15,10 @@ import { testHydration } from "./util/test-hydration.js";
 import { nanoid } from "nanoid";
 
 test("should serialize hooks", async () => {
-  async function App({}, use: UseHook) {
+  async function App({}, { useResource }: { useResource: UseResourceHook }) {
     const context = initContext(createContextId<string>("test"), "1337");
     const state = useState("42");
-    const resource = await use(() => Promise.resolve("420"));
+    const resource = await useResource(() => Promise.resolve("420"));
     return () => (
       <>
         <system>{context.value}</system>
@@ -51,9 +51,7 @@ test("should serialize when listening, for input and accept input when hydrated"
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
-  hydratedPerformer.input(
-    new MessageEvent({ uid: nanoid(), payload: userMessage }),
-  );
+  hydratedPerformer.input(new MessageEvent({ payload: userMessage }));
   await hydratedPerformer.waitUntilSettled();
   expect(hydratedPerformer.hasFinished).toEqual(true);
   // expect original performer node still undefined

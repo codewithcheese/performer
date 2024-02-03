@@ -1,4 +1,4 @@
-import { Assistant, type UseHook } from "@performer/core";
+import { Assistant, type UseResourceHook } from "@performer/core";
 
 async function fetchRepos(user: string) {
   const response = await fetch(
@@ -7,8 +7,11 @@ async function fetchRepos(user: string) {
   return response.json();
 }
 
-async function Repos({ user }: { user: string }, use: UseHook) {
-  const repos = await use(fetchRepos, user);
+async function Repos(
+  { user }: { user: string },
+  { useResource }: { useResource: UseResourceHook },
+) {
+  const repos = await useResource(() => fetchRepos(user));
 
   return () => (
     <system>

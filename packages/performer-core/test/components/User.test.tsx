@@ -24,7 +24,7 @@ test("should accept user input", async () => {
     console.log(`Event ${event.type}`),
   );
   expect(performer.hasFinished).toEqual(false);
-  performer.input(new MessageEvent({ uid: nanoid(), payload: userMessage }));
+  performer.input(new MessageEvent({ payload: userMessage }));
   await performer.waitUntilSettled();
   assert(performer.node?.type instanceof Function);
   expect(performer.node?.type.name).toEqual("User");

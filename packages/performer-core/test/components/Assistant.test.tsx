@@ -1,14 +1,12 @@
 import { assert, expect, test } from "vitest";
 import {
   Assistant,
-  PerformerMessage,
   isAssistantMessage,
   isSystemMessage,
-  isToolMessage,
-  resolveMessages,
   Performer,
+  PerformerMessage,
+  resolveMessages,
   Tool,
-  type ToolMessage,
 } from "../../src/index.js";
 import "dotenv/config";
 import { z } from "zod";

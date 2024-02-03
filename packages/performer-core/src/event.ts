@@ -1,50 +1,5 @@
 import type { PerformerMessage } from "./message.js";
-import { TypedEventTarget } from "./util/typed-event-target.js";
-
-// interface EventDetail {
-//   sid: string; // non-persistent id for tracking stream of events
-//   op: "once" | "close" | "update";
-//   type: string;
-//   payload: unknown;
-// }
-//
-// export interface MessageEvent extends EventDetail {
-//   type: "MESSAGE";
-//   payload: PerformerMessage;
-// }
-//
-// // export interface ErrorEvent extends EventDetail {
-// //   type: "ERROR";
-// //   payload: {
-// //     message: string;
-// //   };
-// // }
-//
-// export interface LifecycleEvent extends EventDetail {
-//   type: "LIFECYCLE";
-//   payload: {
-//     state: "finished" | "aborted";
-//   };
-// }
-
-// export function createMessageEvent(message: PerformerMessage): PerformerEvent {
-//   return {
-//     sid: crypto.randomUUID(),
-//     op: "once",
-//     type: "MESSAGE",
-//     payload: message,
-//   };
-// }
-
-// export function isPerformerEvent(event: unknown): event is PerformerEvent {
-//   return (
-//     typeof event === "object" &&
-//     event != null &&
-//     "op" in event &&
-//     "payload" in event &&
-//     "type" in event
-//   );
-// }
+import { nanoid } from "nanoid";
 
 export function isMessageEvent(
   event: TypedCustomEvent<unknown>,
@@ -63,12 +18,6 @@ export function isErrorEvent(
 ): event is ErrorEvent {
   return event.type === "error";
 }
-
-// class ErrorEvent extends CustomEvent<ErrorEventDetail> {
-//   constructor(payload: ErrorEventDetail) {
-//     super("error", { detail: payload });
-//   }
-// }
 
 class TypedCustomEvent<D> extends CustomEvent<D> {
   static type: keyof PerformerEventMap;
@@ -98,13 +47,26 @@ export class ErrorEvent extends TypedCustomEvent<{ message: string }> {
   }
 }
 
-export class MessageEvent extends TypedCustomEvent<
-  { uid: string } & (
-    | { payload: PerformerMessage }
-    | { delta: PerformerMessage }
-  )
-> {
+type MessageDetail = { uid: string } & (
+  | { payload: PerformerMessage }
+  | { delta: PerformerMessage }
+);
+
+type MessageDetailUidOptional = { uid?: string } & (
+  | { payload: PerformerMessage }
+  | { delta: PerformerMessage }
+);
+
+export class MessageEvent extends TypedCustomEvent<MessageDetail> {
   static type = "message" as const;
+
+  constructor(detail: MessageDetailUidOptional) {
+    if (detail.uid === undefined) {
+      super({ ...detail, uid: nanoid() });
+    } else {
+      super(detail as MessageDetail);
+    }
+  }
 }
 
 export class LifecycleEvent extends TypedCustomEvent<{

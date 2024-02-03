@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
-import { ErrorEvent, PerformerEventMap } from "../src/index.js";
+import { MessageEvent, ErrorEvent, PerformerEventMap } from "../src/index.js";
 import { TypedEventTarget } from "../src/util/typed-event-target.js";
+import { nanoid } from "nanoid";
 
 test("should use static type of subclass", () => {
   const evt = new ErrorEvent("Oops");
@@ -35,4 +36,17 @@ test("should support wildcard", () => {
   eventTarget.dispatchEvent(new ErrorEvent({ message: "3" }));
   expect(count).toEqual(2);
   expect(errorCount).toEqual(3);
+});
+
+test("message event should generate uid if not provided", () => {
+  const event1 = new MessageEvent({
+    payload: { role: "user", content: [{ type: "text", text: "Hello world" }] },
+  });
+  expect(event1.detail.uid).toBeDefined();
+  const uid = nanoid();
+  const event2 = new MessageEvent({
+    uid,
+    payload: { role: "user", content: [{ type: "text", text: "Hello world" }] },
+  });
+  expect(event2.detail.uid).toEqual(uid);
 });
