@@ -15,11 +15,7 @@ import { View } from "./component.js";
 import { effect } from "@preact/signals-core";
 import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
 import { createUseResourceHook } from "./hooks/index.js";
-import {
-  PerformerDeltaEvent,
-  PerformerErrorEvent,
-  PerformerMessageEvent,
-} from "./event.js";
+import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 
 export async function render(performer: Performer) {
   try {
@@ -35,12 +31,7 @@ export async function render(performer: Performer) {
       performer.finish();
     }
   } catch (error) {
-    performer.finish();
-    if (performer.throwOnError) {
-      throw error;
-    } else {
-      performer.dispatchEvent(new PerformerErrorEvent(error));
-    }
+    performer.onError(error);
   }
 }
 
@@ -141,10 +132,7 @@ export async function renderElement(
     let viewPromised: Promise<unknown>;
     try {
       const scope = setRenderScope({ performer, node, nonce: 0 });
-      const useResource = createUseResourceHook(
-        scope,
-        performer.abortController,
-      );
+      const useResource = createUseResourceHook(scope, performer.controller);
       const componentReturn = node.type(node.props, { useResource });
       if (!(componentReturn instanceof Promise)) {
         viewPromised = Promise.resolve(componentReturn);
@@ -158,10 +146,12 @@ export async function renderElement(
       node.hooks.input && node.hooks.input.state === "pending";
     if (requiresInput) {
       performer.setInputNode(node);
-      viewPromised.then((view) => {
-        node.viewResolved = true;
-        registerView(performer, node, view);
-      });
+      viewPromised
+        .then((view) => {
+          node.viewResolved = true;
+          registerView(performer, node, view);
+        })
+        .catch((e) => performer.onError(e));
     } else {
       const view = await viewPromised;
       node.viewResolved = true;

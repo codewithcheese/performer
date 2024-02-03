@@ -1,6 +1,11 @@
 import { expect, test } from "vitest";
-import { Performer, User, PerformerMessageEvent } from "../src/index.js";
-import { nanoid } from "nanoid";
+import {
+  Assistant,
+  Performer,
+  PerformerErrorEvent,
+  PerformerMessageEvent,
+  User,
+} from "../src/index.js";
 
 test("should wait for input before performer is finished", async () => {
   const app = <User />;
@@ -67,15 +72,22 @@ test("should wait for multiple inputs", async () => {
   expect(performer.hasFinished).toEqual(true);
 });
 
-// test('should abort assistant response', async () => {
-// 	const app = (
-// 		<>
-// 			<system>Hello world in Javascript. Code only.</system>
-// 			<Assistant />
-// 		</>
-// 	);
-// 	const session = new RunSession({ element: app });
-// 	session.start();
-// 	session.abort();
-// 	await session.waitUntilSettled();
+// fixme: catch abort error
+// test("should abort assistant response", async () => {
+//   const app = (
+//     <>
+//       <system>Hello world in Javascript. Code only.</system>
+//       <Assistant />
+//     </>
+//   );
+//   const performer = new Performer({ element: app, throwOnError: false });
+//   const events: PerformerErrorEvent[] = [];
+//   performer.addEventListener("error", (event) => {
+//     events.push(event);
+//   });
+//   performer.start();
+//   performer.abort();
+//   await performer.waitUntilSettled();
+//   expect(performer.hasFinished).toEqual(true);
+//   expect(events).toHaveLength(1);
 // });

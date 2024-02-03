@@ -5,6 +5,7 @@ import {
   resolveMessages,
   Performer,
   useState,
+  PerformerErrorEvent,
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
 
@@ -350,4 +351,37 @@ test("should render tree", async () => {
   expect(root.child?.nextSibling?.child?.props.content).toEqual("Hello world");
   expect(root.child?.nextSibling?.nextSibling).toBeUndefined();
   await testHydration(performer);
+});
+
+test("should catch sync component that throws", async () => {
+  function App() {
+    throw Error("Throwing!");
+    return () => {};
+  }
+  const performer = new Performer({ element: <App />, throwOnError: false });
+  performer.start();
+  const events: PerformerErrorEvent[] = [];
+  performer.addEventListener("error", (event) => {
+    events.push(event);
+  });
+  await performer.waitUntilSettled();
+  expect(performer.hasFinished).toEqual(true);
+  expect(events).toHaveLength(1);
+});
+
+test("should catch async component that throws", async () => {
+  async function App() {
+    await sleep(10);
+    throw Error("Throwing!");
+    return () => {};
+  }
+  const performer = new Performer({ element: <App />, throwOnError: false });
+  performer.start();
+  const events: PerformerErrorEvent[] = [];
+  performer.addEventListener("error", (event) => {
+    events.push(event);
+  });
+  await performer.waitUntilSettled();
+  expect(performer.hasFinished).toEqual(true);
+  expect(events).toHaveLength(1);
 });

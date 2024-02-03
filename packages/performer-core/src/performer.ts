@@ -1,8 +1,3 @@
-/**
- * Session responsible for starting/resuming apps.
- *
- * Apps are defined as a tree of elements.
- */
 import type { PerformerElement } from "./element.js";
 import type { PerformerNode } from "./node.js";
 import { render } from "./render.js";
@@ -42,7 +37,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   inputQueue: PerformerMessage[] = [];
   inputNode: PendingInputNode | undefined;
 
-  abortController = new AbortController();
+  controller = new AbortController();
 
   throwOnError = false;
 
@@ -74,7 +69,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   abort() {
     // todo test action abort
     this.dispatchEvent(new PerformerLifecycleEvent({ state: "aborted" }));
-    this.abortController.abort();
+    this.controller.abort();
     this.finish();
   }
 
@@ -84,7 +79,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   }
 
   get aborted() {
-    return this.abortController.signal.aborted;
+    return this.controller.signal.aborted;
   }
 
   queueRender() {
@@ -154,5 +149,14 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
         }
       });
     });
+  }
+
+  onError(error: unknown) {
+    this.finish();
+    if (this.throwOnError) {
+      throw error;
+    } else {
+      this.dispatchEvent(new PerformerErrorEvent(error));
+    }
   }
 }
