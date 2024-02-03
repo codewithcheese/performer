@@ -7,20 +7,16 @@ import type { PerformerElement } from "./element.js";
 import type { PerformerNode } from "./node.js";
 import { render } from "./render.js";
 import {
-  PerformerEvent,
+  PerformerErrorEvent,
+  PerformerLifecycleEvent,
+  PerformerMessageEvent,
   PerformerEventMap,
-  ErrorEvent,
-  LifecycleEvent,
-  isMessageEvent,
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
 import log from "loglevel";
-import { LogConfig, logEvent, logNode } from "./util/log.js";
+import { LogConfig, logNode } from "./util/log.js";
 import { PendingInputState } from "./hooks/index.js";
-import {
-  TypedEventListenerOrEventListenerObject,
-  TypedEventTarget,
-} from "./util/typed-event-target.js";
+import { TypedEventTarget } from "./util/typed-event-target.js";
 
 type RunProps = {
   id?: string;
@@ -38,7 +34,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
 
   element: PerformerElement;
   node?: PerformerNode;
-  errors: ErrorEvent[] = [];
+  errors: PerformerErrorEvent[] = [];
 
   hasFinished: boolean = false;
 
@@ -77,14 +73,14 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
 
   abort() {
     // todo test action abort
-    this.dispatchEvent(new LifecycleEvent({ state: "aborted" }));
+    this.dispatchEvent(new PerformerLifecycleEvent({ state: "aborted" }));
     this.abortController.abort();
     this.finish();
   }
 
   finish() {
     this.hasFinished = true;
-    this.dispatchEvent(new LifecycleEvent({ state: "finished" }));
+    this.dispatchEvent(new PerformerLifecycleEvent({ state: "finished" }));
   }
 
   get aborted() {
@@ -128,22 +124,16 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
       inputNode.hooks.input.resolve([...this.inputQueue]);
     } else {
       this.inputNode = inputNode as PendingInputNode;
-      this.dispatchEvent(new LifecycleEvent({ state: "listening" }));
+      this.dispatchEvent(new PerformerLifecycleEvent({ state: "listening" }));
     }
   }
 
-  input(event: PerformerEvent) {
-    if (isMessageEvent(event)) {
-      const message =
-        "payload" in event.detail ? event.detail.payload : event.detail.delta;
-      if (this.inputNode) {
-        this.inputNode.hooks.input.resolve([message]);
-        this.inputNode = undefined;
-      } else {
-        this.inputQueue.push(message);
-      }
+  input(event: PerformerMessageEvent) {
+    if (this.inputNode) {
+      this.inputNode.hooks.input.resolve([event.detail.message]);
+      this.inputNode = undefined;
     } else {
-      throw Error(`Input of event type ${event.type} not supported.`);
+      this.inputQueue.push(event.detail.message);
     }
   }
 

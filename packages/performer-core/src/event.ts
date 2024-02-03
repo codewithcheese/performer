@@ -1,24 +1,6 @@
 import type { PerformerMessage } from "./message.js";
 import { nanoid } from "nanoid";
 
-export function isMessageEvent(
-  event: TypedCustomEvent<unknown>,
-): event is MessageEvent {
-  return event.type === "message";
-}
-
-export function isLifecycleEvent(
-  event: TypedCustomEvent<unknown>,
-): event is LifecycleEvent {
-  return event.type === "lifecycle";
-}
-
-export function isErrorEvent(
-  event: TypedCustomEvent<unknown>,
-): event is ErrorEvent {
-  return event.type === "error";
-}
-
 class TypedCustomEvent<D> extends CustomEvent<D> {
   static type: keyof PerformerEventMap;
   constructor(detail: D) {
@@ -32,7 +14,7 @@ class TypedCustomEvent<D> extends CustomEvent<D> {
   }
 }
 
-export class ErrorEvent extends TypedCustomEvent<{ message: string }> {
+export class PerformerErrorEvent extends TypedCustomEvent<{ message: string }> {
   static type = "error" as const;
   constructor(error: unknown) {
     let message;
@@ -47,39 +29,48 @@ export class ErrorEvent extends TypedCustomEvent<{ message: string }> {
   }
 }
 
-type MessageDetail = { uid: string } & (
-  | { payload: PerformerMessage }
-  | { delta: PerformerMessage }
-);
+type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-type MessageDetailUidOptional = { uid?: string } & (
-  | { payload: PerformerMessage }
-  | { delta: PerformerMessage }
-);
+type MessageDetail = { uid: string; message: PerformerMessage };
 
-export class MessageEvent extends TypedCustomEvent<MessageDetail> {
+export class PerformerMessageEvent extends TypedCustomEvent<MessageDetail> {
   static type = "message" as const;
 
-  constructor(detail: MessageDetailUidOptional) {
+  constructor(detail: PartialBy<MessageDetail, "uid">) {
     if (detail.uid === undefined) {
-      super({ ...detail, uid: nanoid() });
-    } else {
-      super(detail as MessageDetail);
+      detail.uid = nanoid();
     }
+    super(detail as MessageDetail);
   }
 }
 
-export class LifecycleEvent extends TypedCustomEvent<{
+export class PerformerDeltaEvent extends TypedCustomEvent<MessageDetail> {
+  static type = "delta" as const;
+
+  constructor(detail: PartialBy<MessageDetail, "uid">) {
+    if (detail.uid === undefined) {
+      detail.uid = nanoid();
+    }
+    super(detail as MessageDetail);
+  }
+}
+
+export class PerformerLifecycleEvent extends TypedCustomEvent<{
   state: "finished" | "aborted" | "listening";
 }> {
   static type = "lifecycle" as const;
 }
 
-export type PerformerEvent = MessageEvent | ErrorEvent | LifecycleEvent;
+export type PerformerEvent =
+  | PerformerMessageEvent
+  | PerformerErrorEvent
+  | PerformerLifecycleEvent
+  | PerformerDeltaEvent;
 
 export interface PerformerEventMap {
-  message: MessageEvent;
-  error: ErrorEvent;
-  lifecycle: LifecycleEvent;
+  message: PerformerMessageEvent;
+  delta: PerformerDeltaEvent;
+  error: PerformerErrorEvent;
+  lifecycle: PerformerLifecycleEvent;
   "*": PerformerEvent;
 }

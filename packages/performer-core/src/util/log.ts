@@ -1,7 +1,8 @@
 import {
+  PerformerMessageEvent,
+  PerformerDeltaEvent,
+  PerformerErrorEvent,
   isAssistantMessage,
-  isErrorEvent,
-  isMessageEvent,
   PerformerEvent,
   PerformerNode,
 } from "../index.js";
@@ -23,9 +24,11 @@ export function logEvent(event: PerformerEvent, config: LogConfig) {
   if (!config.showDeltaEvents && "delta" in event.detail) return;
 
   let msg = `Event ${event.type}`;
-  if (isMessageEvent(event)) {
-    const message =
-      "delta" in event.detail ? event.detail.delta : event.detail.payload;
+  if (
+    event instanceof PerformerMessageEvent ||
+    event instanceof PerformerDeltaEvent
+  ) {
+    const message = event.detail.message;
     msg += ` ${message.role} `;
     msg +=
       typeof message.content === "string"
@@ -51,7 +54,7 @@ export function logEvent(event: PerformerEvent, config: LogConfig) {
         )
         .join(", ")}`;
     }
-  } else if (isErrorEvent(event)) {
+  } else if (event instanceof PerformerErrorEvent) {
     msg += ` ${event.detail.message}`;
   }
 

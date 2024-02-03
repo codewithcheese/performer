@@ -1,6 +1,6 @@
 import { assert, expect, test } from "vitest";
 import {
-  MessageEvent,
+  PerformerMessageEvent,
   Performer,
   PerformerEvent,
   resolveMessages,
@@ -130,7 +130,7 @@ test("message element should resolve stream into message object", async () => {
   expect(messages[0]).toEqual(userMessage);
   expect(onMessageValue).toEqual(userMessage);
   assert(messageEventValue);
-  expect(messageEventValue).instanceof(MessageEvent);
+  expect(messageEventValue).instanceof(PerformerMessageEvent);
   await testHydration(performer);
 });
 

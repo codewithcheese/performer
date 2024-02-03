@@ -15,7 +15,11 @@ import { View } from "./component.js";
 import { effect } from "@preact/signals-core";
 import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
 import { createUseResourceHook } from "./hooks/index.js";
-import { ErrorEvent, MessageEvent } from "./event.js";
+import {
+  PerformerDeltaEvent,
+  PerformerErrorEvent,
+  PerformerMessageEvent,
+} from "./event.js";
 
 export async function render(performer: Performer) {
   try {
@@ -35,7 +39,7 @@ export async function render(performer: Performer) {
     if (performer.throwOnError) {
       throw error;
     } else {
-      performer.dispatchEvent(new ErrorEvent(error));
+      performer.dispatchEvent(new PerformerErrorEvent(error));
     }
   }
 }
@@ -239,7 +243,7 @@ function dispatchMessageElement(
   if (!message) {
     message = nodeToMessage(node);
   }
-  performer.dispatchEvent(new MessageEvent({ payload: message }));
+  performer.dispatchEvent(new PerformerMessageEvent({ message }));
   if (node.props.onMessage && node.props.onMessage instanceof Function) {
     node.props.onMessage(message);
   }
@@ -255,7 +259,9 @@ async function consumeMessageStream(
     if (!isMessage(chunk)) {
       throw Error(`Non-message chunk in stream. ${JSON.stringify(chunk)}`);
     }
-    performer.dispatchEvent(new MessageEvent({ uid: node.uid, delta: chunk }));
+    performer.dispatchEvent(
+      new PerformerDeltaEvent({ uid: node.uid, message: chunk }),
+    );
     chunks.push(chunk);
   }
   if (chunks.length === 0) {

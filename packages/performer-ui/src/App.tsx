@@ -1,5 +1,8 @@
+import {
+  PerformerMessageEvent,
+  PerformerLifecycleEvent,
+} from "@performer/core";
 import { useEffect, useState } from "react";
-import { isLifecycleEvent, isMessageEvent } from "@performer/core";
 import { usePerformerClient } from "./use-performer-client.ts";
 import {
   Divider,
@@ -58,13 +61,13 @@ function Chat({ app }: { app: AppImport }) {
               </div>
             </div>
             {events.map((event, index) => {
-              if (isMessageEvent(event)) {
-                return <Message key={index} message={event.payload} />;
-              } else if (isLifecycleEvent(event)) {
+              if (event instanceof PerformerMessageEvent) {
+                return <Message key={index} message={event.detail.message} />;
+              } else if (event instanceof PerformerLifecycleEvent) {
                 return (
                   <Divider
                     key={index}
-                    message={`Performer ${event.payload.state}`}
+                    message={`Performer ${event.detail.state}`}
                   />
                 );
               }

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { Performer, User, MessageEvent } from "../src/index.js";
+import { Performer, User, PerformerMessageEvent } from "../src/index.js";
 import { nanoid } from "nanoid";
 
 test("should wait for input before performer is finished", async () => {
@@ -11,8 +11,8 @@ test("should wait for input before performer is finished", async () => {
   expect(performer.inputNode).toBeDefined();
   expect(performer.hasFinished).toEqual(false);
   performer.input(
-    new MessageEvent({
-      payload: {
+    new PerformerMessageEvent({
+      message: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
       },
@@ -36,8 +36,8 @@ test("should wait for multiple inputs", async () => {
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
   performer.input(
-    new MessageEvent({
-      payload: {
+    new PerformerMessageEvent({
+      message: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
       },
@@ -46,8 +46,8 @@ test("should wait for multiple inputs", async () => {
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
   performer.input(
-    new MessageEvent({
-      payload: {
+    new PerformerMessageEvent({
+      message: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
       },
@@ -56,8 +56,8 @@ test("should wait for multiple inputs", async () => {
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
   performer.input(
-    new MessageEvent({
-      payload: {
+    new PerformerMessageEvent({
+      message: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
       },

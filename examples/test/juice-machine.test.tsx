@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { Performer, MessageEvent } from "@performer/core";
+import { Performer, PerformerMessageEvent } from "@performer/core";
 import { App } from "../src/juice-machine/index.js";
 
 test("juice machine should dispense the users selected juice after payment", async () => {
@@ -9,8 +9,8 @@ test("juice machine should dispense the users selected juice after payment", asy
   performer.start();
   await performer.waitUntilSettled();
   performer.input(
-    new MessageEvent({
-      payload: {
+    new PerformerMessageEvent({
+      message: {
         role: "user",
         content: [
           { type: "text", text: "I would like Apple and Mango juice please!" },
@@ -20,8 +20,8 @@ test("juice machine should dispense the users selected juice after payment", asy
   );
   await performer.waitUntilSettled();
   performer.input(
-    new MessageEvent({
-      payload: {
+    new PerformerMessageEvent({
+      message: {
         role: "user",
         content: [{ type: "text", text: "**insert payment**" }],
       },

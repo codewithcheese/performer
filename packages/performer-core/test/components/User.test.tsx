@@ -1,14 +1,13 @@
 import { assert, expect, test } from "vitest";
 import {
   isTextContent,
-  MessageEvent,
+  PerformerMessageEvent,
   Performer,
   resolveMessages,
   User,
   UserMessage,
 } from "../../src/index.js";
 import { testHydration } from "../util/test-hydration.js";
-import { nanoid } from "nanoid";
 
 test("should accept user input", async () => {
   const userMessage: UserMessage = {
@@ -24,7 +23,7 @@ test("should accept user input", async () => {
     console.log(`Event ${event.type}`),
   );
   expect(performer.hasFinished).toEqual(false);
-  performer.input(new MessageEvent({ payload: userMessage }));
+  performer.input(new PerformerMessageEvent({ message: userMessage }));
   await performer.waitUntilSettled();
   assert(performer.node?.type instanceof Function);
   expect(performer.node?.type.name).toEqual("User");
