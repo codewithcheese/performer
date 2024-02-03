@@ -7,8 +7,7 @@ import {
 import { App } from "../src/open-ended/index.js";
 
 test("should have chat until ended", async () => {
-  const element = <App />;
-  const performer = new Performer({ element });
+  const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
   performer.input(
@@ -33,6 +32,6 @@ test("should have chat until ended", async () => {
     }),
   );
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(8);
 }, 60_000);

@@ -13,12 +13,7 @@ import { LogConfig, logNode } from "./util/log.js";
 import { PendingInputState } from "./hooks/index.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";
 
-type RunProps = {
-  id?: string;
-  element: PerformerElement;
-  node?: PerformerNode;
-  throwOnError?: boolean;
-};
+type PerformerOptions = { throwOnError?: boolean };
 
 export type PendingInputNode = PerformerNode & {
   hooks: { input: PendingInputState };
@@ -27,8 +22,9 @@ export type PendingInputNode = PerformerNode & {
 export class Performer extends TypedEventTarget<PerformerEventMap> {
   #uid: string;
 
-  element: PerformerElement;
-  node?: PerformerNode;
+  app: PerformerElement;
+  root?: PerformerNode;
+  options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
 
   hasFinished: boolean = false;
@@ -49,14 +45,18 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     showResolveMessages: false,
   };
 
-  constructor({ element, throwOnError }: RunProps) {
+  constructor(app: PerformerElement, options: PerformerOptions = {}) {
     super();
     this.#uid = crypto.randomUUID();
-    this.element = element;
-    this.throwOnError =
-      throwOnError === undefined
-        ? globalThis.process && process.env["VITEST"] != null
-        : throwOnError;
+    this.app = app;
+    this.options = options;
+    if (
+      !this.options.throwOnError &&
+      globalThis.process &&
+      process.env["VITEST"] != null
+    ) {
+      this.options.throwOnError = true;
+    }
     this.addEventListener("error", (error) => {
       this.errors.push(error);
     });

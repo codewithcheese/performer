@@ -14,23 +14,23 @@ test("useResource should retain state across async contexts", async () => {
       </>
     );
   }
-  const performer = new Performer({ element: <App /> });
+  const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  expect(performer.node?.hooks["resource-0"]).toEqual({
+  expect(performer.root?.hooks["resource-0"]).toEqual({
     type: "value",
     value: 42,
   });
-  expect(performer.node?.hooks["resource-1"]).toEqual({
+  expect(performer.root?.hooks["resource-1"]).toEqual({
     type: "value",
     value: 420,
   });
-  expect(performer.node?.hooks["resource-2"]).toEqual({
+  expect(performer.root?.hooks["resource-2"]).toEqual({
     type: "value",
     value: 1337,
   });
-  expect(performer.node?.child?.child?.type).toEqual("system");
-  expect(performer.node?.child?.child?.props?.content).toEqual("42");
+  expect(performer.root?.child?.child?.type).toEqual("system");
+  expect(performer.root?.child?.child?.props?.content).toEqual("42");
 });
 
 // todo: test correctly rehydrates stream

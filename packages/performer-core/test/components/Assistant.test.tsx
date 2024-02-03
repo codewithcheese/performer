@@ -19,21 +19,21 @@ test("should call model with messages", async () => {
       <Assistant />
     </>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  expect(performer.node?.child?.type).toEqual("system");
-  expect(performer.node?.child?.props.content).toEqual(
+  expect(performer.root?.child?.type).toEqual("system");
+  expect(performer.root?.child?.props.content).toEqual(
     "Hello world in Javascript. Code only.",
   );
-  assert(performer.node?.child?.nextSibling?.type instanceof Function);
-  expect(performer.node?.child?.nextSibling?.type.name).toEqual("Assistant");
-  expect(performer.node?.child?.nextSibling?.child?.type).toEqual("message");
-  expect(performer.node?.child?.nextSibling?.child?.props.message.role).toEqual(
+  assert(performer.root?.child?.nextSibling?.type instanceof Function);
+  expect(performer.root?.child?.nextSibling?.type.name).toEqual("Assistant");
+  expect(performer.root?.child?.nextSibling?.child?.type).toEqual("message");
+  expect(performer.root?.child?.nextSibling?.child?.props.message.role).toEqual(
     "assistant",
   );
   expect(
-    performer.node?.child?.nextSibling?.child?.props.message.content,
+    performer.root?.child?.nextSibling?.child?.props.message.content,
   ).toHaveLength(1);
 }, 10_000);
 
@@ -45,7 +45,7 @@ test("should call onMessage event handler after assistant response", async () =>
       <Assistant onMessage={() => (eventHandlerCalled = true)} />
     </>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
   expect(eventHandlerCalled).toEqual(true);
@@ -78,13 +78,11 @@ test("should use tool", async () => {
       />
     </>
   );
-  const performer = new Performer({
-    element: app,
-  });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(true);
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(2);
   expect(messages[0].role).toEqual("system");
   assert(isSystemMessage(messages[0]));
@@ -106,13 +104,11 @@ test.skipIf(process.env.TEST_MODEL_OLLAMA == null)(
         <Assistant model={ollama} />
       </>
     );
-    const performer = new Performer({
-      element: app,
-    });
+    const performer = new Performer(app);
     performer.start();
     await performer.waitUntilSettled();
     expect(performer.hasFinished).toEqual(true);
-    const messages = resolveMessages(performer.node);
+    const messages = resolveMessages(performer.root);
     expect(messages).toHaveLength(2);
     expect(messages[0].role).toEqual("system");
     expect(messages[1].role).toEqual("assistant");

@@ -119,13 +119,13 @@ test("message element should resolve stream into message object", async () => {
     );
   }
   const app = <App />;
-  const performer = new Performer({ element: <App /> });
+  const performer = new Performer(<App />);
   performer.addEventListener("message", (event) => {
     messageEventValue = event;
   });
   performer.start();
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual(userMessage);
   expect(onMessageValue).toEqual(userMessage);
@@ -143,10 +143,10 @@ test("message element should accept message object without stream", async () => 
     return () => <message message={userMessage} />;
   }
   const app = <App />;
-  const performer = new Performer({ element: <App /> });
+  const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual(userMessage);
 });

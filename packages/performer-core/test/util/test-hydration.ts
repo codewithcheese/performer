@@ -10,20 +10,16 @@ import { Signal } from "@preact/signals-core";
 import { expect } from "vitest";
 
 export async function testHydration(performer: Performer) {
-  if (!performer.node) {
+  if (!performer.root) {
     throw Error("Cannot test hydration Performer.node undefined");
   }
-  const original = performer.node;
-  const ogMessages = structuredClone(resolveMessages(performer.node));
-  const serialized = serialize(performer.node);
+  const original = performer.root;
+  const ogMessages = structuredClone(resolveMessages(performer.root));
+  const serialized = serialize(performer.root);
   const stringified = JSON.stringify(serialized);
-  const hydratedPerformer = new Performer({ element: performer.element });
-  const hydrated = await hydrate(
-    hydratedPerformer,
-    performer.element,
-    serialized,
-  );
-  const hydratedMessages = resolveMessages(hydratedPerformer.node);
+  const hydratedPerformer = new Performer(performer.app);
+  const hydrated = await hydrate(hydratedPerformer, performer.app, serialized);
+  const hydratedMessages = resolveMessages(hydratedPerformer.root);
   expect(ogMessages).toEqual(hydratedMessages);
   // @ts-ignore
   const diffs = diff(original, hydrated, filterTransient(original, hydrated));

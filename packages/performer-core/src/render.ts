@@ -19,7 +19,7 @@ import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 
 export async function render(performer: Performer) {
   try {
-    let next = findNextElementToRender(performer.element, performer.node);
+    let next = findNextElementToRender(performer.app, performer.root);
     if (next === "SIDE_EFFECT") {
       performer.queueRender();
     } else if (next === "VIEW_PENDING") {
@@ -114,7 +114,7 @@ export async function renderElement(
   const node = createNode({ element, parent, prevSibling, child, serialized });
   log.debug(`Create node`, logNode(node));
   if (!parent) {
-    performer.node = node;
+    performer.root = node;
   }
   // link node in place
   if (prevSibling) {

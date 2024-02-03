@@ -30,7 +30,7 @@ export function usePerformerClient(app: Component<any> | null) {
       return;
     }
     try {
-      const performer = new Performer({ element: jsx(app, {}) });
+      const performer = new Performer(jsx(app, {}));
       setPerformer(performer);
 
       performer.addEventListener("*", (event) => {

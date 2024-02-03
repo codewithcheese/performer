@@ -6,8 +6,7 @@ import * as process from "process";
 test.skipIf(!process.env.VITE_TEST_HAS_CHINOOK_DB)(
   "should use SQL tool to answer users question",
   async () => {
-    const element = <App />;
-    const performer = new Performer({ element });
+    const performer = new Performer(<App />);
     performer.start();
     performer.input(
       new PerformerMessageEvent({

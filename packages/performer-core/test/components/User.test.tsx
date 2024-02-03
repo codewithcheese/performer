@@ -17,7 +17,7 @@ test("should accept user input", async () => {
   const app = (
     <User onMessage={(message) => expect(message).toEqual(userMessage)} />
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   performer.addEventListener("*", (event) =>
     console.log(`Event ${event.type}`),
@@ -25,9 +25,9 @@ test("should accept user input", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(new PerformerMessageEvent({ message: userMessage }));
   await performer.waitUntilSettled();
-  assert(performer.node?.type instanceof Function);
-  expect(performer.node?.type.name).toEqual("User");
-  const messages = resolveMessages(performer.node);
+  assert(performer.root?.type instanceof Function);
+  expect(performer.root?.type.name).toEqual("User");
+  const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
   expect(messages[0].role).toEqual("user");
   assert(isTextContent(messages[0].content[0]));

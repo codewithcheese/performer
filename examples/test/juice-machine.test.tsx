@@ -3,8 +3,7 @@ import { Performer, PerformerMessageEvent } from "@performer/core";
 import { App } from "../src/juice-machine/index.js";
 
 test("juice machine should dispense the users selected juice after payment", async () => {
-  const element = <App />;
-  const performer = new Performer({ element });
+  const performer = new Performer(<App />);
   performer.logConfig.showDeltaEvents = false;
   performer.start();
   await performer.waitUntilSettled();

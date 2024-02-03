@@ -28,21 +28,21 @@ test("should use context from provider", async () => {
       <Consumer />
     </Provider>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  expect(performer.node?.type).toEqual(Provider);
+  expect(performer.root?.type).toEqual(Provider);
   expect(
-    (performer.node?.hooks["context-first"] as Signal<string>).value,
+    (performer.root?.hooks["context-first"] as Signal<string>).value,
   ).toEqual("Hello world");
   expect(
-    (performer.node?.hooks["context-second"] as Signal<string>).value,
+    (performer.root?.hooks["context-second"] as Signal<string>).value,
   ).toEqual("Good night");
-  expect(performer.node?.child?.type).toEqual(Consumer);
-  expect(performer.node?.child?.hooks["provider-first"]?.type).toEqual(
+  expect(performer.root?.child?.type).toEqual(Consumer);
+  expect(performer.root?.child?.hooks["provider-first"]?.type).toEqual(
     Provider,
   );
-  expect(performer.node?.child?.hooks["provider-second"]?.type).toEqual(
+  expect(performer.root?.child?.hooks["provider-second"]?.type).toEqual(
     Provider,
   );
 });

@@ -9,7 +9,7 @@ import {
 
 test("should wait for input before performer is finished", async () => {
   const app = <User />;
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   console.time("Render");
   performer.start();
   await performer.waitUntilSettled();
@@ -35,7 +35,7 @@ test("should wait for multiple inputs", async () => {
       <User />
     </>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   console.time("Render");
   performer.start();
   await performer.waitUntilSettled();

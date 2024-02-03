@@ -19,42 +19,42 @@ test("should repeat 2 times", async () => {
     </>
   );
   const events = [];
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.addEventListener("*", (event) => {
     events.push(event);
   });
   performer.start();
   await performer.waitUntilSettled();
   expect(performer.errors).toHaveLength(0);
-  expect(performer.node?.child?.type).toEqual("system");
-  assert(performer.node?.child?.nextSibling?.type instanceof Function);
-  expect(performer.node?.child?.nextSibling?.type.name).toEqual("Repeat");
-  expect(performer.node?.child?.nextSibling?.child?.type).toEqual("system");
+  expect(performer.root?.child?.type).toEqual("system");
+  assert(performer.root?.child?.nextSibling?.type instanceof Function);
+  expect(performer.root?.child?.nextSibling?.type.name).toEqual("Repeat");
+  expect(performer.root?.child?.nextSibling?.child?.type).toEqual("system");
   assert(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.type instanceof
+    performer.root?.child?.nextSibling?.child?.nextSibling?.type instanceof
       Function,
   );
   expect(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.type.name,
+    performer.root?.child?.nextSibling?.child?.nextSibling?.type.name,
   ).toEqual("Assistant");
   expect(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling?.type,
+    performer.root?.child?.nextSibling?.child?.nextSibling?.nextSibling?.type,
   ).toEqual("system");
   assert(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling
+    performer.root?.child?.nextSibling?.child?.nextSibling?.nextSibling
       ?.nextSibling?.type instanceof Function,
   );
   expect(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling
+    performer.root?.child?.nextSibling?.child?.nextSibling?.nextSibling
       ?.nextSibling?.type.name,
   ).toEqual("Assistant");
   expect(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling
+    performer.root?.child?.nextSibling?.child?.nextSibling?.nextSibling
       ?.nextSibling?.nextSibling,
   ).toEqual(undefined);
-  let messages = resolveMessages(performer.node);
+  let messages = resolveMessages(performer.root);
   console.log(JSON.stringify(messages, null, 2));
-  messages = resolveMessages(performer.node);
+  messages = resolveMessages(performer.root);
   console.log(JSON.stringify(messages, null, 2));
   await testHydration(performer);
 }, 30_000);
@@ -79,10 +79,10 @@ test("should stop repeating using stop prop", async () => {
       </>
     );
   }
-  const performer = new Performer({ element: <App /> });
+  const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
   expect(messages.length).toEqual(5);
   await testHydration(performer);
 }, 10_000);

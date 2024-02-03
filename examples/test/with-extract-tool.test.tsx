@@ -3,9 +3,8 @@ import { resolveMessages, Performer } from "@performer/core";
 import { App } from "../src/with-extract-tool/index.js";
 
 test("should use tool to extract data", async () => {
-  const element = <App />;
-  const performer = new Performer({ element });
+  const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
 });

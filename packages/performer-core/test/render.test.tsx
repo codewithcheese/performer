@@ -24,10 +24,10 @@ test("should render and resolve intrinsic element", async () => {
       <user>Tell me a joke, please.</user>
     </>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   expect(messages[0].role).toEqual("system");
   expect(messages[1].role).toEqual("assistant");
@@ -55,7 +55,7 @@ test("should render view", async () => {
     );
   }
   const app = <AComponent />;
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
   await testHydration(performer);
@@ -82,7 +82,7 @@ test("should update prop when signal changes", async () => {
       </>
     );
   }
-  const performer = new Performer({ element: <App /> });
+  const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
   await testHydration(performer);
@@ -102,17 +102,17 @@ test("should update and run message actions when state changes", async () => {
       </DelayedIf>
     </>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  let messages = resolveMessages(performer.node);
+  let messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
 
   performer.hasFinished = false;
-  performer.node!.child!.nextSibling!.hooks["state-0"].value = true;
+  performer.root!.child!.nextSibling!.hooks["state-0"].value = true;
 
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.node);
+  messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   await testHydration(performer);
 });
@@ -135,21 +135,21 @@ test("should update links when elements are reordered", async () => {
       <Item>Three</Item>
     </Rotate>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
 
-  let messages = resolveMessages(performer.node, undefined, {
+  let messages = resolveMessages(performer.root, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(3);
 
   performer.hasFinished = false;
-  const offset = performer.node!.hooks["state-0"];
+  const offset = performer.root!.hooks["state-0"];
   offset!.value += 1;
 
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.node, undefined, {
+  messages = resolveMessages(performer.root, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(3);
@@ -166,10 +166,10 @@ test("should render new elements when dynamically added or removed", async () =>
       <user>Greet the user</user>
     </Repeat>
   );
-  let performer = new Performer({ element: app });
+  let performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  let messages = resolveMessages(performer.node, undefined, {
+  let messages = resolveMessages(performer.root, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(1);
@@ -179,11 +179,11 @@ test("should render new elements when dynamically added or removed", async () =>
   performer = await testHydration(performer);
   // change state for second run
   performer.hasFinished = false;
-  let times = performer.node!.hooks["state-0"];
+  let times = performer.root!.hooks["state-0"];
   times.value += 4;
   // second run
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.node, undefined, {
+  messages = resolveMessages(performer.root, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(5);
@@ -192,11 +192,11 @@ test("should render new elements when dynamically added or removed", async () =>
   performer = await testHydration(performer);
   // change state for third run
   performer.hasFinished = false;
-  times = performer.node!.hooks["state-0"];
+  times = performer.root!.hooks["state-0"];
   times.value -= 2;
   // third run
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.node, undefined, {
+  messages = resolveMessages(performer.root, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(3);
@@ -205,11 +205,11 @@ test("should render new elements when dynamically added or removed", async () =>
   performer = await testHydration(performer);
   // change state for fourth run
   performer.hasFinished = false;
-  times = performer.node!.hooks["state-0"];
+  times = performer.root!.hooks["state-0"];
   times.value -= 1;
   // fourth run
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.node, undefined, {
+  messages = resolveMessages(performer.root, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(2);
@@ -234,10 +234,10 @@ test("should unlink messages when removed by conditional", async () => {
       <Message>What is the population of Australia?</Message>
     </Temp>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  let messages = resolveMessages(performer.node, undefined, {
+  let messages = resolveMessages(performer.root, undefined, {
     showResolveMessages: true,
   });
   expect(
@@ -246,11 +246,11 @@ test("should unlink messages when removed by conditional", async () => {
   ).toEqual(4);
 
   performer.hasFinished = false;
-  const predicate = performer.node!.hooks["state-0"];
+  const predicate = performer.root!.hooks["state-0"];
   predicate.value = false;
 
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.node, undefined, {
+  messages = resolveMessages(performer.root, undefined, {
     showResolveMessages: true,
   });
   expect(
@@ -275,12 +275,12 @@ test("should wait for async message actions", async () => {
       <Message>Hold me close</Message>
     </Container>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   console.time("Render");
   performer.start();
   await performer.waitUntilSettled();
   console.timeEnd("Render");
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   expect(messages[0]).toEqual({
     role: "user",
@@ -323,10 +323,10 @@ test("should render tree", async () => {
       </Second>
     </>
   );
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  const root = performer.node!;
+  const root = performer.root!;
   expect(root.parent).toBeUndefined();
   expect(root.nextSibling).toBeUndefined();
   expect(root.prevSibling).toBeUndefined();
@@ -358,7 +358,7 @@ test("should catch sync component that throws", async () => {
     throw Error("Throwing!");
     return () => {};
   }
-  const performer = new Performer({ element: <App />, throwOnError: false });
+  const performer = new Performer(<App />, { throwOnError: false });
   performer.start();
   const events: PerformerErrorEvent[] = [];
   performer.addEventListener("error", (event) => {
@@ -375,7 +375,7 @@ test("should catch async component that throws", async () => {
     throw Error("Throwing!");
     return () => {};
   }
-  const performer = new Performer({ element: <App />, throwOnError: false });
+  const performer = new Performer(<App />, { throwOnError: false });
   performer.start();
   const events: PerformerErrorEvent[] = [];
   performer.addEventListener("error", (event) => {
