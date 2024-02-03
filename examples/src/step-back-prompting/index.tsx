@@ -4,6 +4,7 @@ import {
   initContext,
   readTextContent,
   useContext,
+  UseResourceHook,
   User,
 } from "@performer/core";
 import { ChatOpenAI } from "langchain/chat_models/openai";
@@ -52,17 +53,19 @@ function Question() {
   );
 }
 
-async function Answer({
-  question,
-  stepBack,
-}: {
+type AnswerProps = {
   question: string;
   stepBack: string;
-}) {
-  const results = await Promise.all([
-    await searchDuckDuckGo(question),
-    await searchDuckDuckGo(stepBack),
-  ]);
+};
+
+async function Answer(
+  { question, stepBack }: AnswerProps,
+  { useResource }: { useResource: UseResourceHook },
+) {
+  const results = await useResource(() =>
+    Promise.all([searchDuckDuckGo(question), searchDuckDuckGo(stepBack)]),
+  );
+
   const searchResults = results
     .map((result) => extractSearchResults(result))
     .flat()

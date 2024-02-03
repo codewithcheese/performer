@@ -1,4 +1,5 @@
 import type { PerformerElement } from "./element.js";
+import { createUseResourceHook } from "./hooks/index.js";
 
 export type Props = Record<string, any>;
 
@@ -19,5 +20,6 @@ export type Component<P extends Props> = {
       content?: string;
       controller?: AbortController;
     },
+    asyncHooks: { useResource: ReturnType<typeof createUseResourceHook> },
   ): View | Promise<View>;
 };

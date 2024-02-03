@@ -44,7 +44,7 @@ export function App() {
         with their properties. If a property is not present and is not required
         in the function parameters, do not include it in the output.
       </system>
-      <User>jane is 2 and bob is 3</User>
+      <user>jane is 2 and bob is 3</user>
       <Assistant model={model} toolChoice={tools[0]} tools={tools} />
     </>
   );

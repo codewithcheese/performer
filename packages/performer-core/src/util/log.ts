@@ -1,14 +1,16 @@
 import {
+  PerformerMessageEvent,
+  PerformerDeltaEvent,
+  PerformerErrorEvent,
+  isAssistantMessage,
   PerformerEvent,
   PerformerNode,
-  isAssistantMessage,
-  Performer,
 } from "../index.js";
 import log from "loglevel";
 import { isImageContent, isTextContent } from "../message.js";
 
 export type LogConfig = {
-  showUpdateEvents: boolean;
+  showDeltaEvents: boolean;
   showResolveMessages: boolean;
 };
 
@@ -19,15 +21,19 @@ function getNestedProperty(object: any, propertyPath: string): any {
 }
 
 export function logEvent(event: PerformerEvent, config: LogConfig) {
-  if (!config.showUpdateEvents && event.op === "update") return;
+  if (!config.showDeltaEvents && "delta" in event.detail) return;
 
-  let msg = `Event ${event.type} ${event.op}`;
-  if (event.type === "MESSAGE") {
-    msg += ` ${event.payload.role} `;
+  let msg = `Event ${event.type}`;
+  if (
+    event instanceof PerformerMessageEvent ||
+    event instanceof PerformerDeltaEvent
+  ) {
+    const message = event.detail.message;
+    msg += ` ${message.role} `;
     msg +=
-      typeof event.payload.content === "string"
-        ? event.payload.content
-        : event.payload.content
+      typeof message.content === "string"
+        ? message.content
+        : message.content
             .map((content) => {
               if (isTextContent(content) && content.text !== "") {
                 return `text:${content.text}`;
@@ -38,8 +44,8 @@ export function logEvent(event: PerformerEvent, config: LogConfig) {
               }
             })
             .join(", ");
-    if (isAssistantMessage(event.payload) && event.payload.tool_calls) {
-      msg += ` ${event.payload.tool_calls
+    if (isAssistantMessage(message) && message.tool_calls) {
+      msg += ` ${message.tool_calls
         .map(
           (toolCall) =>
             `${toolCall.function.name ? toolCall.function.name + ":" : ""}${
@@ -48,8 +54,8 @@ export function logEvent(event: PerformerEvent, config: LogConfig) {
         )
         .join(", ")}`;
     }
-  } else if (event.type === "ERROR") {
-    msg += ` ${event.payload.message}`;
+  } else if (event instanceof PerformerErrorEvent) {
+    msg += ` ${event.detail.message}`;
   }
 
   log.debug(msg);

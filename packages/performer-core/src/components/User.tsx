@@ -1,21 +1,10 @@
 import type { Component } from "../component.js";
 import { useInput } from "../hooks/index.js";
-import { PerformerMessage, UserMessage } from "../message.js";
+import { messagesToElements, PerformerMessage } from "../message.js";
 
 export const User: Component<{
-  content?: string;
   onMessage?: (message: PerformerMessage) => void;
-}> = async function ({ content, onMessage = () => {} }) {
-  const messages: UserMessage[] = [];
-  if (content) {
-    messages.push({ role: "user", content: [{ type: "text", text: content }] });
-  } else {
-    const input = await useInput<UserMessage[]>();
-    messages.push(...input);
-  }
-  messages.map(onMessage);
-  return () =>
-    messages.map((message) => (
-      <user onMessage={onMessage} content={message.content} />
-    ));
+}> = async function ({ onMessage = () => {} }) {
+  const messages = await useInput();
+  return () => messagesToElements(messages, onMessage);
 };

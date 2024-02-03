@@ -6,7 +6,7 @@ import {
   Performer,
   useState,
 } from "../src/index.js";
-import { resetFinished } from "./util/reset-finished.js";
+import { testHydration } from "./util/test-hydration.js";
 
 async function Message({ content }: any) {
   return () => <user content={[{ type: "text", text: content }]} />;
@@ -31,6 +31,7 @@ test("should render and resolve intrinsic element", async () => {
   expect(messages[0].role).toEqual("system");
   expect(messages[1].role).toEqual("assistant");
   expect(messages[2].role).toEqual("user");
+  await testHydration(performer);
 });
 
 test("should render view", async () => {
@@ -56,6 +57,7 @@ test("should render view", async () => {
   const performer = new Performer({ element: app });
   performer.start();
   await performer.waitUntilSettled();
+  await testHydration(performer);
 });
 
 test("should update prop when signal changes", async () => {
@@ -82,6 +84,7 @@ test("should update prop when signal changes", async () => {
   const performer = new Performer({ element: <App /> });
   performer.start();
   await performer.waitUntilSettled();
+  await testHydration(performer);
 });
 
 test("should update and run message actions when state changes", async () => {
@@ -104,12 +107,13 @@ test("should update and run message actions when state changes", async () => {
   let messages = resolveMessages(performer.node);
   expect(messages).toHaveLength(1);
 
-  resetFinished(performer);
+  performer.hasFinished = false;
   performer.node!.child!.nextSibling!.hooks["state-0"].value = true;
 
   await performer.waitUntilSettled();
   messages = resolveMessages(performer.node);
   expect(messages).toHaveLength(3);
+  await testHydration(performer);
 });
 
 test("should update links when elements are reordered", async () => {
@@ -139,7 +143,7 @@ test("should update links when elements are reordered", async () => {
   });
   expect(messages).toHaveLength(3);
 
-  resetFinished(performer);
+  performer.hasFinished = false;
   const offset = performer.node!.hooks["state-0"];
   offset!.value += 1;
 
@@ -148,6 +152,7 @@ test("should update links when elements are reordered", async () => {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(3);
+  await testHydration(performer);
 });
 
 test("should render new elements when dynamically added or removed", async () => {
@@ -157,45 +162,59 @@ test("should render new elements when dynamically added or removed", async () =>
   }
   const app = (
     <Repeat>
-      <Message>Greet the user</Message>
+      <user>Greet the user</user>
     </Repeat>
   );
-  const performer = new Performer({ element: app });
+  let performer = new Performer({ element: app });
   performer.start();
   await performer.waitUntilSettled();
   let messages = resolveMessages(performer.node, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(1);
+  expect(performer.hasFinished).toEqual(true);
 
-  resetFinished(performer);
-  const times = performer.node!.hooks["state-0"];
+  // rehydrate for second run
+  performer = await testHydration(performer);
+  // change state for second run
+  performer.hasFinished = false;
+  let times = performer.node!.hooks["state-0"];
   times.value += 4;
-
+  // second run
   await performer.waitUntilSettled();
   messages = resolveMessages(performer.node, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(5);
 
-  resetFinished(performer);
+  // rehydrate for third run
+  performer = await testHydration(performer);
+  // change state for third run
+  performer.hasFinished = false;
+  times = performer.node!.hooks["state-0"];
   times.value -= 2;
-
+  // third run
   await performer.waitUntilSettled();
   messages = resolveMessages(performer.node, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(3);
 
-  resetFinished(performer);
+  // rehydrate for fourth run
+  performer = await testHydration(performer);
+  // change state for fourth run
+  performer.hasFinished = false;
+  times = performer.node!.hooks["state-0"];
   times.value -= 1;
-
+  // fourth run
   await performer.waitUntilSettled();
   messages = resolveMessages(performer.node, undefined, {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(2);
-});
+  // final hydration test
+  performer = await testHydration(performer);
+}, 30_000);
 
 test("should unlink messages when removed by conditional", async () => {
   function Temp({ children }: any) {
@@ -225,7 +244,7 @@ test("should unlink messages when removed by conditional", async () => {
     "Expect 4 messages before they are unlinked by `If`",
   ).toEqual(4);
 
-  resetFinished(performer);
+  performer.hasFinished = false;
   const predicate = performer.node!.hooks["state-0"];
   predicate.value = false;
 
@@ -237,6 +256,7 @@ test("should unlink messages when removed by conditional", async () => {
     messages.length,
     "Expect 0 messages after they are unlinked by `If`",
   ).toEqual(0);
+  await testHydration(performer);
 });
 
 test("should wait for async message actions", async () => {
@@ -257,7 +277,7 @@ test("should wait for async message actions", async () => {
   const performer = new Performer({ element: app });
   console.time("Render");
   performer.start();
-  await performer.waitUntilFinished;
+  await performer.waitUntilSettled();
   console.timeEnd("Render");
   const messages = resolveMessages(performer.node);
   expect(messages).toHaveLength(3);
@@ -273,6 +293,7 @@ test("should wait for async message actions", async () => {
     role: "user",
     content: [{ type: "text", text: "Hold me close" }],
   });
+  await testHydration(performer);
 });
 
 test("should render tree", async () => {
@@ -328,4 +349,5 @@ test("should render tree", async () => {
   );
   expect(root.child?.nextSibling?.child?.props.content).toEqual("Hello world");
   expect(root.child?.nextSibling?.nextSibling).toBeUndefined();
+  await testHydration(performer);
 });

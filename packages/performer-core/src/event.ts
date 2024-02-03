@@ -1,60 +1,76 @@
 import type { PerformerMessage } from "./message.js";
+import { nanoid } from "nanoid";
 
-interface Event {
-  sid: string; // non-persistent id for tracking stream of events
-  op: "once" | "close" | "update";
-  type: string;
-  payload: unknown;
+class TypedCustomEvent<D> extends CustomEvent<D> {
+  static type: keyof PerformerEventMap;
+  constructor(detail: D) {
+    super(new.target.type, { detail });
+  }
+  toJSON() {
+    return {
+      type: this.type,
+      detail: this.detail,
+    };
+  }
 }
 
-export interface MessageEvent extends Event {
-  type: "MESSAGE";
-  payload: PerformerMessage;
+export class PerformerErrorEvent extends TypedCustomEvent<{ message: string }> {
+  static type = "error" as const;
+  constructor(error: unknown) {
+    let message;
+    if (typeof error === "string") {
+      message = error;
+    } else if (!(error instanceof Error)) {
+      message = "Undefined error";
+    } else {
+      message = error.message;
+    }
+    super({ message });
+  }
 }
 
-export interface ErrorEvent extends Event {
-  type: "ERROR";
-  payload: {
-    message: string;
-  };
+type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+type MessageDetail = { uid: string; message: PerformerMessage };
+
+export class PerformerMessageEvent extends TypedCustomEvent<MessageDetail> {
+  static type = "message" as const;
+
+  constructor(detail: PartialBy<MessageDetail, "uid">) {
+    if (detail.uid === undefined) {
+      detail.uid = nanoid();
+    }
+    super(detail as MessageDetail);
+  }
 }
 
-export interface LifecycleEvent extends Event {
-  type: "LIFECYCLE";
-  payload: {
-    state: "finished" | "aborted";
-  };
+export class PerformerDeltaEvent extends TypedCustomEvent<MessageDetail> {
+  static type = "delta" as const;
+
+  constructor(detail: PartialBy<MessageDetail, "uid">) {
+    if (detail.uid === undefined) {
+      detail.uid = nanoid();
+    }
+    super(detail as MessageDetail);
+  }
 }
 
-export function createMessageEvent(message: PerformerMessage): PerformerEvent {
-  return {
-    sid: crypto.randomUUID(),
-    op: "once",
-    type: "MESSAGE",
-    payload: message,
-  };
+export class PerformerLifecycleEvent extends TypedCustomEvent<{
+  state: "finished" | "aborted" | "listening";
+}> {
+  static type = "lifecycle" as const;
 }
 
-export function isPerformerEvent(event: unknown): event is PerformerEvent {
-  return (
-    typeof event === "object" &&
-    event != null &&
-    "op" in event &&
-    "payload" in event &&
-    "type" in event
-  );
-}
+export type PerformerEvent =
+  | PerformerMessageEvent
+  | PerformerErrorEvent
+  | PerformerLifecycleEvent
+  | PerformerDeltaEvent;
 
-export function isMessageEvent(event: unknown): event is MessageEvent {
-  return isPerformerEvent(event) && event.type === "MESSAGE";
+export interface PerformerEventMap {
+  message: PerformerMessageEvent;
+  delta: PerformerDeltaEvent;
+  error: PerformerErrorEvent;
+  lifecycle: PerformerLifecycleEvent;
+  "*": PerformerEvent;
 }
-
-export function isLifecycleEvent(event: unknown): event is LifecycleEvent {
-  return isPerformerEvent(event) && event.type === "LIFECYCLE";
-}
-
-export function isErrorEvent(event: unknown): event is ErrorEvent {
-  return isPerformerEvent(event) && event.type === "ERROR";
-}
-
-export type PerformerEvent = MessageEvent | ErrorEvent | LifecycleEvent;

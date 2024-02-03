@@ -3,5 +3,5 @@ import { useRenderScope } from "./use-render-scope.js";
 
 export function useAnnounce() {
   const scope = useRenderScope();
-  return (event: PerformerEvent) => scope.performer.announce(event);
+  return (event: PerformerEvent) => scope.performer.dispatchEvent(event);
 }

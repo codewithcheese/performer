@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   Component,
-  createMessageEvent,
-  isMessageEvent,
-  isPerformerEvent,
   isTextContent,
   Performer,
   PerformerEvent,
   PerformerMessage,
+  PerformerDeltaEvent,
+  PerformerMessageEvent,
 } from "@performer/core";
 import { jsx } from "@performer/core/jsx-runtime";
 
@@ -20,7 +19,9 @@ export function usePerformerClient(app: Component<any> | null) {
       return;
     }
     performer.input(
-      createMessageEvent({ role: "user", content: [{ type: "text", text }] }),
+      new PerformerMessageEvent({
+        message: { role: "user", content: [{ type: "text", text }] },
+      }),
     );
   }
 
@@ -31,44 +32,37 @@ export function usePerformerClient(app: Component<any> | null) {
     try {
       const performer = new Performer({ element: jsx(app, {}) });
       setPerformer(performer);
-      performer.addEventHandler((event) => {
-        console.log("Performer event", event);
-        if (!isPerformerEvent(event)) {
-          return console.error("Unexpected event object");
-        }
-        if (!isMessageEvent(event)) {
+
+      performer.addEventListener("*", (event) => {
+        if (!(event instanceof PerformerDeltaEvent)) {
           return setEvents((prevEvents) => [...prevEvents, event]);
         }
 
         setEvents((prevEvents) => {
-          const prevEvent = prevEvents.findLast(isMessageEvent);
-          if (
-            prevEvent &&
-            event.op === "update" &&
-            prevEvent.sid === event.sid
-          ) {
-            // update content of previous message
-            if (typeof event.payload.content === "string") {
-              updateTextContent(event.payload.content, prevEvent.payload);
-            } else {
-              for (const [_, content] of event.payload.content.entries()) {
-                if (isTextContent(content)) {
-                  updateTextContent(content.text, prevEvent.payload);
-                }
-              }
-            }
-            return prevEvents.toSpliced(prevEvents.length - 1, 1, prevEvent);
-          } else if (
-            prevEvents.length &&
-            event.op === "close" &&
-            prevEvent &&
-            prevEvent.sid === event.sid
-          ) {
-            // skip "close" event when updates aggregated
-            return prevEvents;
-          } else {
+          const prevEvent = prevEvents.findLast(
+            (event): event is PerformerMessageEvent | PerformerDeltaEvent =>
+              (event instanceof PerformerMessageEvent ||
+                event instanceof PerformerDeltaEvent) &&
+              event.detail.uid === event.detail.uid,
+          );
+          if (!prevEvent) {
             return [...prevEvents, event];
           }
+
+          // update content of previous message
+          if (typeof event.detail.message.content === "string") {
+            updateTextContent(
+              event.detail.message.content,
+              prevEvent.detail.message,
+            );
+          } else {
+            for (const [_, content] of event.detail.message.content.entries()) {
+              if (isTextContent(content)) {
+                updateTextContent(content.text, prevEvent.detail.message);
+              }
+            }
+          }
+          return prevEvents.toSpliced(prevEvents.length - 1, 1, prevEvent);
         });
       });
       performer.start();
