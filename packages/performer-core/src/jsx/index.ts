@@ -33,7 +33,10 @@ export namespace JSX {
         | { id: ToolMessage["id"]; content?: ToolMessage["content"] }
         | { children: string | string[] }
       );
-    message: IntrinsicProps & { stream: ReadableStream<PerformerMessage> };
+    message: IntrinsicProps & {
+      message?: PerformerMessage;
+      stream?: ReadableStream<PerformerMessage>;
+    };
   };
 }
 
