@@ -33,6 +33,7 @@ export namespace JSX {
         | { id: ToolMessage["id"]; content?: ToolMessage["content"] }
         | { children: string | string[] }
       );
+    message: IntrinsicProps & { stream: ReadableStream<PerformerMessage> };
   };
 }
 
@@ -49,7 +50,7 @@ export function Fragment({ children }: any) {
 type Props = Record<string, any> & { children?: any };
 
 export function jsx<Type extends Component<P>, P extends Props>(
-  type: Type | PerformerMessage["role"],
+  type: Type | PerformerMessage["role"] | "message",
   props: P,
 ): PerformerElement {
   if (type === undefined) {

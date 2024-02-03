@@ -30,10 +30,13 @@ test("should call model with messages", async () => {
   );
   assert(performer.node?.child?.nextSibling?.type instanceof Function);
   expect(performer.node?.child?.nextSibling?.type.name).toEqual("Assistant");
-  expect(performer.node?.child?.nextSibling?.child?.type).toEqual("assistant");
+  expect(performer.node?.child?.nextSibling?.child?.type).toEqual("message");
+  expect(performer.node?.child?.nextSibling?.child?.props.stream.role).toEqual(
+    "assistant",
+  );
   expect(
-    performer.node?.child?.nextSibling?.child?.props.content,
-  ).toBeDefined();
+    performer.node?.child?.nextSibling?.child?.props.stream.content,
+  ).toHaveLength(1);
 }, 10_000);
 
 test("should call onMessage event handler when content is pre-set", async () => {
@@ -64,6 +67,7 @@ test("should call onMessage event handler after assistant response", async () =>
 });
 
 test("should use tool", async () => {
+  let toolCall = undefined;
   class HelloTool implements Tool {
     id = "hello";
     name = "say_hello";
@@ -71,12 +75,8 @@ test("should use tool", async () => {
     params = z.object({
       name: z.string(),
     });
-    async call(params: z.infer<typeof this.params>): Promise<ToolMessage> {
-      return {
-        id: this.id,
-        role: "tool",
-        content: `Hello ${params.name}`,
-      };
+    async call(params: z.infer<typeof this.params>) {
+      toolCall = params;
     }
   }
   const tool = new HelloTool();
@@ -100,17 +100,14 @@ test("should use tool", async () => {
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(true);
   const messages = resolveMessages(performer.node);
-  expect(messages).toHaveLength(3);
+  expect(messages).toHaveLength(2);
   expect(messages[0].role).toEqual("system");
   assert(isSystemMessage(messages[0]));
   assert(isAssistantMessage(messages[1]));
-  assert(isToolMessage(messages[2]));
   assert(messages[1].tool_calls);
-  expect(messages[2].role).toEqual("tool");
-  expect(messages[2].content).toEqual("Hello world");
-  expect(eventMessages).toHaveLength(2);
+  expect(toolCall).toBeDefined();
+  expect(eventMessages).toHaveLength(1);
   expect(eventMessages[0]).toEqual(messages[1]);
-  expect(eventMessages[1]).toEqual(messages[2]);
 });
 
 test.skipIf(process.env.TEST_MODEL_OLLAMA == null)(

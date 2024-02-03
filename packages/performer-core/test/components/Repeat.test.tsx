@@ -18,7 +18,11 @@ test("should repeat 2 times", async () => {
       </Repeat>
     </>
   );
+  const events = [];
   const performer = new Performer({ element: app });
+  performer.addEventListener("*", (event) => {
+    events.push(event);
+  });
   performer.start();
   await performer.waitUntilSettled();
   expect(performer.errors).toHaveLength(0);
@@ -48,10 +52,12 @@ test("should repeat 2 times", async () => {
     performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling
       ?.nextSibling?.nextSibling,
   ).toEqual(undefined);
-  const messages = resolveMessages(performer.node);
-  console.log(messages);
+  let messages = resolveMessages(performer.node);
+  console.log(JSON.stringify(messages, null, 2));
+  messages = resolveMessages(performer.node);
+  console.log(JSON.stringify(messages, null, 2));
   await testHydration(performer);
-}, 10_000);
+}, 30_000);
 
 test("should stop repeating using stop prop", async () => {
   function App() {

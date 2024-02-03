@@ -12,11 +12,11 @@ import { AfterChildrenHookRecord } from "./use-after-children.js";
 import { InputHookRecord } from "./use-input.js";
 import { StateHookRecord } from "./use-state.js";
 import { ContextHookRecord, ProviderHookRecord } from "./use-context.js";
-import { ResourceHookRecord } from "./use.js";
+import { UseHookRecord } from "./use.js";
 
 export type HookRecord = AfterChildrenHookRecord &
   InputHookRecord &
   StateHookRecord &
   ContextHookRecord &
   ProviderHookRecord &
-  ResourceHookRecord;
+  UseHookRecord;

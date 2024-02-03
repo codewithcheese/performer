@@ -1,21 +1,30 @@
-import { hydrate, Performer, serialize } from "../../src/index.js";
+import {
+  hydrate,
+  Performer,
+  resolveMessages,
+  serialize,
+} from "../../src/index.js";
 import { diff } from "deep-diff";
 import * as _ from "lodash";
 import { Signal } from "@preact/signals-core";
+import { expect } from "vitest";
 
 export async function testHydration(performer: Performer) {
   if (!performer.node) {
     throw Error("Cannot test hydration Performer.node undefined");
   }
   const original = performer.node;
+  const ogMessages = structuredClone(resolveMessages(performer.node));
   const serialized = serialize(performer.node);
-  JSON.stringify(serialized);
+  const stringified = JSON.stringify(serialized);
   const hydratedPerformer = new Performer({ element: performer.element });
   const hydrated = await hydrate(
     hydratedPerformer,
     performer.element,
     serialized,
   );
+  const hydratedMessages = resolveMessages(hydratedPerformer.node);
+  expect(ogMessages).toEqual(hydratedMessages);
   // @ts-ignore
   const diffs = diff(original, hydrated, filterTransient(original, hydrated));
   if (diffs?.length) {

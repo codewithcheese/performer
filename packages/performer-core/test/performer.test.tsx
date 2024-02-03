@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { Performer, User, MessageEvent } from "../src/index.js";
+import { nanoid } from "nanoid";
 
 // todo update serialization then remove skip
 // test.skip('should resume session', async () => {
@@ -44,6 +45,7 @@ test("should wait for input before performer is finished", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(
     new MessageEvent({
+      uid: nanoid(),
       payload: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
@@ -69,6 +71,7 @@ test("should wait for multiple inputs", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(
     new MessageEvent({
+      uid: nanoid(),
       payload: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
@@ -79,6 +82,7 @@ test("should wait for multiple inputs", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(
     new MessageEvent({
+      uid: nanoid(),
       payload: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],
@@ -89,6 +93,7 @@ test("should wait for multiple inputs", async () => {
   expect(performer.hasFinished).toEqual(false);
   performer.input(
     new MessageEvent({
+      uid: nanoid(),
       payload: {
         role: "user",
         content: [{ type: "text", text: "Hold me close" }],

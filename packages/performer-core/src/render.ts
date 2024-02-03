@@ -2,7 +2,13 @@ import { type PerformerElement } from "./element.js";
 import { createNode, type PerformerNode, SerializedNode } from "./node.js";
 import { clearRenderScope, setRenderScope } from "./hooks/use-render-scope.js";
 import type { Performer } from "./performer.js";
-import type { PerformerMessage } from "./message.js";
+import {
+  isAssistantMessage,
+  isImageContent,
+  isMessage,
+  isTextContent,
+  PerformerMessage,
+} from "./message.js";
 import log from "loglevel";
 import * as _ from "lodash";
 import { View } from "./component.js";
@@ -10,6 +16,7 @@ import { effect } from "@preact/signals-core";
 import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
 import { createUseHook } from "./hooks/index.js";
 import { ErrorEvent, MessageEvent } from "./event.js";
+import { chunk } from "lodash";
 
 export async function render(performer: Performer) {
   try {
@@ -156,14 +163,39 @@ export async function renderElement(
     }
   } else {
     // else intrinsic
-    node.viewResolved = true;
-    if (!node.isHydrating) {
-      const message = nodeToMessage(node);
-      performer.dispatchEvent(new MessageEvent({ payload: message }));
-      if (node.props.onMessage && node.props.onMessage instanceof Function) {
-        node.props.onMessage(message);
+    if (node.type === "message") {
+      if (
+        !("stream" in node.props) ||
+        !(node.props.stream instanceof ReadableStream)
+      ) {
+        throw Error(
+          "`message` element requires `stream` prop instance of ReadableStream",
+        );
       }
-      performer.queueRender();
+      if (node.isHydrating) {
+        const message = await consumeMessageStream(
+          performer,
+          node,
+          node.props.stream,
+        );
+        node.props.stream = message;
+        node.viewResolved = true;
+      } else {
+        consumeMessageStream(performer, node, node.props.stream).then(
+          (message) => {
+            node.props.stream = message;
+            node.viewResolved = true;
+            dispatchMessageElement(performer, node);
+            performer.queueRender();
+          },
+        );
+      }
+    } else {
+      node.viewResolved = true;
+      if (!node.isHydrating) {
+        dispatchMessageElement(performer, node);
+        performer.queueRender();
+      }
     }
   }
   return node;
@@ -192,6 +224,84 @@ function registerView(
       performer.queueRender();
     }
   });
+}
+
+function dispatchMessageElement(
+  performer: Performer,
+  node: PerformerNode,
+  message?: PerformerMessage,
+) {
+  if (!message) {
+    message = nodeToMessage(node);
+  }
+  performer.dispatchEvent(
+    new MessageEvent({ uid: node.uid, payload: message }),
+  );
+  if (node.props.onMessage && node.props.onMessage instanceof Function) {
+    node.props.onMessage(message);
+  }
+}
+
+async function consumeMessageStream(
+  performer: Performer,
+  node: PerformerNode,
+  stream: ReadableStream<PerformerMessage>,
+) {
+  let chunks: PerformerMessage[] = [];
+  for await (const chunk of stream) {
+    if (!isMessage(chunk)) {
+      throw Error(`Non-message chunk in stream. ${JSON.stringify(chunk)}`);
+    }
+    performer.dispatchEvent(new MessageEvent({ uid: node.uid, delta: chunk }));
+    chunks.push(chunk);
+  }
+  if (chunks.length === 0) {
+    throw Error("Message stream empty");
+  }
+  const message = structuredClone(chunks[0]);
+  let index = 1;
+  while (index < chunks.length) {
+    const chunk = chunks[index];
+    // aggregate function call
+    if (
+      isAssistantMessage(chunk) &&
+      isAssistantMessage(message) &&
+      chunk.function_call &&
+      message.function_call
+    ) {
+      message.function_call.arguments += chunk.function_call.arguments;
+    }
+    // aggregate tool calls
+    if (
+      isAssistantMessage(chunk) &&
+      isAssistantMessage(message) &&
+      chunk.tool_calls &&
+      message.tool_calls
+    ) {
+      for (const [index, toolCall] of chunk.tool_calls.entries()) {
+        message.tool_calls[index].function.arguments +=
+          toolCall.function.arguments;
+      }
+    }
+
+    // aggregate content
+    if (isAssistantMessage(chunk)) {
+      // fixme always append to last not index
+      for (const [i, chunkEntry] of chunk.content.entries()) {
+        const aggregateEntry = message.content[i];
+        if (isTextContent(chunkEntry) && isTextContent(aggregateEntry)) {
+          aggregateEntry.text += chunkEntry.text;
+        } else if (
+          isImageContent(chunkEntry) &&
+          isImageContent(aggregateEntry)
+        ) {
+          aggregateEntry.image_url += chunkEntry.image_url;
+        }
+      }
+    }
+    index += 1;
+  }
+  return message;
 }
 
 function freeNode(
@@ -263,8 +373,14 @@ function nodeToMessage(node: PerformerNode): PerformerMessage {
       "Cannot convert component to messages, must use intrinsic elements to represent messages",
     );
   }
+  if (node.type === "message") {
+    if (node.props.stream instanceof ReadableStream) {
+      throw Error("Message element stream not resolved.");
+    }
+    return node.props.stream;
+  }
   // fixme refactor without branching
-  if (node.type === "tool") {
+  else if (node.type === "tool") {
     return {
       id: node.props.id,
       role: node.type,

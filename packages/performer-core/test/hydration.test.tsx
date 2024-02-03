@@ -12,6 +12,7 @@ import {
   useState,
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
+import { nanoid } from "nanoid";
 
 test("should serialize hooks", async () => {
   async function App({}, use: UseHook) {
@@ -50,7 +51,9 @@ test("should serialize when listening, for input and accept input when hydrated"
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
-  hydratedPerformer.input(new MessageEvent({ payload: userMessage }));
+  hydratedPerformer.input(
+    new MessageEvent({ uid: nanoid(), payload: userMessage }),
+  );
   await hydratedPerformer.waitUntilSettled();
   expect(hydratedPerformer.hasFinished).toEqual(true);
   // expect original performer node still undefined
@@ -74,7 +77,7 @@ test("should use hydrated input instead of listening again", async () => {
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
-  performer.input(new MessageEvent({ payload: userMessage }));
+  performer.input(new MessageEvent({ uid: nanoid(), payload: userMessage }));
   await performer.waitUntilSettled();
   expect(performer.node?.child?.type).toEqual("user");
   expect(performer.hasFinished).toEqual(true);

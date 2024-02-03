@@ -1,29 +1,28 @@
 import { useMessages } from "../hooks/index.js";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import type { Component } from "../component.js";
-import { BaseMessage } from "langchain/schema";
 import {
-  type PerformerMessage,
-  fromLangchain,
+  AIMessage,
+  AIMessageChunk,
+  BaseMessage,
+  HumanMessage,
+  SystemMessage as LCSystemMessage,
+} from "langchain/schema";
+import {
   isAssistantMessage,
-  isImageContent,
-  isMessage,
-  isTextContent,
-  toLangchain,
-  type ToolMessage,
+  MessageContent,
+  type PerformerMessage,
 } from "../message.js";
 import type { BaseChatModel } from "langchain/chat_models/base";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { PerformerEvent, MessageEvent } from "../event.js";
-import { useAnnounce } from "../hooks/use-announce.js";
 
 export interface Tool {
   id: string;
   name: string;
   description: string;
   params: z.ZodObject<any>;
-  call: (params: any) => Promise<ToolMessage | void>;
+  call: (params: any) => void;
 }
 
 export type AssistantProps = {
@@ -38,9 +37,9 @@ export const Assistant: Component<AssistantProps> = async (
   { model, toolChoice = "auto", tools = [], content, onMessage = () => {} },
   use,
 ) => {
-  const announce = useAnnounce();
   const messages = useMessages();
-  const newMessages: PerformerMessage[] = [];
+  const newMessages: (PerformerMessage | ReadableStream<PerformerMessage>)[] =
+    [];
 
   if (content) {
     const message = {
@@ -88,15 +87,14 @@ export const Assistant: Component<AssistantProps> = async (
         BaseMessage,
         PerformerMessage
       >(fromLangchain);
-      return await handleChatModelResponse(
-        iterable.pipeThrough(transformStream),
-        announce,
-      );
+      return iterable.pipeThrough(transformStream);
     });
     if (message) {
       newMessages.push(message);
     }
+  }
 
+  async function handleMessage(message: PerformerMessage) {
     if (isAssistantMessage(message) && message.tool_calls) {
       for (const toolCall of message.tool_calls) {
         // @ts-expect-error index is undocumented
@@ -104,23 +102,22 @@ export const Assistant: Component<AssistantProps> = async (
         if (!tool) {
           throw Error(`Tool not found for tool call: ${toolCall.id}`);
         }
-        const toolMessage = await tool.call(
-          JSON.parse(toolCall.function.arguments),
-        );
-        if (toolMessage) {
-          newMessages.push(toolMessage);
-        }
+        tool.call(JSON.parse(toolCall.function.arguments));
       }
     }
+    onMessage(message);
   }
 
   return () => {
     return newMessages.map((message) => {
+      if (message instanceof ReadableStream) {
+        return <message onMessage={handleMessage} stream={message} />;
+      }
       switch (message.role) {
         case "tool":
           return (
             <tool
-              onMessage={onMessage}
+              onMessage={handleMessage}
               id={message.id}
               content={message.content}
             />
@@ -128,16 +125,16 @@ export const Assistant: Component<AssistantProps> = async (
         case "assistant":
           return (
             <assistant
-              onMessage={onMessage}
+              onMessage={handleMessage}
               tool_calls={message.tool_calls}
               function_call={message.function_call}
               content={message.content}
             />
           );
         case "user":
-          return <user onMessage={onMessage} content={message.content} />;
+          return <user onMessage={handleMessage} content={message.content} />;
         case "system":
-          return <system onMessage={onMessage} content={message.content} />;
+          return <system onMessage={handleMessage} content={message.content} />;
         default:
           throw Error("Unknown message role: " + (message as any).role);
       }
@@ -145,73 +142,72 @@ export const Assistant: Component<AssistantProps> = async (
   };
 };
 
-// typescript does not recognise ReadableStream as async iterable
-function isAsyncIterable(obj: unknown): obj is AsyncIterable<unknown> {
-  return (
-    !!obj &&
-    typeof (obj as AsyncIterable<unknown>)[Symbol.asyncIterator] === "function"
-  );
-}
-
-async function handleChatModelResponse(
-  msgOrStream: ReadableStream<unknown>,
-  announce: (event: PerformerEvent) => void,
-): Promise<PerformerMessage | undefined> {
-  let aggregate: PerformerMessage | undefined;
-  // todo use more network efficient id
-  const sid = crypto.randomUUID();
-  if (isAsyncIterable(msgOrStream)) {
-    for await (const chunk of msgOrStream) {
-      if (isMessage(chunk)) {
-        announce(new MessageEvent({ delta: chunk }));
-        if (!aggregate) {
-          aggregate = { ...chunk };
-        } else {
-          // aggregate function call
-          if (
-            isAssistantMessage(chunk) &&
-            isAssistantMessage(aggregate) &&
-            chunk.function_call &&
-            aggregate.function_call
-          ) {
-            aggregate.function_call.arguments += chunk.function_call.arguments;
-          }
-          // aggregate tool calls
-          if (
-            isAssistantMessage(chunk) &&
-            isAssistantMessage(aggregate) &&
-            chunk.tool_calls &&
-            aggregate.tool_calls
-          ) {
-            for (const [index, toolCall] of chunk.tool_calls.entries()) {
-              aggregate.tool_calls[index].function.arguments +=
-                toolCall.function.arguments;
-            }
-          }
-
-          if (isAssistantMessage(chunk)) {
-            // fixme always append to last not index
-            for (const [i, chunkEntry] of chunk.content.entries()) {
-              const aggregateEntry = aggregate.content[i];
-              if (isTextContent(chunkEntry) && isTextContent(aggregateEntry)) {
-                aggregateEntry.text += chunkEntry.text;
-              } else if (
-                isImageContent(chunkEntry) &&
-                isImageContent(aggregateEntry)
-              ) {
-                aggregateEntry.image_url += chunkEntry.image_url;
-              }
-            }
-          }
+export const fromLangchain = {
+  transform(
+    chunk: BaseMessage,
+    controller: TransformStreamDefaultController<PerformerMessage>,
+  ) {
+    let role: "user" | "assistant" | "system";
+    if (chunk instanceof HumanMessage) {
+      role = "user";
+    } else if (chunk instanceof AIMessage || chunk instanceof AIMessageChunk) {
+      role = "assistant";
+    } else if (chunk instanceof LCSystemMessage) {
+      role = "system";
+    } else {
+      throw new Error("Unknown message type");
+    }
+    let content: MessageContent = [];
+    let tool_calls;
+    let function_call;
+    if (typeof chunk.content === "string") {
+      content.push({ type: "text", text: chunk.content });
+    } else if (Array.isArray(chunk.content)) {
+      for (const contentPart of chunk.content) {
+        switch (contentPart.type) {
+          case "text":
+            content.push(contentPart);
+            break;
+          case "image_url":
+            content.push({
+              type: "image_url",
+              image_url:
+                typeof contentPart.image_url === "object"
+                  ? contentPart.image_url.url
+                  : contentPart.image_url,
+            });
+            break;
+          default:
+            throw new Error("Unsupported content type");
         }
       }
+    } else {
+      throw new Error("Unsupported content type");
     }
-    if (aggregate) {
-      return aggregate;
+    if (chunk.additional_kwargs?.tool_calls) {
+      tool_calls = chunk.additional_kwargs.tool_calls;
     }
-  } else if (isMessage(msgOrStream)) {
-    announce(new MessageEvent({ payload: msgOrStream }));
-    return msgOrStream;
-  }
-  return;
+    if (chunk.additional_kwargs?.function_call) {
+      function_call = chunk.additional_kwargs.function_call;
+    }
+    controller.enqueue({ role, content, tool_calls, function_call });
+  },
+};
+
+export function toLangchain(messages: PerformerMessage[]) {
+  const lcMessages: BaseMessage[] = [];
+  messages.forEach((message) => {
+    switch (message.role) {
+      case "system":
+        lcMessages.push(new LCSystemMessage({ content: message.content }));
+        break;
+      case "user":
+        lcMessages.push(new HumanMessage({ content: message.content }));
+        break;
+      case "assistant":
+        lcMessages.push(new AIMessage({ content: message.content }));
+        break;
+    }
+  });
+  return lcMessages;
 }

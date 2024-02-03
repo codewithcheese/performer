@@ -16,7 +16,10 @@
   "type": "module",
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "@types/lodash": "^4.14.200",
     "dotenv": "^16.3.1",

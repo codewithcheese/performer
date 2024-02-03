@@ -17,9 +17,14 @@ test("should call `use` after await", async () => {
   const performer = new Performer({ element: <App /> });
   performer.start();
   await performer.waitUntilSettled();
-  expect(performer.node?.hooks["use-0"]).toEqual(42);
-  expect(performer.node?.hooks["use-1"]).toEqual(420);
-  expect(performer.node?.hooks["use-2"]).toEqual(1337);
+  expect(performer.node?.hooks["use-0"]).toEqual({ type: "value", value: 42 });
+  expect(performer.node?.hooks["use-1"]).toEqual({ type: "value", value: 420 });
+  expect(performer.node?.hooks["use-2"]).toEqual({
+    type: "value",
+    value: 1337,
+  });
   expect(performer.node?.child?.child?.type).toEqual("system");
   expect(performer.node?.child?.child?.props?.content).toEqual("42");
 });
+
+// todo: test correctly rehydrates stream

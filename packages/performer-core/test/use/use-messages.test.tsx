@@ -17,5 +17,5 @@ test("should be able to get messages", async () => {
 
   const performer = new Performer({ element: app });
   performer.start();
-  await performer.waitUntilFinished;
+  await performer.waitUntilSettled();
 });
