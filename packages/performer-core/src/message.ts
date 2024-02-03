@@ -115,7 +115,7 @@ export function readTextContent(message: PerformerMessage) {
 
 export function messagesToElements(
   messages: PerformerMessage[],
-  onMessage: (message: PerformerMessage) => void,
+  onMessage?: (message: PerformerMessage) => void,
 ) {
   return messages.map((message) => {
     return jsx(message.role, { ...message, onMessage });
