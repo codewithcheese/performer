@@ -31,11 +31,11 @@ test("should call model with messages", async () => {
   assert(performer.node?.child?.nextSibling?.type instanceof Function);
   expect(performer.node?.child?.nextSibling?.type.name).toEqual("Assistant");
   expect(performer.node?.child?.nextSibling?.child?.type).toEqual("message");
-  expect(performer.node?.child?.nextSibling?.child?.props.stream.role).toEqual(
+  expect(performer.node?.child?.nextSibling?.child?.props.message.role).toEqual(
     "assistant",
   );
   expect(
-    performer.node?.child?.nextSibling?.child?.props.stream.content,
+    performer.node?.child?.nextSibling?.child?.props.message.content,
   ).toHaveLength(1);
 }, 10_000);
 

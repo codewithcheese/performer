@@ -16,7 +16,6 @@ import { effect } from "@preact/signals-core";
 import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
 import { createUseHook } from "./hooks/index.js";
 import { ErrorEvent, MessageEvent } from "./event.js";
-import { chunk } from "lodash";
 
 export async function render(performer: Performer) {
   try {
@@ -164,31 +163,34 @@ export async function renderElement(
   } else {
     // else intrinsic
     if (node.type === "message") {
-      if (
-        !("stream" in node.props) ||
-        !(node.props.stream instanceof ReadableStream)
-      ) {
-        throw Error(
-          "`message` element requires `stream` prop instance of ReadableStream",
-        );
+      if (!node.props.stream && !node.props.message) {
+        throw Error("`message` element requires `stream` OR `message` prop");
       }
-      if (node.isHydrating) {
-        const message = await consumeMessageStream(
-          performer,
-          node,
-          node.props.stream,
-        );
-        node.props.stream = message;
+      if (node.props.stream != null) {
+        // process stream
+        if (node.isHydrating) {
+          node.props.message = await consumeMessageStream(
+            performer,
+            node,
+            node.props.stream,
+          );
+          node.viewResolved = true;
+        } else {
+          consumeMessageStream(performer, node, node.props.stream).then(
+            (message) => {
+              node.props.message = message;
+              node.viewResolved = true;
+              dispatchMessageElement(performer, node);
+              performer.queueRender();
+            },
+          );
+        }
+      } else if (node.props.message != null) {
         node.viewResolved = true;
-      } else {
-        consumeMessageStream(performer, node, node.props.stream).then(
-          (message) => {
-            node.props.stream = message;
-            node.viewResolved = true;
-            dispatchMessageElement(performer, node);
-            performer.queueRender();
-          },
-        );
+        if (!node.isHydrating) {
+          dispatchMessageElement(performer, node);
+          performer.queueRender();
+        }
       }
     } else {
       node.viewResolved = true;
@@ -374,10 +376,10 @@ function nodeToMessage(node: PerformerNode): PerformerMessage {
     );
   }
   if (node.type === "message") {
-    if (node.props.stream instanceof ReadableStream) {
-      throw Error("Message element stream not resolved.");
+    if (!node.props.message) {
+      throw Error("`message` element not resolved.");
     }
-    return node.props.stream;
+    return node.props.message;
   }
   // fixme refactor without branching
   else if (node.type === "tool") {
