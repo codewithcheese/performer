@@ -27,72 +27,55 @@ export interface Tool {
 
 export type AssistantProps = {
   model?: BaseChatModel;
-  content?: string;
   toolChoice?: "auto" | "none" | Tool;
   tools?: Tool[];
   onMessage?: (message: PerformerMessage) => void;
 };
 
 export const Assistant: Component<AssistantProps> = async (
-  { model, toolChoice = "auto", tools = [], content, onMessage = () => {} },
+  { model, toolChoice = "auto", tools = [], onMessage = () => {} },
   use,
 ) => {
   const messages = useMessages();
-  const newMessages: (PerformerMessage | ReadableStream<PerformerMessage>)[] =
-    [];
 
-  if (content) {
-    const message = {
-      role: "assistant" as const,
-      content: [{ type: "text" as const, text: content }],
+  let options = {};
+  if (tools.length) {
+    const toolMap: Map<string, Tool> = new Map();
+    options = {
+      ...options,
+      // response_format: {
+      // 	type: 'json_object'
+      // },
+      tool_choice:
+        typeof toolChoice === "string"
+          ? toolChoice
+          : { type: "function", function: { name: toolChoice.name } },
+      tools: tools.map((tool) => {
+        toolMap.set(tool.id, tool);
+        return {
+          type: "function",
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: zodToJsonSchema(tool.params),
+          },
+        };
+      }),
     };
-    newMessages.push(message);
-    onMessage(message);
-  } else {
-    let options = {};
-
-    if (tools.length) {
-      const toolMap: Map<string, Tool> = new Map();
-      options = {
-        ...options,
-        // response_format: {
-        // 	type: 'json_object'
-        // },
-        tool_choice:
-          typeof toolChoice === "string"
-            ? toolChoice
-            : { type: "function", function: { name: toolChoice.name } },
-        tools: tools.map((tool) => {
-          toolMap.set(tool.id, tool);
-          return {
-            type: "function",
-            function: {
-              name: tool.name,
-              description: tool.description,
-              parameters: zodToJsonSchema(tool.params),
-            },
-          };
-        }),
-      };
-    }
-
-    const lcMessages = toLangchain(messages);
-    const message = await use(async (controller) => {
-      if (!model) {
-        model = new ChatOpenAI();
-      }
-      const chat = model.bind({ signal: controller.signal, ...options });
-      const iterable = await chat.stream(lcMessages);
-      const transformStream = new TransformStream<
-        BaseMessage,
-        PerformerMessage
-      >(fromLangchain);
-      return iterable.pipeThrough(transformStream);
-    });
-    if (message) {
-      newMessages.push(message);
-    }
   }
+
+  const lcMessages = toLangchain(messages);
+  const message = await use(async (controller) => {
+    if (!model) {
+      model = new ChatOpenAI();
+    }
+    const chat = model.bind({ signal: controller.signal, ...options });
+    const iterable = await chat.stream(lcMessages);
+    const transformStream = new TransformStream<BaseMessage, PerformerMessage>(
+      fromLangchain,
+    );
+    return iterable.pipeThrough(transformStream);
+  });
 
   async function handleMessage(message: PerformerMessage) {
     if (isAssistantMessage(message) && message.tool_calls) {
@@ -109,36 +92,7 @@ export const Assistant: Component<AssistantProps> = async (
   }
 
   return () => {
-    return newMessages.map((message) => {
-      if (message instanceof ReadableStream) {
-        return <message onMessage={handleMessage} stream={message} />;
-      }
-      switch (message.role) {
-        case "tool":
-          return (
-            <tool
-              onMessage={handleMessage}
-              id={message.id}
-              content={message.content}
-            />
-          );
-        case "assistant":
-          return (
-            <assistant
-              onMessage={handleMessage}
-              tool_calls={message.tool_calls}
-              function_call={message.function_call}
-              content={message.content}
-            />
-          );
-        case "user":
-          return <user onMessage={handleMessage} content={message.content} />;
-        case "system":
-          return <system onMessage={handleMessage} content={message.content} />;
-        default:
-          throw Error("Unknown message role: " + (message as any).role);
-      }
-    });
+    return <message onMessage={handleMessage} stream={message} />;
   };
 };
 

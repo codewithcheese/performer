@@ -113,8 +113,11 @@ export function readTextContent(message: PerformerMessage) {
         .join(" ");
 }
 
-export function messagesToElements(messages: PerformerMessage[]) {
+export function messagesToElements(
+  messages: PerformerMessage[],
+  onMessage: (message: PerformerMessage) => void,
+) {
   return messages.map((message) => {
-    return jsx(message.role, message);
+    return jsx(message.role, { ...message, onMessage });
   });
 }

@@ -39,19 +39,6 @@ test("should call model with messages", async () => {
   ).toHaveLength(1);
 }, 10_000);
 
-test("should call onMessage event handler when content is pre-set", async () => {
-  let eventHandlerCalled = false;
-  const app = (
-    <Assistant onMessage={() => (eventHandlerCalled = true)}>
-      How may I serve the?
-    </Assistant>
-  );
-  const performer = new Performer({ element: app });
-  performer.start();
-  await performer.waitUntilSettled();
-  expect(eventHandlerCalled).toEqual(true);
-});
-
 test("should call onMessage event handler after assistant response", async () => {
   let eventHandlerCalled = false;
   const app = (
