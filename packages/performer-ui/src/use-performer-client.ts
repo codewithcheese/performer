@@ -37,32 +37,17 @@ export function usePerformerClient(app: Component<any> | null) {
         if (!(event instanceof PerformerDeltaEvent)) {
           return setEvents((prevEvents) => [...prevEvents, event]);
         }
-
         setEvents((prevEvents) => {
-          const prevEvent = prevEvents.findLast(
-            (event): event is PerformerMessageEvent | PerformerDeltaEvent =>
-              (event instanceof PerformerMessageEvent ||
-                event instanceof PerformerDeltaEvent) &&
+          const previous = prevEvents.findLast(
+            (event): event is PerformerDeltaEvent =>
+              event instanceof PerformerDeltaEvent &&
               event.detail.uid === event.detail.uid,
           );
-          if (!prevEvent) {
+          if (!previous) {
             return [...prevEvents, event];
           }
-
-          // update content of previous message
-          if (typeof event.detail.message.content === "string") {
-            updateTextContent(
-              event.detail.message.content,
-              prevEvent.detail.message,
-            );
-          } else {
-            for (const [_, content] of event.detail.message.content.entries()) {
-              if (isTextContent(content)) {
-                updateTextContent(content.text, prevEvent.detail.message);
-              }
-            }
-          }
-          return prevEvents.toSpliced(prevEvents.length - 1, 1, prevEvent);
+          appendDelta(previous, event);
+          return prevEvents.toSpliced(prevEvents.length - 1, 1, previous);
         });
       });
       performer.start();
@@ -72,6 +57,23 @@ export function usePerformerClient(app: Component<any> | null) {
   }, [app]);
 
   return { events, sendMessage };
+}
+
+function appendDelta(
+  previous: PerformerDeltaEvent,
+  event: PerformerDeltaEvent,
+) {
+  // update content of previous message
+  if (typeof event.detail.message.content === "string") {
+    updateTextContent(event.detail.message.content, previous.detail.message);
+  } else {
+    for (const [_, content] of event.detail.message.content.entries()) {
+      if (isTextContent(content)) {
+        updateTextContent(content.text, previous.detail.message);
+      }
+    }
+  }
+  return previous;
 }
 
 function updateTextContent(text: string, message: PerformerMessage) {

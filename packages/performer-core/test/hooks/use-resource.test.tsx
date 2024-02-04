@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { Performer, UseResourceHook } from "../../src/index.js";
 
-test("useResource should retain state across async contexts", async () => {
+test("should retain state across async contexts", async () => {
   async function App({}, { useResource }: { useResource: UseResourceHook }) {
     const c42 = await useResource(() => Promise.resolve(42));
     const c420 = await useResource(() => Promise.resolve(420));

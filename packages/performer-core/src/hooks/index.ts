@@ -1,5 +1,6 @@
 export * from "./use-after-children.js";
 export * from "./use-context.js";
+export * from "./use-dispatch-event.js";
 export * from "./use-messages.js";
 export * from "./use-hook.js";
 export * from "./use-input.js";

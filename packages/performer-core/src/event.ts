@@ -61,11 +61,10 @@ export class PerformerLifecycleEvent extends TypedCustomEvent<{
   static type = "lifecycle" as const;
 }
 
-export type PerformerEvent =
-  | PerformerMessageEvent
-  | PerformerErrorEvent
-  | PerformerLifecycleEvent
-  | PerformerDeltaEvent;
+export type PerformerEvent = PerformerEventMap[Exclude<
+  keyof PerformerEventMap,
+  "*"
+>];
 
 export interface PerformerEventMap {
   message: PerformerMessageEvent;
