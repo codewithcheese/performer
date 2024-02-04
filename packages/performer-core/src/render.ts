@@ -173,14 +173,14 @@ export async function renderElement(
           );
           node.viewResolved = true;
         } else {
-          consumeMessageStream(performer, node, node.props.stream).then(
-            (message) => {
+          consumeMessageStream(performer, node, node.props.stream)
+            .then((message) => {
               node.props.message = message;
               node.viewResolved = true;
               dispatchMessageElement(performer, node);
               performer.queueRender();
-            },
-          );
+            })
+            .catch((error) => performer.onError(error));
         }
       } else if (node.props.message != null) {
         node.viewResolved = true;

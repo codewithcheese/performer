@@ -4,13 +4,19 @@ import { useRenderScope } from "./use-render-scope.js";
 
 export function useState<STATE extends unknown>(
   initState: STATE | (() => STATE),
-): Signal<STATE> {
+): Signal<Readonly<STATE>> {
   const scope = useRenderScope();
   const key = `state-${scope.nonce++}` as const;
   if (initState instanceof Function) {
     initState = initState();
   }
-  const { value } = useHook<Signal<STATE>>(key, new Signal(initState));
+  if (initState && typeof initState === "object") {
+    Object.freeze(initState);
+  }
+  const { value } = useHook<Signal<Readonly<STATE>>>(
+    key,
+    new Signal(initState),
+  );
   return value;
 }
 

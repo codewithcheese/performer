@@ -27,3 +27,63 @@ test("should create state signals using initial values", async () => {
     ],
   });
 });
+
+test("should throw when mutating state object property value", async () => {
+  function App() {
+    const user = useState({ name: "Taylor", age: 28 });
+    return () => (
+      <system
+        onMessage={() => {
+          // @ts-expect-error cannot assign to read only prop
+          user.value.age = 29;
+        }}
+      >
+        The users name is {user.value.name}, they are {String(user.value.age)}{" "}
+        years old.
+      </system>
+    );
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = resolveMessages(performer.root);
+  expect(messages[0]).toEqual({
+    role: "system",
+    content: [
+      {
+        type: "text",
+        text: "The users name is Taylor, they are 28 years old.",
+      },
+    ],
+  });
+  expect(performer.errors).toHaveLength(1);
+});
+
+test("should update when re-assigning state object value", async () => {
+  function App() {
+    const user = useState({ name: "Taylor", age: 28 });
+    return () => (
+      <system
+        onMessage={() => {
+          user.value = { name: "Sam", age: 42 };
+        }}
+      >
+        The users name is {user.value.name}, they are {String(user.value.age)}{" "}
+        years old.
+      </system>
+    );
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = resolveMessages(performer.root);
+  expect(messages[0]).toEqual({
+    role: "system",
+    content: [
+      {
+        type: "text",
+        text: "The users name is Sam, they are 42 years old.",
+      },
+    ],
+  });
+});
