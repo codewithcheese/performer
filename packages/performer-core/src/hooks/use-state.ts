@@ -3,10 +3,13 @@ import { Signal } from "@preact/signals-core";
 import { useRenderScope } from "./use-render-scope.js";
 
 export function useState<STATE extends unknown>(
-  initState: STATE,
+  initState: STATE | (() => STATE),
 ): Signal<STATE> {
   const scope = useRenderScope();
   const key = `state-${scope.nonce++}` as const;
+  if (initState instanceof Function) {
+    initState = initState();
+  }
   const { value } = useHook<Signal<STATE>>(key, new Signal(initState));
   return value;
 }
