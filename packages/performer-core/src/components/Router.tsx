@@ -1,5 +1,5 @@
 import {
-  createContextId,
+  createContext,
   initContext,
   useContext,
   useState,
@@ -11,9 +11,9 @@ import { z } from "zod";
 
 export type Routes = { path: string; component: PerformerElement }[];
 
-export const routesContextId = createContextId<Routes>("routes");
-export const pathContextId = createContextId<string>("routerPath");
-export const routeDataContextId = createContextId<any>("routeData");
+export const routesContextId = createContext<Routes>("routes");
+export const pathContextId = createContext<string>("routerPath");
+export const routeDataContextId = createContext<any>("routeData");
 
 export function Router({ routes }: { routes: Routes }) {
   initContext(routesContextId, routes);

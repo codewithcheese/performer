@@ -2,21 +2,19 @@ import { type PerformerNode, getNearestParent } from "../node.js";
 import { useHook } from "./use-hook.js";
 import { Signal } from "@preact/signals-core";
 
-export interface ContextId<STATE> {
+export interface Context<STATE> {
   readonly __context_type: STATE;
   readonly name: string;
 }
 
-export function createContextId<STATE = unknown>(
-  name: string,
-): ContextId<STATE> {
+export function createContext<STATE = unknown>(name: string): Context<STATE> {
   return Object.freeze({
     name,
   } as any);
 }
 
 export function initContext<STATE extends unknown>(
-  context: ContextId<STATE>,
+  context: Context<STATE>,
   initValue: STATE,
 ) {
   const contextKey = `context-${context.name}` as const;
@@ -25,7 +23,7 @@ export function initContext<STATE extends unknown>(
 }
 
 export function useContext<STATE extends unknown>(
-  context: ContextId<STATE>,
+  context: Context<STATE>,
 ): Signal<STATE> {
   const providerKey = `provider-${context.name}` as const;
   const contextKey = `context-${context.name}` as const;

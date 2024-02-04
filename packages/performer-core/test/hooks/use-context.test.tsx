@@ -1,6 +1,6 @@
 import { expect, test, assert, assertType } from "vitest";
 import {
-  createContextId,
+  createContext,
   initContext,
   Performer,
   useContext,
@@ -8,8 +8,8 @@ import {
 import { Signal } from "@preact/signals-core";
 
 test("should use context from provider", async () => {
-  const firstContextId = createContextId<string>("first");
-  const secondContextId = createContextId<string>("second");
+  const firstContextId = createContext<string>("first");
+  const secondContextId = createContext<string>("second");
   function Provider(props: any) {
     initContext(firstContextId, "Hello world");
     initContext(secondContextId, "Good night");
