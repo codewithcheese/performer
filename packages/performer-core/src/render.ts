@@ -82,6 +82,7 @@ export function findNextElementToRender(
       childPrevSibling,
     );
     if (nextElement) {
+      node.childRenderCount += 1;
       return nextElement;
     }
     if (childPrevSibling) {
@@ -98,9 +99,12 @@ export function findNextElementToRender(
     freeNode(childNode, node, true);
   }
 
-  if (node.hooks.afterChildren) {
-    const update = node.hooks.afterChildren();
-    if (update) return "SIDE_EFFECT";
+  if (node.childRenderCount > 0) {
+    if (node.hooks.afterChildren) {
+      node.hooks.afterChildren();
+    }
+    node.childRenderCount = 0;
+    return "SIDE_EFFECT";
   }
 
   return null;

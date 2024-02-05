@@ -16,6 +16,7 @@ export type PerformerNode = {
   viewResolved: boolean;
   disposeView?: () => void | undefined;
   isHydrating: boolean;
+  childRenderCount: number;
 
   // linked tree
   parent: PerformerNode | undefined;
@@ -54,6 +55,7 @@ export function createNode({
     hooks: serialized ? hydrateHooks(serialized.hooks) : {},
     viewResolved: false,
     isHydrating: !!serialized,
+    childRenderCount: 0,
     parent,
     child,
     prevSibling,

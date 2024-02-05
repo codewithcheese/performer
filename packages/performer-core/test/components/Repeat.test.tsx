@@ -8,12 +8,16 @@ import {
 } from "../../src/index.js";
 import { testHydration } from "../util/test-hydration.js";
 
-test("should repeat 2 times", async () => {
+test("should repeat multiple times", async () => {
   const app = (
     <>
-      <system>X = 0. Answer with scalar.</system>
+      <system>X = 0. Answer using scalar value only.</system>
       <Repeat times={2}>
         <system>Increment X by 1</system>
+        <Assistant />
+      </Repeat>
+      <Repeat times={2}>
+        <system>Increment X by 2</system>
         <Assistant />
       </Repeat>
     </>
