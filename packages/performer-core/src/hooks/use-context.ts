@@ -1,6 +1,7 @@
 import { type PerformerNode, getNearestParent } from "../node.js";
 import { useHook } from "./use-hook.js";
 import { Signal } from "@preact/signals-core";
+import { assertTrue } from "../util/assert.js";
 
 export interface Context<STATE> {
   readonly __context_type: STATE;
@@ -8,6 +9,10 @@ export interface Context<STATE> {
 }
 
 export function createContext<STATE = unknown>(name: string): Context<STATE> {
+  assertTrue(
+    /^[\w/.-]+$/.test(name),
+    `Context name "${name}" must only contain A-Z,a-z,0-9, _, -`,
+  );
   return Object.freeze({
     name,
   } as any);

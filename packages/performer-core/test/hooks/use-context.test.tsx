@@ -46,3 +46,11 @@ test("should use context from provider", async () => {
     Provider,
   );
 });
+
+test("should throw with invalid name", () => {
+  expect(() => createContext("My Context")).toThrow();
+});
+
+test("should not throw with valid name", () => {
+  expect(() => createContext("My-Context")).not.toThrow();
+});
