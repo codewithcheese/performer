@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "ui": "performer-ui ./src",
-        "test": "vitest"
+        "test": "vitest",
+        "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
         "@types/jsdom": "^21.1.6",

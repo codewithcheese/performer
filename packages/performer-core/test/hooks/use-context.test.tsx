@@ -1,7 +1,7 @@
 import { expect, test, assert, assertType } from "vitest";
 import {
   createContext,
-  initContext,
+  useContextProvider,
   Performer,
   useContext,
 } from "../../src/index.js";
@@ -11,8 +11,8 @@ test("should use context from provider", async () => {
   const firstContextId = createContext<string>("first");
   const secondContextId = createContext<string>("second");
   function Provider(props: any) {
-    initContext(firstContextId, "Hello world");
-    initContext(secondContextId, "Good night");
+    useContextProvider(firstContextId, "Hello world");
+    useContextProvider(secondContextId, "Good night");
     return () => props.children;
   }
   function Consumer(props: any) {

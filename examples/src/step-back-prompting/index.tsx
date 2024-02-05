@@ -1,7 +1,7 @@
 import {
   Assistant,
-  createContextId,
-  initContext,
+  createContext,
+  useContextProvider,
   readTextContent,
   useContext,
   UseResourceHook,
@@ -14,12 +14,12 @@ import { JSDOM } from "jsdom";
  * todo UX notifications from custom effects
  */
 
-const questionContext = createContextId<string>("question");
-const stepBackContext = createContextId<string>("stepBack");
+const questionContext = createContext<string>("question");
+const stepBackContext = createContext<string>("stepBack");
 
 export function App() {
-  const question = initContext(questionContext, null);
-  const stepBack = initContext(stepBackContext, null);
+  const question = useContextProvider(questionContext, null);
+  const stepBack = useContextProvider(stepBackContext, null);
   return () => {
     if (question.value === null || stepBack.value === null) {
       return <Question />;

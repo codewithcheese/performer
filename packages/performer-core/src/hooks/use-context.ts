@@ -18,12 +18,15 @@ export function createContext<STATE = unknown>(name: string): Context<STATE> {
   } as any);
 }
 
-export function initContext<STATE extends unknown>(
+export function useContextProvider<STATE extends unknown>(
   context: Context<STATE>,
-  initValue: STATE,
+  initialValue: STATE,
 ) {
   const contextKey = `context-${context.name}` as const;
-  const { value } = useHook<Signal<STATE>>(contextKey, new Signal(initValue));
+  const { value } = useHook<Signal<STATE>>(
+    contextKey,
+    new Signal(initialValue),
+  );
   return value;
 }
 

@@ -1,6 +1,6 @@
 import {
   createContext,
-  initContext,
+  useContextProvider,
   useContext,
   useState,
 } from "../hooks/index.js";
@@ -16,9 +16,9 @@ export const pathContextId = createContext<string>("routerPath");
 export const routeDataContextId = createContext<any>("routeData");
 
 export function Router({ routes }: { routes: Routes }) {
-  initContext(routesContextId, routes);
-  initContext(routeDataContextId, undefined);
-  const path = initContext(pathContextId, "/");
+  useContextProvider(routesContextId, routes);
+  useContextProvider(routeDataContextId, undefined);
+  const path = useContextProvider(pathContextId, "/");
 
   return () => {
     const route = routes.find((route) => route.path === path.value);

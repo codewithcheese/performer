@@ -2,7 +2,7 @@ import { assert, expect, test } from "vitest";
 import {
   createContext,
   PerformerMessageEvent,
-  initContext,
+  useContextProvider,
   isTextContent,
   messagesToElements,
   Performer,
@@ -16,7 +16,7 @@ import { nanoid } from "nanoid";
 
 test("should serialize hooks", async () => {
   async function App({}, { useResource }: { useResource: UseResourceHook }) {
-    const context = initContext(createContext<string>("test"), "1337");
+    const context = useContextProvider(createContext<string>("test"), "1337");
     const state = useState("42");
     const resource = await useResource(() => Promise.resolve("420"));
     return () => (
