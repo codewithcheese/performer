@@ -1,21 +1,19 @@
 import { assert, expect, test } from "vitest";
 import {
+  AsyncHooks,
   createContext,
-  PerformerMessageEvent,
-  useContextProvider,
   isTextContent,
   messagesToElements,
   Performer,
-  UseResourceHook,
+  useContextProvider,
   useInput,
   UserMessage,
   useState,
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
-import { nanoid } from "nanoid";
 
 test("should serialize hooks", async () => {
-  async function App({}, { useResource }: { useResource: UseResourceHook }) {
+  async function App({}, { useResource }: AsyncHooks) {
     const context = useContextProvider(createContext<string>("test"), "1337");
     const state = useState("42");
     const resource = await useResource(() => Promise.resolve("420"));

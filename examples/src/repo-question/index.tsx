@@ -1,17 +1,14 @@
-import { Assistant, type UseResourceHook } from "@performer/core";
+import { Assistant, AsyncHooks } from "@performer/core";
 
-async function fetchRepos(user: string) {
+async function fetchRepos(controller: AbortController, user: string) {
   const response = await fetch(
     `https://api.github.com/users/${user}/repos?sort=updated`,
   );
   return response.json();
 }
 
-async function Repos(
-  { user }: { user: string },
-  { useResource }: { useResource: UseResourceHook },
-) {
-  const repos = await useResource(() => fetchRepos(user));
+async function Repos({ user }: { user: string }, { useResource }: AsyncHooks) {
+  const repos = await useResource(fetchRepos, user);
 
   return () => (
     <system>

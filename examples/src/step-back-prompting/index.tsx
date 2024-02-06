@@ -1,10 +1,10 @@
 import {
   Assistant,
+  AsyncHooks,
   createContext,
-  useContextProvider,
   readTextContent,
   useContext,
-  UseResourceHook,
+  useContextProvider,
   User,
 } from "@performer/core";
 import { ChatOpenAI } from "langchain/chat_models/openai";
@@ -60,7 +60,7 @@ type AnswerProps = {
 
 async function Answer(
   { question, stepBack }: AnswerProps,
-  { useResource }: { useResource: UseResourceHook },
+  { useResource }: AsyncHooks,
 ) {
   const results = await useResource(() =>
     Promise.all([searchDuckDuckGo(question), searchDuckDuckGo(stepBack)]),

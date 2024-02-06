@@ -12,6 +12,10 @@ export type View = () =>
   | false
   | string;
 
+export type AsyncHooks = {
+  useResource: ReturnType<typeof createUseResourceHook>;
+};
+
 export type Component<P extends Props> = {
   // The main action function
   (
@@ -20,6 +24,6 @@ export type Component<P extends Props> = {
       content?: string;
       controller?: AbortController;
     },
-    asyncHooks: { useResource: ReturnType<typeof createUseResourceHook> },
+    asyncHooks: AsyncHooks,
   ): View | Promise<View>;
 };
