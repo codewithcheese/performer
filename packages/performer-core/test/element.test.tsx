@@ -105,7 +105,7 @@ test("message element should resolve stream into message object", async () => {
   let messageEventValue: PerformerEvent | undefined = undefined;
   function App() {
     return () => (
-      <message
+      <raw
         onMessage={(message) => (onMessageValue = message)}
         stream={
           new ReadableStream({
@@ -140,7 +140,7 @@ test("message element should accept message object without stream", async () => 
     content: [{ type: "text", text: "Hello World" }],
   };
   function App() {
-    return () => <message message={userMessage} />;
+    return () => <raw message={userMessage} />;
   }
   const app = <App />;
   const performer = new Performer(<App />);

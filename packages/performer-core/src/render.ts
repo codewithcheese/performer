@@ -163,9 +163,9 @@ export async function renderElement(
     }
   } else {
     // else intrinsic
-    if (node.type === "message") {
+    if (node.type === "raw") {
       if (!node.props.stream && !node.props.message) {
-        throw Error("`message` element requires `stream` OR `message` prop");
+        throw Error("`raw` element requires `stream` OR `message` prop");
       }
       if (node.props.stream != null) {
         // process stream
@@ -376,7 +376,7 @@ function nodeToMessage(node: PerformerNode): PerformerMessage {
       "Cannot convert component to messages, must use intrinsic elements to represent messages",
     );
   }
-  if (node.type === "message") {
+  if (node.type === "raw") {
     if (!node.props.message) {
       throw Error("`message` element not resolved.");
     }

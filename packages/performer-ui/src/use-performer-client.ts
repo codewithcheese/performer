@@ -18,11 +18,7 @@ export function usePerformerClient(app: Component<any> | null) {
     if (!performer) {
       return;
     }
-    performer.input(
-      new PerformerMessageEvent({
-        message: { role: "user", content: [{ type: "text", text }] },
-      }),
-    );
+    performer.input({ role: "user", content: [{ type: "text", text }] });
   }
 
   useEffect(() => {

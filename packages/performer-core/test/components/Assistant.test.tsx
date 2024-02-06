@@ -28,7 +28,7 @@ test("should call model with messages", async () => {
   );
   assert(performer.root?.child?.nextSibling?.type instanceof Function);
   expect(performer.root?.child?.nextSibling?.type.name).toEqual("Assistant");
-  expect(performer.root?.child?.nextSibling?.child?.type).toEqual("message");
+  expect(performer.root?.child?.nextSibling?.child?.type).toEqual("raw");
   expect(performer.root?.child?.nextSibling?.child?.props.message.role).toEqual(
     "assistant",
   );

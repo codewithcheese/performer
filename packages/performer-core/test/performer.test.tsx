@@ -15,14 +15,10 @@ test("should wait for input before performer is finished", async () => {
   await performer.waitUntilSettled();
   expect(performer.inputNode).toBeDefined();
   expect(performer.hasFinished).toEqual(false);
-  performer.input(
-    new PerformerMessageEvent({
-      message: {
-        role: "user",
-        content: [{ type: "text", text: "Hold me close" }],
-      },
-    }),
-  );
+  performer.input({
+    role: "user",
+    content: [{ type: "text", text: "Hold me close" }],
+  });
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(true);
 });
@@ -40,34 +36,22 @@ test("should wait for multiple inputs", async () => {
   performer.start();
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
-  performer.input(
-    new PerformerMessageEvent({
-      message: {
-        role: "user",
-        content: [{ type: "text", text: "Hold me close" }],
-      },
-    }),
-  );
+  performer.input({
+    role: "user",
+    content: [{ type: "text", text: "Hold me close" }],
+  });
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
-  performer.input(
-    new PerformerMessageEvent({
-      message: {
-        role: "user",
-        content: [{ type: "text", text: "Hold me close" }],
-      },
-    }),
-  );
+  performer.input({
+    role: "user",
+    content: [{ type: "text", text: "Hold me close" }],
+  });
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(false);
-  performer.input(
-    new PerformerMessageEvent({
-      message: {
-        role: "user",
-        content: [{ type: "text", text: "Hold me close" }],
-      },
-    }),
-  );
+  performer.input({
+    role: "user",
+    content: [{ type: "text", text: "Hold me close" }],
+  });
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(true);
 });

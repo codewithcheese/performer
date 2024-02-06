@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { Performer, PerformerMessageEvent } from "@performer/core";
+import { Performer } from "@performer/core";
 import { App } from "../src/with-sql-tool/index.js";
 import * as process from "process";
 
@@ -8,14 +8,10 @@ test.skipIf(!process.env.VITE_TEST_HAS_CHINOOK_DB)(
   async () => {
     const performer = new Performer(<App />);
     performer.start();
-    performer.input(
-      new PerformerMessageEvent({
-        message: {
-          role: "user",
-          content: [{ type: "text", text: "How many employees are there?" }],
-        },
-      }),
-    );
+    performer.input({
+      role: "user",
+      content: [{ type: "text", text: "How many employees are there?" }],
+    });
     await performer.waitUntilSettled();
   },
 );

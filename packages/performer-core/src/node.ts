@@ -7,7 +7,7 @@ import { nanoid } from "nanoid";
 
 export type PerformerNode = {
   uid: string;
-  type: Component<any> | PerformerMessage["role"] | "message";
+  type: Component<any> | PerformerMessage["role"] | "raw";
   _typeName: string;
   props: Record<string, any>;
   hooks: Record<string, unknown> & HookRecord;

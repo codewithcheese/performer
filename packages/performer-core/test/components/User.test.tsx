@@ -23,7 +23,7 @@ test("should accept user input", async () => {
     console.log(`Event ${event.type}`),
   );
   expect(performer.hasFinished).toEqual(false);
-  performer.input(new PerformerMessageEvent({ message: userMessage }));
+  performer.input(userMessage);
   await performer.waitUntilSettled();
   assert(performer.root?.type instanceof Function);
   expect(performer.root?.type.name).toEqual("User");

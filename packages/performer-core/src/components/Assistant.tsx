@@ -92,7 +92,7 @@ export const Assistant: Component<AssistantProps> = async (
   }
 
   return () => {
-    return <message onMessage={handleMessage} stream={message} />;
+    return <raw onMessage={handleMessage} stream={message} />;
   };
 };
 

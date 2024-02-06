@@ -123,12 +123,12 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     }
   }
 
-  input(event: PerformerMessageEvent) {
+  input(message: PerformerMessage) {
     if (this.inputNode) {
-      this.inputNode.hooks.input.resolve([event.detail.message]);
+      this.inputNode.hooks.input.resolve([message]);
       this.inputNode = undefined;
     } else {
-      this.inputQueue.push(event.detail.message);
+      this.inputQueue.push(message);
     }
   }
 
