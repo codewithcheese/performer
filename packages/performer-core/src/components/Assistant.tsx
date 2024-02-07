@@ -16,8 +16,8 @@ export interface Tool {
   description: string;
   params: z.ZodObject<any>;
   call: (
-    id: string,
     params: z.infer<any>,
+    tool_call_id: string,
   ) => void | ToolMessage | Promise<ToolMessage | void>;
 }
 
@@ -25,8 +25,8 @@ export function createTool<T extends z.ZodObject<any>>(
   name: string,
   schema: T,
   callback: (
-    id: string,
     params: z.infer<T>,
+    tool_call_id: string,
   ) => void | ToolMessage | Promise<ToolMessage | void>,
 ): Tool {
   return {
@@ -114,8 +114,8 @@ export const Assistant: Component<AssistantProps> = async (
           throw Error(`Tool not found for tool call: ${toolCall.id}`);
         }
         const message = await tool.call(
-          toolCall.id,
           JSON.parse(toolCall.function.arguments),
+          toolCall.id,
         );
         if (!message) {
           toolMessages.value = [

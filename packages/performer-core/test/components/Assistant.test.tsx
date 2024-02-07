@@ -1,6 +1,7 @@
 import { assert, expect, test } from "vitest";
 import {
   Assistant,
+  createTool,
   isAssistantMessage,
   isMessage,
   isSystemMessage,
@@ -65,18 +66,14 @@ test("should call onMessage event handler after assistant response", async () =>
 
 test("should use tool", async () => {
   let toolCall = undefined;
-  class HelloTool implements Tool {
-    id = "hello";
-    name = "say_hello";
-    description = "Say hello";
-    params = z.object({
+  const HelloSchema = z
+    .object({
       name: z.string(),
-    });
-    async call(_: string, params: z.infer<typeof this.params>) {
-      toolCall = params;
-    }
-  }
-  const tool = new HelloTool();
+    })
+    .describe("Say hello");
+  const tool = createTool("sayHello", HelloSchema, ({ name }) => {
+    toolCall = name;
+  });
   const eventMessages: PerformerMessage[] = [];
   const app = (
     <>

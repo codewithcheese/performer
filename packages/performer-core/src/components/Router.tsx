@@ -3,10 +3,11 @@ import {
   useContextProvider,
   useContext,
   useState,
+  useToolData,
 } from "../hooks/index.js";
 import { PerformerElement } from "../element.js";
-import { batch } from "@preact/signals-core";
-import { Assistant, Tool } from "./Assistant.js";
+import { batch, Signal } from "@preact/signals-core";
+import { Assistant, createTool, Tool } from "./Assistant.js";
 import { z } from "zod";
 
 export type Routes = { path: string; component: PerformerElement }[];
@@ -53,6 +54,28 @@ export function Append({ path }: { path: string }) {
   };
 }
 
+function createSelectPathTool(
+  decision: Signal<{ reasoning: string; path: string } | null>,
+  paths: string[],
+) {
+  const DecisionSchema = z
+    .object({
+      reasoning: z
+        .string()
+        .describe(
+          "Use deductive logic to reason about the next path. Think out loud and reason step by step.",
+        ),
+      path: z.string(),
+    })
+    .describe(
+      "Examine the conversation history and select the next path to take. The possible paths are: " +
+        paths.join(", "),
+    );
+  return createTool("select_path", DecisionSchema, (data) => {
+    decision.value = data;
+  });
+}
+
 export function Decision({
   instruction,
   operation = "append",
@@ -60,46 +83,29 @@ export function Decision({
   instruction: string;
   operation?: "append" | "goto";
 }) {
-  const decision = useState<string>("");
+  const decision = useState<{ reasoning: string; path: string } | null>(null);
   const next = useState<string | null>(null);
   const routes = useContext(routesContext);
 
   return () => {
     const paths = routes.value.map((route) => route.path);
-    const decisionTool: Tool = {
-      name: "select_path",
-      description:
-        "Examine the conversation history and select the next path to take. The possible paths are: " +
-        paths.join(", "),
-      params: z.object({
-        reasoning: z
-          .string()
-          .describe(
-            "Use deductive logic to reason about the next path. Think out loud and reason step by step.",
-          ),
-        path: z.string(),
-      }),
-      async call(_, { reasoning, path }: z.infer<typeof this.params>) {
-        decision.value = reasoning;
-        next.value = path;
-      },
-    };
+    const selectPathTool = createSelectPathTool(decision, paths);
 
-    if (next.value === null) {
+    if (decision.value === null) {
       return (
         <>
           <system>{instruction}</system>
-          <Assistant toolChoice={decisionTool} tools={[decisionTool]} />
+          <Assistant toolChoice={selectPathTool} tools={[selectPathTool]} />
         </>
       );
     } else {
       return (
         <>
-          <system>{decision.value}</system>
+          <system>{decision.value.reasoning}</system>
           {operation === "append" ? (
-            <Append path={next.value} />
+            <Append path={decision.value.path} />
           ) : (
-            <Goto path={next.value} />
+            <Goto path={decision.value.path} />
           )}
         </>
       );

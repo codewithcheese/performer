@@ -31,10 +31,10 @@ export async function App({}, { useResource }: AsyncHooks) {
   const selectTool = createTool(
     "query_tool",
     SQLSelectSchema,
-    async (id, { query }) => {
+    async ({ query }, tool_call_id) => {
       const content = await db.run(query);
       return {
-        tool_call_id: id,
+        tool_call_id,
         role: "tool" as const,
         content: `${content}`,
       };

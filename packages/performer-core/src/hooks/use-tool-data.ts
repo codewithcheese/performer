@@ -11,10 +11,10 @@ export function useToolData<Params extends z.ZodObject<any>>(
 ): [Signal<z.infer<Params>>, Tool] {
   const defaultValue = getDefaults(schema);
   if (isEmptyObject(defaultValue)) {
-    throw Error("useToolData() schema must have a default value");
+    throw Error("useToolData() schema must have default values.");
   }
   const data = useState<z.infer<Params>>(defaultValue);
-  const tool = createTool(name, schema, async (_, args) => {
+  const tool = createTool(name, schema, async (args) => {
     data.value = args;
   });
   return [data, tool];
