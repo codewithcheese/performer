@@ -44,7 +44,7 @@ export type AssistantProps = {
   toolChoice?: "auto" | "none" | Tool;
   tools?: Tool[];
   defaultHeaders?: Record<string, any>;
-  dangerouslyAllowBrowser: boolean;
+  dangerouslyAllowBrowser?: boolean;
   onMessage?: (message: PerformerMessage) => void;
 };
 

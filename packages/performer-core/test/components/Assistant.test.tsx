@@ -1,6 +1,7 @@
 import { assert, expect, test } from "vitest";
 import {
   Assistant,
+  AsyncHooks,
   createTool,
   isAssistantMessage,
   isMessage,
@@ -104,17 +105,25 @@ test("should use tool", async () => {
 
 test.skipIf(!process.env.OPENROUTER_API_KEY)(
   "should use open router",
+
   async () => {
+    function Mixtral({}, asyncHooks: AsyncHooks) {
+      return Assistant(
+        {
+          model: "mistralai/mixtral-8x7b-instruct",
+          baseURL: "https://openrouter.ai/api/v1",
+          apiKey: process.env.OPENROUTER_API_KEY,
+        },
+        asyncHooks,
+      );
+    }
+
     function App() {
       return () => (
         <>
           <system>Your name is Bob.</system>
           <user>Whats your name?</user>
-          <Assistant
-            model="mistralai/mistral-7b-instruct:free"
-            apiKey={process.env.OPENROUTER_API_KEY}
-            baseURL="https://openrouter.ai/api/v1"
-          />
+          <Mixtral />
         </>
       );
     }
