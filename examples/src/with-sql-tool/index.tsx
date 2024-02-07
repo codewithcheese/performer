@@ -1,11 +1,10 @@
 /**
  * Based on https://js.langchain.com/docs/modules/chains/popular/sqlite
  */
-import { Assistant, Tool, User, AsyncHooks } from "@performer/core";
+import { Assistant, AsyncHooks, Tool, User } from "@performer/core";
 import { DataSource } from "typeorm";
 import { SqlDatabase } from "langchain/sql_db";
 import { z } from "zod";
-import { ChatOpenAI } from "langchain/chat_models/openai";
 import * as path from "path";
 import sqlite3 from "sqlite3";
 
@@ -38,7 +37,6 @@ export async function App({}, { useResource }: AsyncHooks) {
     type: "sqlite",
     database: path.join(__dirname, "Chinook.db"),
   });
-  const model = new ChatOpenAI({ modelName: "gpt-4-1106-preview" });
 
   const db = await SqlDatabase.fromDataSourceParams({
     appDataSource: datasource,
@@ -56,7 +54,7 @@ export async function App({}, { useResource }: AsyncHooks) {
       </system>
       <User />
       <Assistant
-        model={model}
+        model="gpt-4-1106-preview"
         toolChoice={tools.length ? tools[0] : "auto"}
         tools={tools}
       />

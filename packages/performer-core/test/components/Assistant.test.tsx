@@ -2,6 +2,7 @@ import { assert, expect, test } from "vitest";
 import {
   Assistant,
   isAssistantMessage,
+  isMessage,
   isSystemMessage,
   Performer,
   PerformerMessage,
@@ -10,7 +11,7 @@ import {
 } from "../../src/index.js";
 import "dotenv/config";
 import { z } from "zod";
-import { ChatOpenAI } from "langchain/chat_models/openai";
+import { isToolMessage } from "openai/lib/chatCompletionUtils";
 
 test("should call model with messages", async () => {
   const app = (
@@ -28,13 +29,24 @@ test("should call model with messages", async () => {
   );
   assert(performer.root?.child?.nextSibling?.type instanceof Function);
   expect(performer.root?.child?.nextSibling?.type.name).toEqual("Assistant");
-  expect(performer.root?.child?.nextSibling?.child?.type).toEqual("raw");
-  expect(performer.root?.child?.nextSibling?.child?.props.message.role).toEqual(
-    "assistant",
+  assert(performer.root?.child?.nextSibling?.child?.type instanceof Function);
+  expect(performer.root?.child?.nextSibling?.child?.type.name).toEqual(
+    "Fragment",
+  );
+  expect(performer.root?.child?.nextSibling?.child?.child?.type).toEqual("raw");
+  expect(
+    performer.root?.child?.nextSibling?.child?.child?.hooks.message,
+    "Expect raw element message hook to be defined.",
+  ).toBeDefined();
+  assert(
+    isMessage(performer.root?.child?.nextSibling?.child?.child?.hooks?.message),
   );
   expect(
-    performer.root?.child?.nextSibling?.child?.props.message.content,
-  ).toHaveLength(1);
+    performer.root?.child?.nextSibling?.child?.child?.hooks?.message.role,
+  ).toEqual("assistant");
+  expect(
+    performer.root?.child?.nextSibling?.child?.child?.hooks?.message.content,
+  ).not.toBeNull();
 }, 10_000);
 
 test("should call onMessage event handler after assistant response", async () => {
@@ -60,19 +72,18 @@ test("should use tool", async () => {
     params = z.object({
       name: z.string(),
     });
-    async call(params: z.infer<typeof this.params>) {
+    async call(_: string, params: z.infer<typeof this.params>) {
       toolCall = params;
     }
   }
   const tool = new HelloTool();
-  const model = new ChatOpenAI({ modelName: "gpt-4-1106-preview" });
   const eventMessages: PerformerMessage[] = [];
   const app = (
     <>
       <system>Say hello to world</system>
       <Assistant
         onMessage={(message) => eventMessages.push(message)}
-        model={model}
+        model="gpt-4-1106-preview"
         toolChoice={tool}
         tools={[tool]}
       />
@@ -83,35 +94,13 @@ test("should use tool", async () => {
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(true);
   const messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(2);
+  expect(messages).toHaveLength(3);
   expect(messages[0].role).toEqual("system");
   assert(isSystemMessage(messages[0]));
   assert(isAssistantMessage(messages[1]));
+  assert(isToolMessage(messages[2]));
   assert(messages[1].tool_calls);
   expect(toolCall).toBeDefined();
   expect(eventMessages).toHaveLength(1);
   expect(eventMessages[0]).toEqual(messages[1]);
 });
-
-test.skipIf(process.env.TEST_MODEL_OLLAMA == null)(
-  "should use ollama model phi",
-  async () => {
-    const { ChatOllama } = await import("langchain/chat_models/ollama");
-    const ollama = new ChatOllama({ model: "phi" });
-    const app = (
-      <>
-        <system>Greet the user concisely.</system>
-        <Assistant model={ollama} />
-      </>
-    );
-    const performer = new Performer(app);
-    performer.start();
-    await performer.waitUntilSettled();
-    expect(performer.hasFinished).toEqual(true);
-    const messages = resolveMessages(performer.root);
-    expect(messages).toHaveLength(2);
-    expect(messages[0].role).toEqual("system");
-    expect(messages[1].role).toEqual("assistant");
-  },
-  60_000,
-);

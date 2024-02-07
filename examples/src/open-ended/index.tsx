@@ -13,6 +13,7 @@ export function App() {
     }),
     async call({ end_chat }: z.infer<typeof this.params>) {
       stopped.value = end_chat;
+      return { role: "tool" };
     },
   };
   return () => (

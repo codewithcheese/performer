@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import {
   AsyncHooks,
+  MessageDelta,
   Performer,
   resolveMessages,
   UseResourceHook,
@@ -40,13 +41,13 @@ test("should retain state across async contexts", async () => {
 });
 
 test("should write stream chunks to hook state", async () => {
-  const userMessage: UserMessage = {
-    role: "user",
-    content: [{ type: "text", text: "Hello World" }],
+  const userMessage = {
+    role: "user" as const,
+    content: "Hello World",
   };
 
   function fetcher() {
-    return new ReadableStream<UserMessage>({
+    return new ReadableStream<MessageDelta>({
       start(controller) {
         controller.enqueue(userMessage);
         controller.close();

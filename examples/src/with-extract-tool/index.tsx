@@ -1,8 +1,7 @@
 /**
  * Based on https://github.com/langchain-ai/langchain/blob/master/cookbook/extraction_openai_tools.ipynb
  */
-import { Assistant, Tool, User } from "@performer/core";
-import { ChatOpenAI } from "langchain/chat_models/openai";
+import { Assistant, Tool } from "@performer/core";
 import { z } from "zod";
 
 class ExtractTool implements Tool {
@@ -35,7 +34,6 @@ class PeopleExtractionTool extends ExtractTool {
 }
 
 export function App() {
-  const model = new ChatOpenAI({ modelName: "gpt-3.5-turbo-1106" });
   const tools = [new PeopleExtractionTool()];
   return () => (
     <>
@@ -45,7 +43,11 @@ export function App() {
         in the function parameters, do not include it in the output.
       </system>
       <user>jane is 2 and bob is 3</user>
-      <Assistant model={model} toolChoice={tools[0]} tools={tools} />
+      <Assistant
+        model="gpt-3.5-turbo-1106"
+        toolChoice={tools[0]}
+        tools={tools}
+      />
     </>
   );
 }

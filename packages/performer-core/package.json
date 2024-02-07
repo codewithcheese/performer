@@ -38,7 +38,7 @@
     "lodash": "^4.17.21",
     "loglevel": "^1.8.1",
     "nanoid": "^5.0.5",
-    "openai": "^4.20.1",
+    "openai": "^4.24.7",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.21.4"
   },

@@ -12,7 +12,7 @@ import { testHydration } from "../util/test-hydration.js";
 test("should accept user input", async () => {
   const userMessage: UserMessage = {
     role: "user",
-    content: [{ type: "text", text: "Hello, world!" }],
+    content: "Hello, world!",
   };
   const app = (
     <User onMessage={(message) => expect(message).toEqual(userMessage)} />
@@ -30,8 +30,6 @@ test("should accept user input", async () => {
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
   expect(messages[0].role).toEqual("user");
-  assert(isTextContent(messages[0].content[0]));
-  expect(messages[0].content[0].type).toEqual("text");
-  expect(messages[0].content[0].text).toEqual("Hello, world!");
+  expect(messages[0].content).toEqual("Hello, world!");
   await testHydration(performer);
 });

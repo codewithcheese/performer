@@ -1,41 +1,46 @@
-import { useMessages } from "../hooks/index.js";
-import { ChatOpenAI } from "langchain/chat_models/openai";
+import { useMessages, useState } from "../hooks/index.js";
 import type { Component } from "../component.js";
 import {
-  AIMessage,
-  AIMessageChunk,
-  BaseMessage,
-  HumanMessage,
-  SystemMessage as LCSystemMessage,
-} from "langchain/schema";
-import {
   isAssistantMessage,
-  MessageContent,
+  isToolMessage,
+  MessageDelta,
   type PerformerMessage,
+  ToolMessage,
 } from "../message.js";
-import type { BaseChatModel } from "langchain/chat_models/base";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
+import OpenAI from "openai";
+import { isEmptyObject } from "../util/is-empty-object.js";
 
 export interface Tool {
   id: string;
   name: string;
   description: string;
   params: z.ZodObject<any>;
-  call: (params: any) => void;
+  call: (
+    id: string,
+    params: any,
+  ) => void | ToolMessage | Promise<ToolMessage | void>;
 }
 
 export type AssistantProps = {
-  model?: BaseChatModel;
+  model?: string;
   toolChoice?: "auto" | "none" | Tool;
   tools?: Tool[];
+
   onMessage?: (message: PerformerMessage) => void;
 };
 
 export const Assistant: Component<AssistantProps> = async (
-  { model, toolChoice = "auto", tools = [], onMessage = () => {} },
+  {
+    model = "gpt-3.5-turbo",
+    toolChoice = "auto",
+    tools = [],
+    onMessage = () => {},
+  },
   { useResource },
 ) => {
+  const toolMessages = useState<ToolMessage[]>([]);
   const messages = useMessages();
 
   let options = {};
@@ -64,20 +69,31 @@ export const Assistant: Component<AssistantProps> = async (
     };
   }
 
-  const lcMessages = toLangchain(messages);
   const message = await useResource(async (controller) => {
-    if (!model) {
-      model = new ChatOpenAI();
-    }
-    const chat = model.bind({ signal: controller.signal, ...options });
-    const iterable = await chat.stream(lcMessages);
-    const transformStream = new TransformStream<BaseMessage, PerformerMessage>(
-      fromLangchain,
-    );
-    return iterable.pipeThrough(transformStream);
+    const openai = new OpenAI();
+    const stream = await openai.chat.completions.create({
+      model,
+      messages,
+      stream: true,
+      ...(options ? options : {}),
+    });
+    controller.signal.addEventListener("abort", () => {
+      stream.controller.abort();
+    });
+    return new ReadableStream<MessageDelta>({
+      async start(controller) {
+        for await (const chunk of stream) {
+          const delta = chunk.choices[0]?.delta;
+          if (!isEmptyObject(delta)) {
+            controller.enqueue(delta);
+          }
+        }
+        controller.close();
+      },
+    });
   });
 
-  async function handleMessage(message: PerformerMessage) {
+  async function callTools(message: PerformerMessage) {
     if (isAssistantMessage(message) && message.tool_calls) {
       for (const toolCall of message.tool_calls) {
         // @ts-expect-error index is undocumented
@@ -85,83 +101,36 @@ export const Assistant: Component<AssistantProps> = async (
         if (!tool) {
           throw Error(`Tool not found for tool call: ${toolCall.id}`);
         }
-        tool.call(JSON.parse(toolCall.function.arguments));
+        const message = await tool.call(
+          toolCall.id,
+          JSON.parse(toolCall.function.arguments),
+        );
+        if (!message) {
+          toolMessages.value = [
+            ...toolMessages.value,
+            { role: "tool", tool_call_id: toolCall.id, content: "" },
+          ];
+        } else {
+          toolMessages.value = [...toolMessages.value, message];
+        }
       }
     }
-    onMessage(message);
   }
 
   return () => {
-    return <raw onMessage={handleMessage} stream={message} />;
+    return (
+      <>
+        <raw
+          onMessage={(message) => {
+            callTools(message);
+            onMessage(message);
+          }}
+          stream={message}
+        />
+        {toolMessages.value.map((message) => (
+          <raw message={message} />
+        ))}
+      </>
+    );
   };
 };
-
-export const fromLangchain = {
-  transform(
-    chunk: BaseMessage,
-    controller: TransformStreamDefaultController<PerformerMessage>,
-  ) {
-    let role: "user" | "assistant" | "system";
-    if (chunk instanceof HumanMessage) {
-      role = "user";
-    } else if (chunk instanceof AIMessage || chunk instanceof AIMessageChunk) {
-      role = "assistant";
-    } else if (chunk instanceof LCSystemMessage) {
-      role = "system";
-    } else {
-      throw new Error("Unknown message type");
-    }
-    let content: MessageContent = [];
-    let tool_calls;
-    let function_call;
-    if (typeof chunk.content === "string") {
-      content.push({ type: "text", text: chunk.content });
-    } else if (Array.isArray(chunk.content)) {
-      for (const contentPart of chunk.content) {
-        switch (contentPart.type) {
-          case "text":
-            content.push(contentPart);
-            break;
-          case "image_url":
-            content.push({
-              type: "image_url",
-              image_url:
-                typeof contentPart.image_url === "object"
-                  ? contentPart.image_url.url
-                  : contentPart.image_url,
-            });
-            break;
-          default:
-            throw new Error("Unsupported content type");
-        }
-      }
-    } else {
-      throw new Error("Unsupported content type");
-    }
-    if (chunk.additional_kwargs?.tool_calls) {
-      tool_calls = chunk.additional_kwargs.tool_calls;
-    }
-    if (chunk.additional_kwargs?.function_call) {
-      function_call = chunk.additional_kwargs.function_call;
-    }
-    controller.enqueue({ role, content, tool_calls, function_call });
-  },
-};
-
-export function toLangchain(messages: PerformerMessage[]) {
-  const lcMessages: BaseMessage[] = [];
-  messages.forEach((message) => {
-    switch (message.role) {
-      case "system":
-        lcMessages.push(new LCSystemMessage({ content: message.content }));
-        break;
-      case "user":
-        lcMessages.push(new HumanMessage({ content: message.content }));
-        break;
-      case "assistant":
-        lcMessages.push(new AIMessage({ content: message.content }));
-        break;
-    }
-  });
-  return lcMessages;
-}

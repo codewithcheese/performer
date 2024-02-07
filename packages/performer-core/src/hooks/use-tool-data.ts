@@ -15,7 +15,7 @@ export function useToolData<Params extends z.ZodObject<any>>(
     name,
     description,
     params,
-    async call(args) {
+    async call(_, args) {
       data.value = args;
     },
   };

@@ -8,7 +8,7 @@ export type PerformerMessage =
 
 export type MessageImageUrlContent = {
   type: "image_url";
-  image_url: string;
+  image_url: { url: string; detail?: "auto" | "low" | "high" };
 };
 
 export type MessageTextContent = {
@@ -16,7 +16,10 @@ export type MessageTextContent = {
   text: string;
 };
 
-export type MessageContent = (MessageTextContent | MessageImageUrlContent)[];
+export type MessageContentItem = (
+  | MessageTextContent
+  | MessageImageUrlContent
+)[];
 
 export type ToolCall = {
   id: string;
@@ -34,25 +37,43 @@ export type FunctionCall = {
 
 export type UserMessage = {
   role: "user";
-  content: MessageContent;
+  content: string | MessageContentItem;
 };
 
 export type AssistantMessage = {
   role: "assistant";
-  content: MessageContent;
+  content: string | null;
   tool_calls?: ToolCall[];
   function_call?: FunctionCall;
 };
 
 export type SystemMessage = {
   role: "system";
-  content: MessageContent;
+  content: string;
 };
 
 export type ToolMessage = {
-  id: string;
+  tool_call_id: string;
   role: "tool";
   content: string;
+};
+
+export type MessageDelta = {
+  role?: "system" | "user" | "assistant" | "tool";
+  content?: string | null;
+  function_call?: {
+    name?: string;
+    arguments?: string;
+  };
+  tool_calls?: {
+    index: number;
+    id?: string;
+    function?: {
+      name?: string;
+      arguments?: string;
+    };
+    type?: "function";
+  }[];
 };
 
 export function isTextContent(content: unknown): content is MessageTextContent {
@@ -86,6 +107,17 @@ export function isMessage(message: unknown): message is PerformerMessage {
   );
 }
 
+export function isMessageDelta(delta: unknown): delta is MessageDelta {
+  return (
+    delta != null &&
+    typeof delta === "object" &&
+    ("role" in delta ||
+      "content" in delta ||
+      "tool_calls" in delta ||
+      "function_call" in delta)
+  );
+}
+
 export function isToolMessage(message: unknown): message is AssistantMessage {
   return isMessage(message) && message.role === "tool";
 }
@@ -105,6 +137,9 @@ export function isAssistantMessage(
 }
 
 export function readTextContent(message: PerformerMessage) {
+  if (!message.content) {
+    return "";
+  }
   return typeof message.content === "string"
     ? message.content
     : message.content

@@ -9,9 +9,6 @@ import {
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
 
-async function Message({ content }: any) {
-  return () => <user content={[{ type: "text", text: content }]} />;
-}
 async function Container({ children }: any) {
   return () => children;
 }
@@ -95,10 +92,10 @@ test("should update and run message actions when state changes", async () => {
   }
   const app = (
     <>
-      <Message>X = 0. Answer with scalar.</Message>
+      <user>X = 0. Answer with scalar.</user>
       <DelayedIf>
-        <Message>Increment X by 1</Message>
-        <Message>X = 1</Message>
+        <user>Increment X by 1</user>
+        <user>X = 1</user>
       </DelayedIf>
     </>
   );
@@ -230,8 +227,8 @@ test("should unlink messages when removed by conditional", async () => {
           <user>Goodbye, world!</user>
         </Container>
       </Container>
-      <Message>Help the user</Message>
-      <Message>What is the population of Australia?</Message>
+      <user>Help the user</user>
+      <user>What is the population of Australia?</user>
     </Temp>
   );
   const performer = new Performer(app);
@@ -265,14 +262,14 @@ test("should wait for async message actions", async () => {
     const isReady = useState<boolean>(false);
     await sleep(10);
     isReady.value = true;
-    return () => isReady && <Message>Your name is Bob</Message>;
+    return () => isReady && <system>Your name is Bob</system>;
   }
 
   const app = (
     <Container>
       <AsyncMessage />
-      <Message>Hi, how can I help?</Message>
-      <Message>Hold me close</Message>
+      <assistant>Hi, how can I help?</assistant>
+      <user>Hold me close</user>
     </Container>
   );
   const performer = new Performer(app);
@@ -283,16 +280,16 @@ test("should wait for async message actions", async () => {
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   expect(messages[0]).toEqual({
-    role: "user",
-    content: [{ type: "text", text: "Your name is Bob" }],
+    role: "system",
+    content: "Your name is Bob",
   });
   expect(messages[1]).toEqual({
-    role: "user",
-    content: [{ type: "text", text: "Hi, how can I help?" }],
+    role: "assistant",
+    content: "Hi, how can I help?",
   });
   expect(messages[2]).toEqual({
     role: "user",
-    content: [{ type: "text", text: "Hold me close" }],
+    content: "Hold me close",
   });
   await testHydration(performer);
 });

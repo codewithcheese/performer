@@ -19,12 +19,7 @@ test("should create state signals using initial values", async () => {
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual({
     role: "system",
-    content: [
-      {
-        type: "text",
-        text: "The users name is Taylor, they are 28 years old.",
-      },
-    ],
+    content: "The users name is Taylor, they are 28 years old.",
   });
 });
 
@@ -43,18 +38,13 @@ test("should throw when mutating state object property value", async () => {
       </system>
     );
   }
-  const performer = new Performer(<App />);
+  const performer = new Performer(<App />, { throwOnError: false });
   performer.start();
   await performer.waitUntilSettled();
   const messages = resolveMessages(performer.root);
   expect(messages[0]).toEqual({
     role: "system",
-    content: [
-      {
-        type: "text",
-        text: "The users name is Taylor, they are 28 years old.",
-      },
-    ],
+    content: "The users name is Taylor, they are 28 years old.",
   });
   expect(performer.errors).toHaveLength(1);
 });
@@ -79,11 +69,6 @@ test("should update when re-assigning state object value", async () => {
   const messages = resolveMessages(performer.root);
   expect(messages[0]).toEqual({
     role: "system",
-    content: [
-      {
-        type: "text",
-        text: "The users name is Sam, they are 42 years old.",
-      },
-    ],
+    content: "The users name is Sam, they are 42 years old.",
   });
 });

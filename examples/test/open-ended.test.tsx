@@ -1,9 +1,13 @@
 import { expect, test } from "vitest";
-import { Performer, resolveMessages } from "@performer/core";
+import { Performer, PerformerEvent, resolveMessages } from "@performer/core";
 import { App } from "../src/open-ended/index.js";
 
 test("should have chat until ended", async () => {
   const performer = new Performer(<App />);
+  const events: PerformerEvent[] = [];
+  performer.addEventListener("*", (evt) => {
+    events.push(evt);
+  });
   performer.start();
   await performer.waitUntilSettled();
   performer.input({
@@ -22,4 +26,5 @@ test("should have chat until ended", async () => {
   await performer.waitUntilSettled();
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(8);
+  expect(events).toHaveLength(20);
 }, 60_000);

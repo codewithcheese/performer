@@ -11,14 +11,14 @@ import { z } from "zod";
 
 export type Routes = { path: string; component: PerformerElement }[];
 
-export const routesContextId = createContext<Routes>("routes");
-export const pathContextId = createContext<string>("routerPath");
-export const routeDataContextId = createContext<any>("routeData");
+export const routesContext = createContext<Routes>("routes");
+export const pathContext = createContext<string>("routerPath");
+export const routeDataContext = createContext<any>("routeData");
 
 export function Router({ routes }: { routes: Routes }) {
-  useContextProvider(routesContextId, routes);
-  useContextProvider(routeDataContextId, undefined);
-  const path = useContextProvider(pathContextId, "/");
+  useContextProvider(routesContext, routes);
+  useContextProvider(routeDataContext, undefined);
+  const path = useContextProvider(pathContext, "/");
 
   return () => {
     const route = routes.find((route) => route.path === path.value);
@@ -31,8 +31,8 @@ export function Router({ routes }: { routes: Routes }) {
 
 export function Goto({ path, data }: { path: string; data?: any }) {
   // add messages dependency to wait for messages
-  const currentPath = useContext(pathContextId);
-  const currentData = useContext(routeDataContextId);
+  const currentPath = useContext(pathContext);
+  const currentData = useContext(routeDataContext);
 
   batch(() => {
     currentPath.value = path;
@@ -43,7 +43,7 @@ export function Goto({ path, data }: { path: string; data?: any }) {
 }
 
 export function Append({ path }: { path: string }) {
-  const routes = useContext(routesContextId);
+  const routes = useContext(routesContext);
   return () => {
     const route = routes.value.find((route: any) => route.path === path);
     if (!route) {
@@ -62,7 +62,7 @@ export function Decision({
 }) {
   const decision = useState<string>("");
   const next = useState<string | null>(null);
-  const routes = useContext(routesContextId);
+  const routes = useContext(routesContext);
 
   return () => {
     const paths = routes.value.map((route) => route.path);
@@ -80,7 +80,7 @@ export function Decision({
           ),
         path: z.string(),
       }),
-      async call({ reasoning, path }: z.infer<typeof this.params>) {
+      async call(_, { reasoning, path }: z.infer<typeof this.params>) {
         decision.value = reasoning;
         next.value = path;
       },

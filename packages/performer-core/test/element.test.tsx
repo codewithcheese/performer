@@ -5,6 +5,7 @@ import {
   PerformerEvent,
   resolveMessages,
   UserMessage,
+  MessageDelta,
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
 
@@ -97,9 +98,9 @@ test("should accept array of children", async () => {
 });
 
 test("message element should resolve stream into message object", async () => {
-  const userMessage: UserMessage = {
+  const userMessage: MessageDelta = {
     role: "user",
-    content: [{ type: "text", text: "Hello World" }],
+    content: "Hello World",
   };
   let onMessageValue;
   let messageEventValue: PerformerEvent | undefined = undefined;
