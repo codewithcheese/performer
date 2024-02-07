@@ -57,6 +57,7 @@ function filterTransient(lhs: any, rhs: any) {
       key === "parent" ||
       key === "prevSibling" ||
       key === "onMessage" ||
+      key === "onResolved" ||
       key === "afterChildren"
     ) {
       return true;

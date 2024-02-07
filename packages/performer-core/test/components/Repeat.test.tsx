@@ -56,7 +56,7 @@ test("should repeat multiple times", async () => {
     ],
   });
   let messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(11);
+  expect(messages).toHaveLength(9);
   await testHydration(performer);
 }, 30_000);
 

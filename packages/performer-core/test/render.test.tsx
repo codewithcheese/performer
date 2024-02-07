@@ -8,6 +8,7 @@ import {
   PerformerErrorEvent,
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
+import { expectTree } from "./util/expect-tree.js";
 
 async function Container({ children }: any) {
   return () => children;
@@ -327,25 +328,20 @@ test("should render tree", async () => {
   expect(root.parent).toBeUndefined();
   expect(root.nextSibling).toBeUndefined();
   expect(root.prevSibling).toBeUndefined();
-  assert(root.child?.type instanceof Function);
-  expect(root.child?.type.name).toEqual("First");
-  expect(root.child?.props.content).toEqual("Greet the user");
-  assert(root.child?.nextSibling?.type instanceof Function);
-  expect(root.child?.nextSibling?.type.name).toEqual("Second");
-  assert(root.child?.nextSibling?.child?.type instanceof Function);
-  expect(root.child?.nextSibling?.child?.type.name).toEqual("Greet");
-  assert(root.child?.nextSibling?.child?.nextSibling?.type instanceof Function);
-  expect(root.child?.nextSibling?.child?.nextSibling?.type.name).toEqual(
-    "Third",
-  );
-  assert(
-    root.child?.nextSibling?.child?.nextSibling?.child?.type instanceof
-      Function,
-  );
-  expect(root.child?.nextSibling?.child?.nextSibling?.child?.type.name).toEqual(
-    "Child",
-  );
-  expect(root.child?.nextSibling?.child?.props.content).toEqual("Hello world");
+  const expected = {
+    type: "Fragment",
+    children: [
+      { type: "First", props: { content: "Greet the user" } },
+      {
+        type: "Second",
+        children: [
+          { type: "Greet", props: { content: "Hello world" } },
+          { type: "Third" },
+        ],
+      },
+    ],
+  };
+  expectTree(performer.root!, expected);
   expect(root.child?.nextSibling?.nextSibling).toBeUndefined();
   await testHydration(performer);
 });

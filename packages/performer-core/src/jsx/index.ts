@@ -37,6 +37,7 @@ export namespace JSX {
     raw: IntrinsicProps & {
       message?: PerformerMessage;
       stream?: ReadableStream<MessageDelta>;
+      onResolved?: (message: PerformerMessage) => void;
     };
   };
 }

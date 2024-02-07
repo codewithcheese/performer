@@ -67,7 +67,6 @@ export function Decision({
   return () => {
     const paths = routes.value.map((route) => route.path);
     const decisionTool: Tool = {
-      id: "decision_tool",
       name: "select_path",
       description:
         "Examine the conversation history and select the next path to take. The possible paths are: " +

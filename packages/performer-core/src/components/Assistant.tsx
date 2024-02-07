@@ -2,7 +2,6 @@ import { useMessages, useState } from "../hooks/index.js";
 import type { Component } from "../component.js";
 import {
   isAssistantMessage,
-  isToolMessage,
   MessageDelta,
   type PerformerMessage,
   ToolMessage,
@@ -13,14 +12,29 @@ import OpenAI from "openai";
 import { isEmptyObject } from "../util/is-empty-object.js";
 
 export interface Tool {
-  id: string;
   name: string;
   description: string;
   params: z.ZodObject<any>;
   call: (
     id: string,
-    params: any,
+    params: z.infer<any>,
   ) => void | ToolMessage | Promise<ToolMessage | void>;
+}
+
+export function createTool<T extends z.ZodObject<any>>(
+  name: string,
+  schema: T,
+  callback: (
+    id: string,
+    params: z.infer<T>,
+  ) => void | ToolMessage | Promise<ToolMessage | void>,
+): Tool {
+  return {
+    name,
+    description: schema.description || "",
+    params: schema,
+    call: callback,
+  };
 }
 
 export type AssistantProps = {
@@ -45,7 +59,6 @@ export const Assistant: Component<AssistantProps> = async (
 
   let options = {};
   if (tools.length) {
-    const toolMap: Map<string, Tool> = new Map();
     options = {
       ...options,
       // response_format: {
@@ -56,7 +69,6 @@ export const Assistant: Component<AssistantProps> = async (
           ? toolChoice
           : { type: "function", function: { name: toolChoice.name } },
       tools: tools.map((tool) => {
-        toolMap.set(tool.id, tool);
         return {
           type: "function",
           function: {
@@ -120,13 +132,7 @@ export const Assistant: Component<AssistantProps> = async (
   return () => {
     return (
       <>
-        <raw
-          onMessage={(message) => {
-            callTools(message);
-            onMessage(message);
-          }}
-          stream={message}
-        />
+        <raw onResolved={callTools} onMessage={onMessage} stream={message} />
         {toolMessages.value.map((message) => (
           <raw message={message} />
         ))}

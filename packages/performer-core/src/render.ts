@@ -1,5 +1,10 @@
 import { type PerformerElement } from "./element.js";
-import { createNode, type PerformerNode, SerializedNode } from "./node.js";
+import {
+  createNode,
+  isRawNode,
+  type PerformerNode,
+  SerializedNode,
+} from "./node.js";
 import { clearRenderScope, setRenderScope } from "./hooks/use-render-scope.js";
 import type { Performer } from "./performer.js";
 import {
@@ -172,25 +177,32 @@ export async function renderElement(
     }
   } else {
     // else intrinsic
-    if (node.type === "raw") {
+    if (isRawNode(node)) {
       if (!node.props.stream && !node.props.message) {
         throw Error("`raw` element requires `stream` OR `message` prop");
       }
       if (node.props.stream != null) {
         // process stream
         if (node.isHydrating) {
-          node.hooks.message = await consumeDeltaStream(
+          const message = await consumeDeltaStream(
             performer,
             node,
             node.props.stream,
           );
+          node.hooks.message = message;
+          if (node.props.onResolved) {
+            await node.props.onResolved(message);
+          }
           node.viewResolved = true;
         } else {
           consumeDeltaStream(performer, node, node.props.stream)
-            .then((message) => {
+            .then(async (message) => {
               node.hooks.message = message;
+              if (node.props.onResolved) {
+                await node.props.onResolved(message);
+              }
               node.viewResolved = true;
-              dispatchMessageElement(performer, node);
+              dispatchMessageElement(performer, node, message);
               performer.queueRender();
             })
             .catch((error) => performer.onError(error));

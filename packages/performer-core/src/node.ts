@@ -1,7 +1,7 @@
 import type { Component } from "./component.js";
 import type { PerformerElement } from "./element.js";
 import type { HookRecord } from "./hooks/index.js";
-import { PerformerMessage } from "./message.js";
+import { MessageDelta, PerformerMessage } from "./message.js";
 import { hydrateHooks } from "./hydration.js";
 import { nanoid } from "nanoid";
 
@@ -31,6 +31,19 @@ export type SerializedNode = {
   hooks: Record<string, unknown> & HookRecord;
   children: SerializedNode[];
 };
+
+export function isRawNode(node: PerformerNode): node is RawNode {
+  return node.type === "raw";
+}
+
+export interface RawNode extends PerformerNode {
+  type: "raw";
+  props: {
+    stream?: ReadableStream<MessageDelta>;
+    message?: PerformerMessage;
+    onResolved?: (message: PerformerMessage) => Promise<void>;
+  };
+}
 
 export function createNode({
   element,

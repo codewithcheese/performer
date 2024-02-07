@@ -1,7 +1,7 @@
 /**
  * Based on https://js.langchain.com/docs/modules/chains/popular/sqlite
  */
-import { Assistant, AsyncHooks, Tool, User } from "@performer/core";
+import { Assistant, AsyncHooks, createTool, Tool, User } from "@performer/core";
 import { DataSource } from "typeorm";
 import { SqlDatabase } from "langchain/sql_db";
 import { z } from "zod";
@@ -10,27 +10,13 @@ import sqlite3 from "sqlite3";
 
 sqlite3.verbose();
 
-class SQLSelectTool implements Tool {
-  id = "sql_select_tool";
-  name = "sql_select_query";
-  description =
-    "Write a SQLite 3 to select data that answers the users question.";
-  params = z.object({
+const SQLSelectSchema = z
+  .object({
     query: z.string(),
-  });
-
-  constructor(private db: SqlDatabase) {}
-
-  async call({ query }: z.infer<typeof this.params>) {
-    const content = await this.db.run(query);
-    return {
-      id: this.id,
-      // todo test OpenAI appears to ignore `tool` messages
-      role: "tool" as const,
-      content: `${content}`,
-    };
-  }
-}
+  })
+  .describe(
+    "Write a SQLite 3 query to select data that answers the users question.",
+  );
 
 export async function App({}, { useResource }: AsyncHooks) {
   const datasource = new DataSource({
@@ -42,8 +28,20 @@ export async function App({}, { useResource }: AsyncHooks) {
     appDataSource: datasource,
   });
 
+  const selectTool = createTool(
+    "query_tool",
+    SQLSelectSchema,
+    async (id, { query }) => {
+      const content = await db.run(query);
+      return {
+        tool_call_id: id,
+        role: "tool" as const,
+        content: `${content}`,
+      };
+    },
+  );
+
   const schema = await useResource(() => db.getTableInfo());
-  const tools = [new SQLSelectTool(db)];
 
   return () => (
     <>
@@ -55,12 +53,9 @@ export async function App({}, { useResource }: AsyncHooks) {
       <User />
       <Assistant
         model="gpt-4-1106-preview"
-        toolChoice={tools.length ? tools[0] : "auto"}
-        tools={tools}
+        toolChoice={selectTool}
+        tools={[selectTool]}
       />
-      <system>
-        Use the SQL response to answer the users question using natural language
-      </system>
       <Assistant />
     </>
   );
