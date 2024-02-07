@@ -38,26 +38,31 @@ export function createTool<T extends z.ZodObject<any>>(
 }
 
 export type AssistantProps = {
+  baseURL?: string;
+  apiKey?: string;
   model?: string;
   toolChoice?: "auto" | "none" | Tool;
   tools?: Tool[];
-
+  defaultHeaders?: Record<string, any>;
   onMessage?: (message: PerformerMessage) => void;
 };
 
 export const Assistant: Component<AssistantProps> = async (
   {
+    apiKey,
+    baseURL,
     model = "gpt-3.5-turbo",
     toolChoice = "auto",
     tools = [],
     onMessage = () => {},
+    defaultHeaders,
   },
   { useResource },
 ) => {
   const toolMessages = useState<ToolMessage[]>([]);
   const messages = useMessages();
 
-  let options = {};
+  let options: Record<string, any> = {};
   if (tools.length) {
     options = {
       ...options,
@@ -82,7 +87,11 @@ export const Assistant: Component<AssistantProps> = async (
   }
 
   const message = await useResource(async (controller) => {
-    const openai = new OpenAI();
+    const openai = new OpenAI({
+      ...(apiKey ? { apiKey } : {}),
+      ...(baseURL ? { baseURL } : {}),
+      ...(defaultHeaders ? { defaultHeaders } : {}),
+    });
     const stream = await openai.chat.completions.create({
       model,
       messages,

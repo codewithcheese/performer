@@ -101,3 +101,28 @@ test("should use tool", async () => {
   expect(eventMessages).toHaveLength(1);
   expect(eventMessages[0]).toEqual(messages[1]);
 });
+
+test.skipIf(!process.env.OPENROUTER_API_KEY)(
+  "should use open router",
+  async () => {
+    function App() {
+      return () => (
+        <>
+          <system>Your name is Bob.</system>
+          <user>Whats your name?</user>
+          <Assistant
+            model="mistralai/mistral-7b-instruct:free"
+            apiKey={process.env.OPENROUTER_API_KEY}
+            baseURL="https://openrouter.ai/api/v1"
+          />
+        </>
+      );
+    }
+    const performer = new Performer(<App />);
+    performer.start();
+    await performer.waitUntilSettled();
+    const message = resolveMessages(performer.root!);
+    console.log(message);
+  },
+  20_000,
+);
