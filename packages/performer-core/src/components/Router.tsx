@@ -1,14 +1,14 @@
 import {
   createContext,
-  useContextProvider,
   useContext,
+  useContextProvider,
   useState,
-  useToolData,
 } from "../hooks/index.js";
 import { PerformerElement } from "../element.js";
 import { batch, Signal } from "@preact/signals-core";
-import { Assistant, createTool, Tool } from "./Assistant.js";
+import { Assistant } from "./Assistant.js";
 import { z } from "zod";
+import { createTool } from "../tool.js";
 
 export type Routes = { path: string; component: PerformerElement }[];
 

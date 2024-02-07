@@ -9,7 +9,6 @@ import {
   Performer,
   PerformerMessage,
   resolveMessages,
-  Tool,
 } from "../../src/index.js";
 import "dotenv/config";
 import { z } from "zod";

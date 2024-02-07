@@ -6,36 +6,10 @@ import {
   type PerformerMessage,
   ToolMessage,
 } from "../message.js";
-import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import OpenAI from "openai";
 import { isEmptyObject } from "../util/is-empty-object.js";
-
-export interface Tool {
-  name: string;
-  description: string;
-  params: z.ZodObject<any>;
-  call: (
-    params: z.infer<any>,
-    tool_call_id: string,
-  ) => void | ToolMessage | Promise<ToolMessage | void>;
-}
-
-export function createTool<T extends z.ZodObject<any>>(
-  name: string,
-  schema: T,
-  callback: (
-    params: z.infer<T>,
-    tool_call_id: string,
-  ) => void | ToolMessage | Promise<ToolMessage | void>,
-): Tool {
-  return {
-    name,
-    description: schema.description || "",
-    params: schema,
-    call: callback,
-  };
-}
+import { Tool } from "../tool.js";
 
 export type AssistantProps = {
   baseURL?: string;
@@ -81,7 +55,7 @@ export const Assistant: Component<AssistantProps> = async (
           function: {
             name: tool.name,
             description: tool.description,
-            parameters: zodToJsonSchema(tool.params),
+            parameters: zodToJsonSchema(tool.schema),
           },
         };
       }),
@@ -125,7 +99,7 @@ export const Assistant: Component<AssistantProps> = async (
         if (!tool) {
           throw Error(`Tool not found for tool call: ${toolCall.id}`);
         }
-        const message = await tool.call(
+        const message = await tool.callback(
           JSON.parse(toolCall.function.arguments),
           toolCall.id,
         );

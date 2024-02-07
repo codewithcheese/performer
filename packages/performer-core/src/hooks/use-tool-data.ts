@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { createTool, Tool } from "../components/index.js";
 import { useState } from "./use-state.js";
 import { Signal } from "@preact/signals-core";
 import { isEmptyObject } from "../util/is-empty-object.js";
 import { getDefaults } from "../util/zod.js";
+import { createTool, Tool } from "../tool.js";
 
 export function useToolData<Params extends z.ZodObject<any>>(
   name: string,
