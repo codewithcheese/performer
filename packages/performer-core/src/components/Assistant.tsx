@@ -44,6 +44,7 @@ export type AssistantProps = {
   toolChoice?: "auto" | "none" | Tool;
   tools?: Tool[];
   defaultHeaders?: Record<string, any>;
+  dangerouslyAllowBrowser: boolean;
   onMessage?: (message: PerformerMessage) => void;
 };
 
@@ -55,6 +56,7 @@ export const Assistant: Component<AssistantProps> = async (
     toolChoice = "auto",
     tools = [],
     onMessage = () => {},
+    dangerouslyAllowBrowser = true,
     defaultHeaders,
   },
   { useResource },
@@ -91,6 +93,7 @@ export const Assistant: Component<AssistantProps> = async (
       ...(apiKey ? { apiKey } : {}),
       ...(baseURL ? { baseURL } : {}),
       ...(defaultHeaders ? { defaultHeaders } : {}),
+      ...(dangerouslyAllowBrowser ? { dangerouslyAllowBrowser } : {}),
     });
     const stream = await openai.chat.completions.create({
       model,
