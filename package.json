@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
-    "vitest": "0.34.6"
+    "vitest": "0.34.6",
+    "playwright": "^1.41.2"
   }
 }
