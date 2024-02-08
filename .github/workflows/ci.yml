@@ -40,3 +40,4 @@ jobs:
       - run: pnpm test
         env:
           CI: true
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
