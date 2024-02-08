@@ -2,9 +2,11 @@
   "name": "performer",
   "scripts": {
     "watch": "pnpm --recursive --parallel run watch",
-    "ci:publish": "pnpm publish -r --dry-run --no-git-checks --access public"
+    "ci:publish": "pnpm publish -r --dry-run --no-git-checks --access public",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.1"
+    "@changesets/cli": "^2.27.1",
+    "vitest": "0.34.6"
   }
 }
