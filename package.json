@@ -1,5 +1,9 @@
 {
   "name": "performer",
+  "packageManager": "pnpm@8.6.12",
+  "engines": {
+    "pnpm": "^8.0.0"
+  },
   "scripts": {
     "watch": "pnpm --recursive --parallel run watch",
     "ci:publish": "pnpm publish -r --dry-run --no-git-checks --access public",
