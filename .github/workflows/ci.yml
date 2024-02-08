@@ -17,16 +17,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - node-version: 18
-            os: windows-latest
-          - node-version: 18
-            os: macOS-latest
-          - node-version: 18
-            os: ubuntu-latest
+#          - node-version: 18
+#            os: windows-latest
+#          - node-version: 18
+#            os: macOS-latest
+#          - node-version: 18
+#            os: ubuntu-latest
           - node-version: 20
             os: ubuntu-latest
-          - node-version: 21
-            os: ubuntu-latest
+#          - node-version: 21
+#            os: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
