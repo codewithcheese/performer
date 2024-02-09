@@ -5,7 +5,8 @@ import { Signal } from "@preact/signals-core";
 /**
  *	Repeat the children indefinitely unless limited using times prop or stopped with a signal.
  *
- *  Signal is used for stop instead of a boolean so that setting stop does not cause a rerender, which would lose the `n` state.
+ *  Signal is used for stop instead of a boolean so that changing the stop does not cause Repeat to be recreated.
+ *  If Repeat was recreated the `n` state would be lost.
  */
 export const Repeat: Component<{ times?: number; stop?: Signal<boolean> }> = ({
   children,

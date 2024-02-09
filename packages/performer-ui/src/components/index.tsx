@@ -1,6 +1,7 @@
 import { KeyboardEventHandler, useEffect, useRef, useState } from "react";
-import { isTextContent, PerformerMessage } from "@performer/core";
+import { PerformerMessage } from "@performer/core";
 import { toTitleCase } from "../lib/message.ts";
+import { readTextContent } from "@performer/core";
 
 export function Divider({ message }: { message: string }) {
   return (
@@ -530,21 +531,14 @@ export function Message({ message }: MessageProps) {
             <div className="flex-col gap-1 md:gap-3">
               <div className="flex max-w-full flex-grow flex-col">
                 <ToolInfo />
-                {message.role !== "tool" &&
-                  message.content.map((content, index) => {
-                    if (isTextContent(content)) {
-                      return (
-                        <div
-                          key={index}
-                          data-message-author-role="user"
-                          data-message-id="aaa20052-9c9b-4b7a-8b3e-fc23c72c98c2"
-                          className="text-message flex min-h-[20px] flex-col items-start gap-3 overflow-x-auto whitespace-pre-wrap break-words [.text-message+&]:mt-5"
-                        >
-                          <div>{content.text}</div>
-                        </div>
-                      );
-                    }
-                  })}
+                {message.role !== "tool" && message.content && (
+                  <div
+                    data-message-author-role={message.role}
+                    className="text-message flex min-h-[20px] flex-col items-start gap-3 overflow-x-auto whitespace-pre-wrap break-words [.text-message+&]:mt-5"
+                  >
+                    <div>{readTextContent(message)}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

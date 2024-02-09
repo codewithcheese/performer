@@ -9,14 +9,15 @@ import {
 } from "../../src/index.js";
 import { z } from "zod";
 
+const ApprovalSchema = z
+  .object({
+    approved: z.boolean().default(false),
+  })
+  .describe("When approval is given");
+
 test("should use tool to set signal", async () => {
   function App() {
-    const [approval, tool] = useToolData(
-      "was_approved",
-      "When approval is given",
-      z.object({ approved: z.boolean() }),
-      { approved: false },
-    );
+    const [approval, tool] = useToolData("was_approved", ApprovalSchema);
     return () => {
       approval.value;
       if (!approval.value.approved) {

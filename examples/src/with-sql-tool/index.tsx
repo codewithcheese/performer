@@ -1,51 +1,47 @@
 /**
  * Based on https://js.langchain.com/docs/modules/chains/popular/sqlite
  */
-import { Assistant, Tool, User, AsyncHooks } from "@performer/core";
+import { Assistant, AsyncHooks, createTool, Tool, User } from "@performer/core";
 import { DataSource } from "typeorm";
 import { SqlDatabase } from "langchain/sql_db";
 import { z } from "zod";
-import { ChatOpenAI } from "langchain/chat_models/openai";
 import * as path from "path";
 import sqlite3 from "sqlite3";
 
 sqlite3.verbose();
 
-class SQLSelectTool implements Tool {
-  id = "sql_select_tool";
-  name = "sql_select_query";
-  description =
-    "Write a SQLite 3 to select data that answers the users question.";
-  params = z.object({
+const SQLSelectSchema = z
+  .object({
     query: z.string(),
-  });
-
-  constructor(private db: SqlDatabase) {}
-
-  async call({ query }: z.infer<typeof this.params>) {
-    const content = await this.db.run(query);
-    return {
-      id: this.id,
-      // todo test OpenAI appears to ignore `tool` messages
-      role: "tool" as const,
-      content: `${content}`,
-    };
-  }
-}
+  })
+  .describe(
+    "Write a SQLite 3 query to select data that answers the users question.",
+  );
 
 export async function App({}, { useResource }: AsyncHooks) {
   const datasource = new DataSource({
     type: "sqlite",
     database: path.join(__dirname, "Chinook.db"),
   });
-  const model = new ChatOpenAI({ modelName: "gpt-4-1106-preview" });
 
   const db = await SqlDatabase.fromDataSourceParams({
     appDataSource: datasource,
   });
 
+  const selectTool = createTool(
+    "query_tool",
+    SQLSelectSchema,
+    async ({ query }, tool_call_id) => {
+      const content = await db.run(query);
+      return {
+        tool_call_id,
+        role: "tool" as const,
+        content: `${content}`,
+      };
+    },
+  );
+
   const schema = await useResource(() => db.getTableInfo());
-  const tools = [new SQLSelectTool(db)];
 
   return () => (
     <>
@@ -56,13 +52,10 @@ export async function App({}, { useResource }: AsyncHooks) {
       </system>
       <User />
       <Assistant
-        model={model}
-        toolChoice={tools.length ? tools[0] : "auto"}
-        tools={tools}
+        model="gpt-4-1106-preview"
+        toolChoice={selectTool}
+        tools={[selectTool]}
       />
-      <system>
-        Use the SQL response to answer the users question using natural language
-      </system>
       <Assistant />
     </>
   );

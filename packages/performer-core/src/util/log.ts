@@ -1,10 +1,11 @@
 import {
-  PerformerMessageEvent,
+  nodeToMessage,
   PerformerDeltaEvent,
   PerformerErrorEvent,
-  isAssistantMessage,
   PerformerEvent,
+  PerformerMessageEvent,
   PerformerNode,
+  readTextContent,
 } from "../index.js";
 import log from "loglevel";
 import { isImageContent, isTextContent } from "../message.js";
@@ -28,30 +29,40 @@ export function logEvent(event: PerformerEvent, config: LogConfig) {
     event instanceof PerformerMessageEvent ||
     event instanceof PerformerDeltaEvent
   ) {
-    const message = event.detail.message;
-    msg += ` ${message.role} `;
-    msg +=
-      typeof message.content === "string"
-        ? message.content
-        : message.content
-            .map((content) => {
-              if (isTextContent(content) && content.text !== "") {
-                return `text:${content.text}`;
-              } else if (isImageContent(content)) {
-                return `image:${content.image_url}`;
-              } else {
-                return "";
-              }
-            })
-            .join(", ");
-    if (isAssistantMessage(message) && message.tool_calls) {
+    const message =
+      "message" in event.detail ? event.detail.message : event.detail.delta;
+    if (message.role) {
+      msg += ` ${message.role} `;
+    } else {
+      msg += " ";
+    }
+    if (message.content) {
+      msg +=
+        typeof message.content === "string"
+          ? message.content
+          : message.content
+              .map((content) => {
+                if (isTextContent(content) && content.text !== "") {
+                  return `text:${content.text}`;
+                } else if (isImageContent(content)) {
+                  return `image:${content.image_url}`;
+                } else {
+                  return "";
+                }
+              })
+              .join(", ");
+    }
+    if ("tool_calls" in message && message.tool_calls) {
       msg += ` ${message.tool_calls
-        .map(
-          (toolCall) =>
-            `${toolCall.function.name ? toolCall.function.name + ":" : ""}${
+        .map((toolCall) => {
+          if (toolCall.function) {
+            return `${toolCall.function.name ? toolCall.function.name + ":" : ""}${
               toolCall.function.arguments
-            }`,
-        )
+            }`;
+          } else {
+            return "";
+          }
+        })
         .join(", ")}`;
     }
   } else if (event instanceof PerformerErrorEvent) {
@@ -70,6 +81,18 @@ export function logObject<T>(object: T, properties: string[]) {
 
 export function logNode(node: PerformerNode) {
   return getHierarchy(node).join("->");
+}
+
+export function logContent(node: PerformerNode, length: number = 20) {
+  if (typeof node.type === "string" && node.type !== "raw") {
+    let content = readTextContent(nodeToMessage(node));
+    if (content.length > length) {
+      content = content.substring(0, length) + "...";
+    }
+    return `"${content}"`;
+  } else {
+    return "";
+  }
 }
 
 function getHierarchy(node: PerformerNode) {

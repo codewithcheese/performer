@@ -7,6 +7,7 @@ import {
   useState,
 } from "../../src/index.js";
 import { testHydration } from "../util/test-hydration.js";
+import { ExpectNode, expectTree } from "../util/expect-tree.js";
 
 test("should repeat multiple times", async () => {
   const app = (
@@ -30,36 +31,32 @@ test("should repeat multiple times", async () => {
   performer.start();
   await performer.waitUntilSettled();
   expect(performer.errors).toHaveLength(0);
-  expect(performer.root?.child?.type).toEqual("system");
-  assert(performer.root?.child?.nextSibling?.type instanceof Function);
-  expect(performer.root?.child?.nextSibling?.type.name).toEqual("Repeat");
-  expect(performer.root?.child?.nextSibling?.child?.type).toEqual("system");
-  assert(
-    performer.root?.child?.nextSibling?.child?.nextSibling?.type instanceof
-      Function,
-  );
-  expect(
-    performer.root?.child?.nextSibling?.child?.nextSibling?.type.name,
-  ).toEqual("Assistant");
-  expect(
-    performer.root?.child?.nextSibling?.child?.nextSibling?.nextSibling?.type,
-  ).toEqual("system");
-  assert(
-    performer.root?.child?.nextSibling?.child?.nextSibling?.nextSibling
-      ?.nextSibling?.type instanceof Function,
-  );
-  expect(
-    performer.root?.child?.nextSibling?.child?.nextSibling?.nextSibling
-      ?.nextSibling?.type.name,
-  ).toEqual("Assistant");
-  expect(
-    performer.root?.child?.nextSibling?.child?.nextSibling?.nextSibling
-      ?.nextSibling?.nextSibling,
-  ).toEqual(undefined);
+  expectTree(performer.root!, {
+    type: "Fragment",
+    children: [
+      { type: "system" },
+      {
+        type: "Repeat",
+        children: [
+          { type: "system" },
+          { type: "Assistant" },
+          { type: "system" },
+          { type: "Assistant" },
+        ],
+      },
+      {
+        type: "Repeat",
+        children: [
+          { type: "system" },
+          { type: "Assistant" },
+          { type: "system" },
+          { type: "Assistant" },
+        ],
+      },
+    ],
+  });
   let messages = resolveMessages(performer.root);
-  console.log(JSON.stringify(messages, null, 2));
-  messages = resolveMessages(performer.root);
-  console.log(JSON.stringify(messages, null, 2));
+  expect(messages).toHaveLength(9);
   await testHydration(performer);
 }, 30_000);
 

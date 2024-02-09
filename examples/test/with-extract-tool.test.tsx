@@ -7,4 +7,5 @@ test("should use tool to extract data", async () => {
   performer.start();
   await performer.waitUntilSettled();
   const messages = resolveMessages(performer.root);
+  console.log(messages);
 });

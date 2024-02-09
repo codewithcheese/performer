@@ -13,6 +13,7 @@
         "vitest": "^1.2.1"
     },
     "dependencies": {
+        "@preact/signals-core": "1.5.1",
         "@performer/core": "workspace:*",
         "@performer/ui": "workspace:*",
         "jsdom": "^23.2.0",

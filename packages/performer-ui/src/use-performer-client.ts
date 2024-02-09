@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import {
   Component,
   isTextContent,
+  MessageDelta,
   Performer,
-  PerformerEvent,
-  PerformerMessage,
   PerformerDeltaEvent,
-  PerformerMessageEvent,
+  PerformerEvent,
 } from "@performer/core";
 import { jsx } from "@performer/core/jsx-runtime";
+import { concatDelta, ToolCall } from "@performer/core";
 
 export function usePerformerClient(app: Component<any> | null) {
   const [events, setEvents] = useState<PerformerEvent[]>([]);
@@ -42,7 +42,7 @@ export function usePerformerClient(app: Component<any> | null) {
           if (!previous) {
             return [...prevEvents, event];
           }
-          appendDelta(previous, event);
+          concatDelta(previous.detail.delta, event.detail.delta);
           return prevEvents.toSpliced(prevEvents.length - 1, 1, previous);
         });
       });
@@ -53,34 +53,4 @@ export function usePerformerClient(app: Component<any> | null) {
   }, [app]);
 
   return { events, sendMessage };
-}
-
-function appendDelta(
-  previous: PerformerDeltaEvent,
-  event: PerformerDeltaEvent,
-) {
-  // update content of previous message
-  if (typeof event.detail.message.content === "string") {
-    updateTextContent(event.detail.message.content, previous.detail.message);
-  } else {
-    for (const [_, content] of event.detail.message.content.entries()) {
-      if (isTextContent(content)) {
-        updateTextContent(content.text, previous.detail.message);
-      }
-    }
-  }
-  return previous;
-}
-
-function updateTextContent(text: string, message: PerformerMessage) {
-  if (typeof message.content === "string") {
-    message.content += text;
-  } else {
-    const textContent = message.content.findLast(isTextContent);
-    if (textContent) {
-      textContent.text += text;
-    } else {
-      message.content.push({ type: "text", text });
-    }
-  }
 }

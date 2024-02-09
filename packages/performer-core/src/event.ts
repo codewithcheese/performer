@@ -1,4 +1,4 @@
-import type { PerformerMessage } from "./message.js";
+import type { MessageDelta, PerformerMessage } from "./message.js";
 import { nanoid } from "nanoid";
 
 class TypedCustomEvent<D> extends CustomEvent<D> {
@@ -31,27 +31,29 @@ export class PerformerErrorEvent extends TypedCustomEvent<{ message: string }> {
 
 type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-type MessageDetail = { uid: string; message: PerformerMessage };
+type MessageEventDetail = { uid: string; message: PerformerMessage };
 
-export class PerformerMessageEvent extends TypedCustomEvent<MessageDetail> {
+export class PerformerMessageEvent extends TypedCustomEvent<MessageEventDetail> {
   static type = "message" as const;
 
-  constructor(detail: PartialBy<MessageDetail, "uid">) {
+  constructor(detail: PartialBy<MessageEventDetail, "uid">) {
     if (detail.uid === undefined) {
       detail.uid = nanoid();
     }
-    super(detail as MessageDetail);
+    super(detail as MessageEventDetail);
   }
 }
 
-export class PerformerDeltaEvent extends TypedCustomEvent<MessageDetail> {
+type DeltaEventDetail = { uid: string; delta: MessageDelta };
+
+export class PerformerDeltaEvent extends TypedCustomEvent<DeltaEventDetail> {
   static type = "delta" as const;
 
-  constructor(detail: PartialBy<MessageDetail, "uid">) {
+  constructor(detail: PartialBy<DeltaEventDetail, "uid">) {
     if (detail.uid === undefined) {
       detail.uid = nanoid();
     }
-    super(detail as MessageDetail);
+    super(detail as DeltaEventDetail);
   }
 }
 

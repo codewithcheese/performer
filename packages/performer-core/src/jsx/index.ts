@@ -2,6 +2,7 @@ import type { Component } from "../component.js";
 import type { PerformerElement } from "../element.js";
 import {
   AssistantMessage,
+  MessageDelta,
   PerformerMessage,
   SystemMessage,
   ToolMessage,
@@ -30,12 +31,13 @@ export namespace JSX {
       ({ content: SystemMessage["content"] } | { children: string | string[] });
     tool: IntrinsicProps &
       (
-        | { id: ToolMessage["id"]; content?: ToolMessage["content"] }
+        | { id: ToolMessage["tool_call_id"]; content?: ToolMessage["content"] }
         | { children: string | string[] }
       );
     raw: IntrinsicProps & {
       message?: PerformerMessage;
-      stream?: ReadableStream<PerformerMessage>;
+      stream?: ReadableStream<MessageDelta>;
+      onResolved?: (message: PerformerMessage) => void;
     };
   };
 }

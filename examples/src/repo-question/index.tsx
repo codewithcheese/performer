@@ -3,6 +3,7 @@ import { Assistant, AsyncHooks } from "@performer/core";
 async function fetchRepos(controller: AbortController, user: string) {
   const response = await fetch(
     `https://api.github.com/users/${user}/repos?sort=updated`,
+    { signal: controller.signal },
   );
   return response.json();
 }

@@ -9,7 +9,7 @@ import {
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
 import log from "loglevel";
-import { LogConfig, logNode } from "./util/log.js";
+import { LogConfig, logEvent, logNode } from "./util/log.js";
 import { PendingInputState } from "./hooks/index.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";
 
@@ -35,8 +35,6 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
 
   controller = new AbortController();
 
-  throwOnError = false;
-
   renderQueued = false;
   renderPromised: ReturnType<typeof render> | null = null;
 
@@ -51,12 +49,15 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     this.app = app;
     this.options = options;
     if (
-      !this.options.throwOnError &&
+      this.options.throwOnError === undefined &&
       globalThis.process &&
       process.env["VITEST"] != null
     ) {
       this.options.throwOnError = true;
     }
+    this.addEventListener("delta", (delta) => {
+      logEvent(delta, this.logConfig);
+    });
     this.addEventListener("error", (error) => {
       this.errors.push(error);
     });
@@ -153,7 +154,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
 
   onError(error: unknown) {
     this.finish();
-    if (this.throwOnError) {
+    if (this.options.throwOnError) {
       throw error;
     } else {
       this.dispatchEvent(new PerformerErrorEvent(error));

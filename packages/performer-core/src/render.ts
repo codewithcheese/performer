@@ -1,19 +1,34 @@
 import { type PerformerElement } from "./element.js";
-import { createNode, type PerformerNode, SerializedNode } from "./node.js";
+import {
+  createNode,
+  isRawNode,
+  type PerformerNode,
+  SerializedNode,
+} from "./node.js";
 import { clearRenderScope, setRenderScope } from "./hooks/use-render-scope.js";
 import type { Performer } from "./performer.js";
 import {
+  AssistantMessage,
+  concatDelta,
   isAssistantMessage,
   isImageContent,
   isMessage,
+  isMessageDelta,
   isTextContent,
+  MessageDelta,
   PerformerMessage,
+  ToolCall,
 } from "./message.js";
 import log from "loglevel";
 import * as _ from "lodash";
 import { View } from "./component.js";
 import { effect } from "@preact/signals-core";
-import { LogConfig, logNode, logResolveMessages } from "./util/log.js";
+import {
+  LogConfig,
+  logContent,
+  logNode,
+  logResolveMessages,
+} from "./util/log.js";
 import { createUseResourceHook } from "./hooks/index.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 
@@ -116,7 +131,7 @@ export async function renderElement(
   serialized?: SerializedNode,
 ): Promise<PerformerNode> {
   const node = createNode({ element, parent, prevSibling, child, serialized });
-  log.debug(`Create node`, logNode(node));
+  log.debug(`Create node`, logNode(node), logContent(node));
   if (!parent) {
     performer.root = node;
   }
@@ -163,25 +178,32 @@ export async function renderElement(
     }
   } else {
     // else intrinsic
-    if (node.type === "raw") {
+    if (isRawNode(node)) {
       if (!node.props.stream && !node.props.message) {
         throw Error("`raw` element requires `stream` OR `message` prop");
       }
       if (node.props.stream != null) {
         // process stream
         if (node.isHydrating) {
-          node.props.message = await consumeMessageStream(
+          const message = await consumeDeltaStream(
             performer,
             node,
             node.props.stream,
           );
+          node.hooks.message = message;
+          if (node.props.onResolved) {
+            await node.props.onResolved(message);
+          }
           node.viewResolved = true;
         } else {
-          consumeMessageStream(performer, node, node.props.stream)
-            .then((message) => {
-              node.props.message = message;
+          consumeDeltaStream(performer, node, node.props.stream)
+            .then(async (message) => {
+              node.hooks.message = message;
+              if (node.props.onResolved) {
+                await node.props.onResolved(message);
+              }
               node.viewResolved = true;
-              dispatchMessageElement(performer, node);
+              dispatchMessageElement(performer, node, message);
               performer.queueRender();
             })
             .catch((error) => performer.onError(error));
@@ -243,65 +265,34 @@ function dispatchMessageElement(
   }
 }
 
-async function consumeMessageStream(
+async function consumeDeltaStream(
   performer: Performer,
   node: PerformerNode,
-  stream: ReadableStream<PerformerMessage>,
-) {
-  let chunks: PerformerMessage[] = [];
+  stream: ReadableStream<MessageDelta>,
+): Promise<PerformerMessage> {
+  let chunks: MessageDelta[] = [];
   for await (const chunk of stream) {
-    if (!isMessage(chunk)) {
-      throw Error(`Non-message chunk in stream. ${JSON.stringify(chunk)}`);
+    if (!isMessageDelta(chunk)) {
+      throw Error(
+        `Chunk in stream does not match message delta. ${JSON.stringify(chunk)}`,
+      );
     }
     performer.dispatchEvent(
-      new PerformerDeltaEvent({ uid: node.uid, message: chunk }),
+      new PerformerDeltaEvent({ uid: node.uid, delta: chunk }),
     );
     chunks.push(chunk);
   }
   if (chunks.length === 0) {
     throw Error("Message stream empty");
   }
-  const message = structuredClone(chunks[0]);
+  const message = chunks[0] as AssistantMessage;
+  if (!message.role) {
+    throw Error("First chunk in stream does not contain message role.");
+  }
   let index = 1;
   while (index < chunks.length) {
-    const chunk = chunks[index];
-    // aggregate function call
-    if (
-      isAssistantMessage(chunk) &&
-      isAssistantMessage(message) &&
-      chunk.function_call &&
-      message.function_call
-    ) {
-      message.function_call.arguments += chunk.function_call.arguments;
-    }
-    // aggregate tool calls
-    if (
-      isAssistantMessage(chunk) &&
-      isAssistantMessage(message) &&
-      chunk.tool_calls &&
-      message.tool_calls
-    ) {
-      for (const [index, toolCall] of chunk.tool_calls.entries()) {
-        message.tool_calls[index].function.arguments +=
-          toolCall.function.arguments;
-      }
-    }
-
-    // aggregate content
-    if (isAssistantMessage(chunk)) {
-      // fixme always append to last not index
-      for (const [i, chunkEntry] of chunk.content.entries()) {
-        const aggregateEntry = message.content[i];
-        if (isTextContent(chunkEntry) && isTextContent(aggregateEntry)) {
-          aggregateEntry.text += chunkEntry.text;
-        } else if (
-          isImageContent(chunkEntry) &&
-          isImageContent(aggregateEntry)
-        ) {
-          aggregateEntry.image_url += chunkEntry.image_url;
-        }
-      }
-    }
+    const delta = chunks[index];
+    concatDelta(message as MessageDelta, delta);
     index += 1;
   }
   return message;
@@ -370,46 +361,46 @@ export function resolveMessages(
   return messages;
 }
 
-function nodeToMessage(node: PerformerNode): PerformerMessage {
+export function nodeToMessage(node: PerformerNode): PerformerMessage {
   if (typeof node.type !== "string") {
     throw Error(
       "Cannot convert component to messages, must use intrinsic elements to represent messages",
     );
   }
   if (node.type === "raw") {
-    if (!node.props.message) {
+    if (!node.hooks.message && !node.props.message) {
       throw Error("`message` element not resolved.");
     }
-    return node.props.message;
+    return node.hooks.message || node.props.message;
   }
   // fixme refactor without branching
   else if (node.type === "tool") {
     return {
-      id: node.props.id,
+      tool_call_id: node.props.tool_call_id,
       role: node.type,
       content: node.props.content,
     };
   } else if (node.type === "assistant") {
     return {
       role: node.type,
-      content:
-        typeof node.props.content === "string"
-          ? [{ type: "text", text: node.props.content }]
-          : node.props.content,
+      content: node.props.content,
       ...(node.props.tool_calls ? { tool_calls: node.props.tool_calls } : {}),
       ...(node.props.function_call
         ? { function_call: node.props.function_call }
         : {}),
     };
-  } else {
+  } else if (node.type === "system") {
     return {
       role: node.type,
-      content:
-        typeof node.props.content === "string"
-          ? [{ type: "text", text: node.props.content }]
-          : node.props.content,
+      content: node.props.content,
+    };
+  } else if (node.type === "user") {
+    return {
+      role: node.type,
+      content: node.props.content,
     };
   }
+  throw Error(`Unexpected message element ${node.type}`);
 }
 
 function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
