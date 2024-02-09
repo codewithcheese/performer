@@ -9,6 +9,7 @@ import { clearRenderScope, setRenderScope } from "./hooks/use-render-scope.js";
 import type { Performer } from "./performer.js";
 import {
   AssistantMessage,
+  concatDelta,
   isAssistantMessage,
   isImageContent,
   isMessage,
@@ -291,52 +292,7 @@ async function consumeDeltaStream(
   let index = 1;
   while (index < chunks.length) {
     const delta = chunks[index];
-
-    if (delta.content != null) {
-      // Check for both null and undefined
-      message.content = message.content
-        ? message.content + delta.content
-        : delta.content;
-    }
-
-    // Apply function_call
-    if (delta.function_call) {
-      if (!message.function_call) {
-        message.function_call = { name: "", arguments: "" };
-      }
-      message.function_call.name += delta.function_call.name ?? "";
-      message.function_call.arguments += delta.function_call.arguments ?? "";
-    }
-
-    // Apply tool_calls
-    if (delta.tool_calls && delta.tool_calls.length > 0) {
-      if (!message.tool_calls) {
-        message.tool_calls = [];
-      }
-      delta.tool_calls.forEach((deltaToolCall) => {
-        const existingToolCall = message.tool_calls?.find(
-          (_, index) => index === deltaToolCall.index,
-        );
-        if (!existingToolCall) {
-          if (!message.tool_calls) {
-            message.tool_calls = [];
-          }
-          message.tool_calls[deltaToolCall.index] = deltaToolCall as ToolCall;
-        } else {
-          // Example of concatenation/merge logic for existing tool calls
-          existingToolCall.id = existingToolCall.id + (deltaToolCall.id ?? "");
-          if (deltaToolCall.function) {
-            if (!existingToolCall.function) {
-              existingToolCall.function = { name: "", arguments: "" };
-            }
-            existingToolCall.function.name += deltaToolCall.function.name ?? "";
-            existingToolCall.function.arguments +=
-              deltaToolCall.function.arguments ?? "";
-          }
-        }
-      });
-    }
-
+    concatDelta(message as MessageDelta, delta);
     index += 1;
   }
   return message;

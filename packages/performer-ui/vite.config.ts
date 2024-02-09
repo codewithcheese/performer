@@ -12,7 +12,10 @@ export default defineConfig({
     {
       name: "performer-jsx-transformer",
       async transform(code, id) {
-        if (id.startsWith(process.env.VITE_PERFORMER_APP_PATH)) {
+        if (
+          typeof process.env.VITE_PERFORMER_APP_PATH === "string" &&
+          id.startsWith(process.env.VITE_PERFORMER_APP_PATH)
+        ) {
           console.log(`Performer JSX transformed ${id}`);
           const result = await transform(code, {
             loader: "jsx",

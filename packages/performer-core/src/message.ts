@@ -156,3 +156,49 @@ export function messagesToElements(
     return jsx(message.role, { ...message, onMessage });
   });
 }
+
+export function concatDelta(previous: MessageDelta, delta: MessageDelta) {
+  if (delta.content != null) {
+    // Check for both null and undefined
+    previous.content = previous.content
+      ? previous.content + delta.content
+      : delta.content;
+  }
+
+  // Apply function_call
+  if (delta.function_call) {
+    if (!previous.function_call) {
+      previous.function_call = { name: "", arguments: "" };
+    }
+    previous.function_call.name += delta.function_call.name ?? "";
+    previous.function_call.arguments += delta.function_call.arguments ?? "";
+  }
+
+  // Apply tool_calls
+  if (delta.tool_calls && delta.tool_calls.length > 0) {
+    if (!previous.tool_calls) {
+      previous.tool_calls = [];
+    }
+    delta.tool_calls.forEach((toolCall) => {
+      const existingToolCall =
+        previous.tool_calls && previous.tool_calls[toolCall.index];
+      if (!existingToolCall) {
+        if (!previous.tool_calls) {
+          previous.tool_calls = [];
+        }
+        previous.tool_calls[toolCall.index] = toolCall;
+      } else {
+        // Example of concatenation/merge logic for existing tool calls
+        existingToolCall.id = existingToolCall.id + (toolCall.id ?? "");
+        if (toolCall.function) {
+          if (!existingToolCall.function) {
+            existingToolCall.function = { name: "", arguments: "" };
+          }
+          existingToolCall.function.name += toolCall.function.name ?? "";
+          existingToolCall.function.arguments +=
+            toolCall.function.arguments ?? "";
+        }
+      }
+    });
+  }
+}
