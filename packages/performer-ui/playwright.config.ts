@@ -9,7 +9,7 @@ const appPath = path.join(__dirname, "./test/apps");
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: "./test",
+  testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
