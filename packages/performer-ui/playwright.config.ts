@@ -16,7 +16,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://127.0.0.1:3011",
+    baseURL: "http://localhost:3011",
     trace: "on-first-retry",
   },
 
@@ -39,7 +39,8 @@ export default defineConfig({
 
   webServer: {
     command: `export VITE_PERFORMER_APP_PATH=${appPath} && npm run dev`,
-    url: "http://127.0.0.1:3011",
+    url: "http://localhost:3011",
     reuseExistingServer: !process.env.CI,
+    timeout: 10_000,
   },
 });
