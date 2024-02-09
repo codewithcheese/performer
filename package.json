@@ -1,5 +1,6 @@
 {
   "name": "performer",
+  "type": "module",
   "packageManager": "pnpm@8.6.12",
   "engines": {
     "pnpm": "^8.0.1"
@@ -8,11 +9,12 @@
     "watch": "pnpm --recursive --parallel run watch",
     "ci:publish": "pnpm publish -r --dry-run --no-git-checks --access public",
     "test": "vitest run",
-    "typecheck": "pnpm --recursive --parallel run typecheck"
+    "typecheck": "pnpm --recursive --parallel run typecheck",
+    "e2e": "playwright test packages/performer-ui --config packages/performer-ui/playwright.config.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
-    "vitest": "0.34.6",
-    "playwright": "^1.41.2"
+    "@playwright/test": "^1.41.2",
+    "vitest": "0.34.6"
   }
 }

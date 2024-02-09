@@ -1,0 +1,39 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches: [ master ]  # Customize trigger branches as needed
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        include:
+          #          - node-version: 18
+          #            os: windows-latest
+          #          - node-version: 18
+          #            os: macOS-latest
+          #          - node-version: 18
+          #            os: ubuntu-latest
+          - node-version: 20
+            os: ubuntu-latest
+    #          - node-version: 21
+    #            os: ubuntu-lat
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2.2.4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playwright install chromium
+      - name: Run Playwright tests
+        run: pnpm run e2e
+        env:
+          DEBUG: "pw:webserver"

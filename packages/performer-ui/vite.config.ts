@@ -1,13 +1,16 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { transform } from "esbuild";
 
 if (!process.env.VITE_PERFORMER_APP_PATH) {
-  throw new Error("Environment variable VITE_PERFORMER_APP_PATH required.");
+  console.warn("Environment variable VITE_PERFORMER_APP_PATH required.");
 }
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  test: {
+    include: ["test/**.*"],
+  },
   plugins: [
     {
       name: "performer-jsx-transformer",

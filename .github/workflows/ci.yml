@@ -6,9 +6,9 @@ on:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
-env:
-  # We only install Chromium manually
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+#env:
+#  # We only install Chromium manually
+#  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
 jobs:
   Tests:
@@ -36,7 +36,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm playwright install chromium
+#      - run: pnpm playwright install chromium
       - run: pnpm test
         env:
           CI: true
