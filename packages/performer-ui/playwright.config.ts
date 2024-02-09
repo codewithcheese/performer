@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const appPath = path.join(__dirname, "./test/apps");
+const appPath = path.join(__dirname, "./e2e/apps");
 
 /**
  * See https://playwright.dev/docs/test-configuration.
