@@ -120,7 +120,7 @@ export const Assistant: Component<AssistantProps> = async (
       <>
         <raw onResolved={callTools} onMessage={onMessage} stream={message} />
         {toolMessages.value.map((message) => (
-          <raw message={message} />
+          <raw onMessage={onMessage} message={message} />
         ))}
       </>
     );

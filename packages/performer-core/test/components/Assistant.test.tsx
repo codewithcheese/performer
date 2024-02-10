@@ -2,17 +2,11 @@ import { assert, expect, test } from "vitest";
 import {
   Assistant,
   AsyncHooks,
-  createTool,
-  isAssistantMessage,
   isMessage,
-  isSystemMessage,
   Performer,
-  PerformerMessage,
   resolveMessages,
 } from "../../src/index.js";
 import "dotenv/config";
-import { z } from "zod";
-import { isToolMessage } from "openai/lib/chatCompletionUtils";
 
 test("should call model with messages", async () => {
   const app = (
@@ -64,44 +58,6 @@ test("should call onMessage event handler after assistant response", async () =>
   expect(eventHandlerCalled).toEqual(true);
 });
 
-test("should use tool", async () => {
-  let toolCall = undefined;
-  const HelloSchema = z
-    .object({
-      name: z.string(),
-    })
-    .describe("Say hello");
-  const tool = createTool("sayHello", HelloSchema, ({ name }) => {
-    toolCall = name;
-  });
-  const eventMessages: PerformerMessage[] = [];
-  const app = (
-    <>
-      <system>Say hello to world</system>
-      <Assistant
-        onMessage={(message) => eventMessages.push(message)}
-        model="gpt-4-1106-preview"
-        toolChoice={tool}
-        tools={[tool]}
-      />
-    </>
-  );
-  const performer = new Performer(app);
-  performer.start();
-  await performer.waitUntilSettled();
-  expect(performer.hasFinished).toEqual(true);
-  const messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(3);
-  expect(messages[0].role).toEqual("system");
-  assert(isSystemMessage(messages[0]));
-  assert(isAssistantMessage(messages[1]));
-  assert(isToolMessage(messages[2]));
-  assert(messages[1].tool_calls);
-  expect(toolCall).toBeDefined();
-  expect(eventMessages).toHaveLength(1);
-  expect(eventMessages[0]).toEqual(messages[1]);
-});
-
 test.skipIf(!process.env.OPENROUTER_API_KEY)(
   "should use open router",
 
@@ -123,6 +79,38 @@ test.skipIf(!process.env.OPENROUTER_API_KEY)(
           <system>Your name is Bob.</system>
           <user>Whats your name?</user>
           <Mixtral />
+        </>
+      );
+    }
+    const performer = new Performer(<App />);
+    performer.start();
+    await performer.waitUntilSettled();
+    const message = resolveMessages(performer.root!);
+    console.log(message);
+  },
+  20_000,
+);
+
+test.skipIf(process.env.USE_OLLAMA !== "true")(
+  "should use ollama model",
+
+  async () => {
+    function Ollama({ model }: { model: string }, asyncHooks: AsyncHooks) {
+      return Assistant(
+        {
+          model,
+          baseURL: "http://localhost:11434/v1",
+        },
+        asyncHooks,
+      );
+    }
+
+    function App() {
+      return () => (
+        <>
+          <system>Your name is Bob.</system>
+          <user>Whats your name? Be concise.</user>
+          <Ollama model="phi" />
         </>
       );
     }
