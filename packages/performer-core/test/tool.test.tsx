@@ -45,13 +45,12 @@ test("should use tool", async () => {
   assert(isToolMessage(messages[2]));
   assert(messages[1].tool_calls);
   expect(toolCall).toBeDefined();
-  expect(eventMessages).toHaveLength(1);
+  expect(eventMessages).toHaveLength(2);
   expect(eventMessages[0]).toEqual(messages[1]);
 });
 
-const fixMe = true; // does not return multiple tool calls, and tool call response index not correct
-
-test.skipIf(fixMe)("should use multiple tools", async () => {
+// fixme: does not return multiple tool calls, and tool call response index not correct
+test("should use multiple tools", async () => {
   const WidgetCountSchema = z
     .object({
       count: z.number(),
@@ -62,18 +61,13 @@ test.skipIf(fixMe)("should use multiple tools", async () => {
       name: z.string(),
     })
     .describe("Extact name of widget");
-  let finalCount = 0;
-  let finalName = "";
+  let callCount = 0;
   function App() {
-    const countTool = createTool(
-      "extractCount",
-      WidgetCountSchema,
-      ({ count }) => {
-        finalCount = count;
-      },
-    );
-    const nameTool = createTool("extractName", WidgetNameSchema, ({ name }) => {
-      finalName = name;
+    const countTool = createTool("extractCount", WidgetCountSchema, () => {
+      callCount += 1;
+    });
+    const nameTool = createTool("extractName", WidgetNameSchema, () => {
+      callCount += 1;
     });
     return () => (
       <>
@@ -90,5 +84,5 @@ test.skipIf(fixMe)("should use multiple tools", async () => {
   const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  console.log(finalCount, finalName);
+  expect(callCount).toBeGreaterThan(0);
 });

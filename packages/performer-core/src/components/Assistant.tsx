@@ -94,8 +94,7 @@ export const Assistant: Component<AssistantProps> = async (
   async function callTools(message: PerformerMessage) {
     if (isAssistantMessage(message) && message.tool_calls) {
       for (const toolCall of message.tool_calls) {
-        // @ts-expect-error index is undocumented
-        const tool = tools[toolCall.index];
+        const tool = tools.find((tool) => tool.name === toolCall.function.name);
         if (!tool) {
           throw Error(`Tool not found for tool call: ${toolCall.id}`);
         }
