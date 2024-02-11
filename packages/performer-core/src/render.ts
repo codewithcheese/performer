@@ -259,7 +259,9 @@ function dispatchMessageElement(
   if (!message) {
     message = nodeToMessage(node);
   }
-  performer.dispatchEvent(new PerformerMessageEvent({ message }));
+  performer.dispatchEvent(
+    new PerformerMessageEvent({ message: structuredClone(message) }),
+  );
   if (node.props.onMessage && node.props.onMessage instanceof Function) {
     node.props.onMessage(message);
   }
@@ -278,14 +280,15 @@ async function consumeDeltaStream(
       );
     }
     performer.dispatchEvent(
-      new PerformerDeltaEvent({ uid: node.uid, delta: chunk }),
+      // clone chunk so event consumers mutations don't modify this chunk
+      new PerformerDeltaEvent({ uid: node.uid, delta: structuredClone(chunk) }),
     );
     chunks.push(chunk);
   }
   if (chunks.length === 0) {
     throw Error("Message stream empty");
   }
-  const message = chunks[0] as AssistantMessage;
+  const message = structuredClone(chunks[0]) as AssistantMessage;
   if (!message.role) {
     throw Error("First chunk in stream does not contain message role.");
   }
