@@ -10,6 +10,7 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import OpenAI from "openai";
 import { isEmptyObject } from "../util/is-empty-object.js";
 import { Tool } from "../tool.js";
+import "../util/readable-stream-polyfill.js";
 
 export type AssistantProps = {
   baseURL?: string;
