@@ -30,6 +30,7 @@ export function usePerformerClient(app: Component<any> | null) {
       setPerformer(performer);
 
       performer.addEventListener("*", (event) => {
+        console.log("Received event", event);
         if (!(event instanceof PerformerDeltaEvent)) {
           return setEvents((prevEvents) => [...prevEvents, event]);
         }
