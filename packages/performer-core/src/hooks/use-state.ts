@@ -3,19 +3,19 @@ import { Signal } from "@preact/signals-core";
 import { useRenderScope } from "./use-render-scope.js";
 
 export function useState<STATE extends unknown>(
-  initState: STATE | (() => STATE),
+  initialValue: STATE | (() => STATE),
 ): Signal<Readonly<STATE>> {
   const scope = useRenderScope();
   const key = `state-${scope.nonce++}` as const;
-  if (initState instanceof Function) {
-    initState = initState();
+  if (initialValue instanceof Function) {
+    initialValue = initialValue();
   }
-  if (initState && typeof initState === "object") {
-    Object.freeze(initState);
+  if (initialValue && typeof initialValue === "object") {
+    Object.freeze(initialValue);
   }
   const { value } = useHook<Signal<Readonly<STATE>>>(
     key,
-    new Signal(initState),
+    new Signal(initialValue),
   );
   return value;
 }
