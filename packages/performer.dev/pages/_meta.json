@@ -1,0 +1,20 @@
+{
+  "index": {
+    "type": "page",
+    "title": "Performer",
+    "display": "hidden",
+    "theme": {
+      "layout": "raw"
+    }
+  },
+  "-- Learn": {
+    "type": "separator",
+    "title": "Learn"
+  },
+  "introduction": "",
+  "-- @performer/core": {
+    "type": "separator",
+    "title": "@performer/core"
+  },
+  "hooks": ""
+}

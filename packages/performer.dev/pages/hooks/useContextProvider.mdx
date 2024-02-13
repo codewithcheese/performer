@@ -1,0 +1,107 @@
+---
+title: useContextProvider
+---
+
+# useContextProvider
+
+`useContextProvider` lets you provide context to descendant components.
+
+```js
+const signal = useContextProvider(SomeContext, initialValue)
+```
+
+
+## Reference
+
+Call `useContextProvider` at the top level of your component to create a context value that descendants can access.
+
+```js
+import { useContextProvider } from '@performer/core';
+
+function App() {
+  const config = useContextProvider(ConfigContext, { model: 'gpt-4' });
+  // ...
+```
+
+[See more examples below.](#usage)
+
+#### Parameters
+
+* `SomeContext`: The context that you've previously created with [`createContext`](/reference/react/createContext). The context itself does not hold the information, it only represents the kind of information you can provide or read from components.
+* `initialValue`: The context initial value.
+
+#### Returns
+
+`useContextProvider` returns a signal containing the `initialValue`.
+
+#### Caveats
+
+- `useContextProvider` is a Hook, it must be called at the top level of the component or your own Hooks. You can't call it inside loops or conditions. It must be called before any `await` expressions.
+- The provided value will not be globally available across the whole component tree, but only to descendant components.
+
+---
+
+## Usage
+
+
+### Provide a context value to descendant components
+
+Call `useContextProvider` at the top level of your component to get a reference to the context signal:
+
+```js [[2, 4, "ConfigContext"], [1, 4, "{ model: 'gpt-4' }"]]
+import { useContextProvider } from '@performer/core';
+
+function App() {
+  useContextProvider(ConfigContext, { model: 'gpt-4' });
+  // ...
+```
+
+To access the value in the descendant component:
+
+```js [[2, 4, "config"], [1, 4, "ConfigContext"]]
+import { useContext } from '@performer/core';
+
+function MyAssistant() {
+  const config = useContext(ConfigContext);
+  // ...
+```
+
+`useContext` returns a signal containing the context value for the context you passed.
+
+To access the context value use the signals `value` property:
+
+```js
+const model = config.value.model
+```
+
+---
+
+### Updating the context value
+
+Often, you'll want the context to change over time. Both `useContextProvider` and `useContext` return a signal containing the context value. Update the context using the `value` property.
+
+```js {2} [[1, 2, "ConfigContext"], [2, 2, "{ model: 'gpt-4' }"]]
+function App() {
+  const config = useContextProvider(ConfigContext, { model: 'gpt-4' });
+
+  function onMessage() {
+    config.value = { model: 'gpt-3.5-turbo' }
+  }
+}
+```
+
+Now all `MyAssistant` components below `App` in the component tree will receive this new value.
+
+Child components like `MyAssistant` can also update the context by assigning to the `value` prop:
+
+```js {2} [[1, 2, "ConfigContext"], [2, 5, "{ model: 'gpt-3.5-turbo' }"]]
+function MyAssistant() {
+  const config = useContext(ConfigContext);
+
+  function onMessage() {
+    config.value = { model: 'gpt-3.5-turbo' }
+  }
+}
+```
+
+

@@ -1,0 +1,49 @@
+---
+title: useResource
+---
+
+# useResource
+
+`useResource` lets you fetch and cache external resources.
+
+```js
+const data = await useResource(fn, ...args)
+```
+
+## Reference
+
+### `useResource(fetcher, ...args)`
+
+Call `useResource` with a fetcher function to fetch and cache an external resource.
+
+```js {4,9}
+async function Repos({ user }, { useResource }) {
+  const repos = await useResource(fetchRepos, user);
+  // ...
+
+async function fetchRepos(controller, user) {
+  // ...
+```
+
+`useResource` caches the return value of your fetcher function. When resuming the cached value is used instead of invoking the fetcher.
+
+To support resuming the return value must be JSON serializable. `useResource` also supports returning a `ReadableStream` if the chunks are JSON serializable.
+
+Your component is free to fetch async resources without `useResource`. However, the resource would not be cached and would be fetched during resume.
+
+`useResource` is passed as the second argument to the component instead of being imported. Unlike other hooks, `useResource` is bound to the component instead of imported directly. Since it is bound to the component it can be used **before and after `await` calls**. This allows for multiple `await useResource` expressions in a component function.
+
+#### Parameters
+
+* `fetcher`: The fetcher is the async function that you provide to `useResource` to fetch the resource. It is passed an `AbortController` in the first argument, followed by additional arguments (`...args`) passed in the `useResource` call.
+* `...args`: Additional arguments passed onto the `fetcher` after controller.
+
+#### Returns
+
+`useResource` returns the return value of the fetcher function.
+
+#### Caveats
+
+* The return value of the fetcher function must be JSON serializable.
+
+{/*todo: stream example*/}
