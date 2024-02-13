@@ -1,35 +1,36 @@
 ---
-title: <user>
+title: <assistant>
 ---
 
-# `<user>`
+# \<assistant\>
 
-`<user>` lets you create a user message.
+
+`<assistant>` lets you create an assistant message.
 
 ```js
-<user></user>
+<assistant>Message content</assistant>
 ```
 
 ## Reference 
 
-Use `<user>` to create a user message.
+Use `<assistant>` to create an assistant message.
 
-```js
-<user>Can you help me with my home work?</user>
+```jsx
+<assistant>Hi there, how can I help you today?</assistant>
 ```
 
-`<user>` represents a message literal and has no component logic.   
+`<assistant>` represents a message literal and has no component logic.   
 
 #### Props 
 
 - `onMessage` optional function. Called when `<assistant>` is created. The function is called with the following arguments:
-    - `message` object. Message object of type `AssistantMessage`
-- `content` optional string or object of type `MessageContent`.
+  - `message` object. Message object of type `AssistantMessage`
+- `content` optional string. String message content.
 - `children` optional string. String message content.
 
 #### Caveats 
 
-- Beware that lowercase `<user>` element is different from capitalized `<User>` component. `<user>` represents a user message literal and has no logic. `<User />` is a component that waits for external user input and returns message elements containing the input.
+- Beware that lowercase `<assistant>` element is different from capitalized `<Assistant>` component. `<assistant>` represents a user message literal and has no logic. `<Assistant />` is used to request language model completions.
 
 ## Usage 
 

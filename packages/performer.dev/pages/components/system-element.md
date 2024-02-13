@@ -2,7 +2,7 @@
 title: <system>
 ---
 
-# `<system>`
+# \<system\>
 
 `<system>` lets you create a system message.
 

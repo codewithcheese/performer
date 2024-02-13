@@ -2,7 +2,7 @@
 title: <Assistant>
 ---
 
-# `<Assistant>`
+# \<Assistant\>
 
 `<Assistant>` lets you requests an assistant message response from a language model.
 

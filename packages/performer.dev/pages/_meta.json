@@ -16,5 +16,5 @@
     "type": "separator",
     "title": "@performer/core"
   },
-  "hooks": ""
+  "apis": "API"
 }

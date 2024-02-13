@@ -2,7 +2,7 @@
 title: <User>
 ---
 
-# `<User>`
+# \<User\>
 
 `<User>` lets you wait for user message input.
 

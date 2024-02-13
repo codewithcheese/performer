@@ -2,7 +2,7 @@
 title: <Repeat>
 ---
 
-# `<Repeat>`
+# \<Repeat\>
 
 `<Repeat>` lets you repeat a set of components or elements.
 
