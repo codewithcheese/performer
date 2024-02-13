@@ -8,7 +8,7 @@
     "README.md"
   ],
   "scripts": {
-    "prepare": "tshy",
+    "prepublishOnly": "tshy",
     "watch": "tshy --watch",
     "test": "vitest",
     "typecheck": "tsc --noEmit"
