@@ -11,5 +11,6 @@
     "dependencies": {
         "@performer/core": "workspace:*",
         "@performer/playground": "workspace:*"
-    }
+    },
+    "version": null
 }
