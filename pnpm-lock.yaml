@@ -14,6 +14,9 @@ importers:
       '@playwright/test':
         specifier: ^1.41.2
         version: 1.41.2
+      '@types/node':
+        specifier: ^20.11.17
+        version: 20.11.17
       vitest:
         specifier: 0.34.6
         version: 0.34.6
@@ -56,7 +59,7 @@ importers:
         version: 5.3.3
       vitest:
         specifier: ^1.2.1
-        version: 1.2.1(jsdom@23.2.0)
+        version: 1.2.1(@types/node@20.11.17)(jsdom@23.2.0)
 
   packages/create-performer:
     dependencies:
@@ -6409,7 +6412,7 @@ packages:
       - terser
     dev: true
 
-  /vite-node@1.2.1:
+  /vite-node@1.2.1(@types/node@20.11.17):
     resolution: {integrity: sha512-fNzHmQUSOY+y30naohBvSW7pPn/xn3Ib/uqm+5wAJQJiqQsU0NBR78XdRJb04l4bOFKjpTWld0XAfkKlrDbySg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
@@ -6531,7 +6534,7 @@ packages:
       - terser
     dev: true
 
-  /vitest@1.2.1(jsdom@23.2.0):
+  /vitest@1.2.1(@types/node@20.11.17)(jsdom@23.2.0):
     resolution: {integrity: sha512-TRph8N8rnSDa5M2wKWJCMnztCZS9cDcgVTQ6tsTFTG/odHJ4l5yNVqvbeDJYJRZ6is3uxaEpFs8LL6QM+YFSdA==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
@@ -6556,6 +6559,7 @@ packages:
       jsdom:
         optional: true
     dependencies:
+      '@types/node': 20.11.17
       '@vitest/expect': 1.2.1
       '@vitest/runner': 1.2.1
       '@vitest/snapshot': 1.2.1
@@ -6576,7 +6580,7 @@ packages:
       tinybench: 2.6.0
       tinypool: 0.8.2
       vite: 5.0.11(@types/node@20.11.17)
-      vite-node: 1.2.1
+      vite-node: 1.2.1(@types/node@20.11.17)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less
