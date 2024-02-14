@@ -14,6 +14,7 @@
     "directory": "packages/create-performer"
   },
   "scripts": {
+    "test": "vitest",
     "prepare": "tshy"
   },
   "devDependencies": {
