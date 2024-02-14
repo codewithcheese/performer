@@ -10,11 +10,12 @@
     "ci:publish": "pnpm publish -r --dry-run --no-git-checks --access public",
     "test": "vitest run",
     "typecheck": "pnpm --recursive --parallel run typecheck",
-    "e2e": "playwright test packages/performer-ui --config packages/performer-ui/playwright.config.ts"
+    "e2e": "playwright test packages/performer-playground --config packages/performer-playground/playwright.config.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
     "@playwright/test": "^1.41.2",
+    "@types/node": "^20.11.17",
     "vitest": "0.34.6"
   }
 }

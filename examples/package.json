@@ -1,9 +1,9 @@
 {
     "name": "performer-examples",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "type": "module",
     "scripts": {
-        "ui": "performer-ui ./src",
+        "playground": "playground ./src",
         "test": "vitest",
         "typecheck": "tsc --noEmit"
     },
@@ -15,7 +15,7 @@
     "dependencies": {
         "@preact/signals-core": "1.5.1",
         "@performer/core": "workspace:*",
-        "@performer/ui": "workspace:*",
+        "@performer/playground": "workspace:*",
         "jsdom": "^23.2.0",
         "langchain": "^0.0.201",
         "sqlite3": "5.1.7-rc.0",

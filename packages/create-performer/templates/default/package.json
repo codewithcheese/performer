@@ -1,0 +1,16 @@
+{
+    "name": "examples",
+    "type": "module",
+    "scripts": {
+        "test": "vitest",
+        "playground": "playground ./src"
+    },
+    "devDependencies": {
+        "vitest": "^0.34.6"
+    },
+    "dependencies": {
+        "@performer/core": "workspace:*",
+        "@performer/playground": "workspace:*"
+    },
+    "version": null
+}

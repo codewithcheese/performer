@@ -1,4 +1,4 @@
-# performer-ui
+# @performer/playground
 
 A simple chat UI for testing your Performer apps.
 
@@ -7,7 +7,7 @@ A simple chat UI for testing your Performer apps.
 Install as a dev dependency.
 
 ```bash
-npm install @performer/ui -D
+npm install @performer/playground -D
 ```
 
 ## Setup
@@ -17,12 +17,12 @@ Add a script to your `package.json` to start the UI.
 ```json
 {
   "scripts": {
-    "ui": "performer-ui <directory-with-app-files>"
+    "playground": "playground <directory-with-app-files>"
   }
 }
 ```
 
-Will start the UI on port 3011 (ChatGPT launch date 30th November).
+Will start the playground on port 3011 (ChatGPT launch date 30th November).
 
 ## Creating apps
 

@@ -1,10 +1,10 @@
 {
-  "name": "@performer/ui",
+  "name": "@performer/playground",
   "private": false,
   "bin": {
-    "performer-ui": "./bin/ui.js"
+    "playground": "./bin/playground.js"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3011",

@@ -1,0 +1,13 @@
+{
+    "name": "~TODO~",
+    "version": "0.0.1",
+    "scripts": {
+        "test": "vitest",
+        "ui": "playground ./src"
+    },
+    "devDependencies": {
+        "@performer/core": "^0.0.0",
+        "@performer/playground": "^0.0.0"
+    },
+    "type": "module"
+}
