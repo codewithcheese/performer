@@ -1,7 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
+import * as fs from "fs";
+import * as path from "path";
 import parser from "gitignore-parser";
-import { mkdirp, copy, dist } from "./utils.js";
+import { mkdirp } from "./utils.js";
 import { fileURLToPath } from "url";
 import glob from "tiny-glob/sync.js";
 

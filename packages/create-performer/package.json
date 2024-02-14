@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
+    "kleur": "^4.1.5",
     "gitignore-parser": "^0.0.2",
     "tiny-glob": "^0.2.9"
   },
