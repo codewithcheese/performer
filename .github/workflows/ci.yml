@@ -6,7 +6,8 @@ on:
 permissions:
   contents: read # to fetch code (actions/checkout)
 
-#env:
+env:
+  PNPM_CACHE_FOLDER: .pnpm-store
 #  # We only install Chromium manually
 #  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
@@ -30,13 +31,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2.2.4
-      - uses: actions/setup-node@v3
+      - name: setup node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: pnpm
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+      - name: install pnpm
+        run: npm i pnpm@latest -g
+      - name: setup pnpm config
+        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
       - run: pnpm install --frozen-lockfile
-#      - run: pnpm playwright install chromium
       - run: pnpm test
         env:
           CI: true
