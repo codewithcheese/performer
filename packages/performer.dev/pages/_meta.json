@@ -11,7 +11,9 @@
     "type": "separator",
     "title": "Learn"
   },
-  "introduction": "",
+  "what-is-performer": "",
+  "the-basics": "",
+  "quickstart": "",
   "-- @performer/core": {
     "type": "separator",
     "title": "@performer/core"
