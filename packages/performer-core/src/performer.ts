@@ -1,125 +1,103 @@
-/**
- * Session responsible for starting/resuming apps.
- *
- * Apps are defined as a tree of elements.
- */
 import type { PerformerElement } from "./element.js";
 import type { PerformerNode } from "./node.js";
 import { render } from "./render.js";
-import type { PerformerEvent } from "./event.js";
+import {
+  PerformerErrorEvent,
+  PerformerLifecycleEvent,
+  PerformerMessageEvent,
+  PerformerEventMap,
+} from "./event.js";
 import type { PerformerMessage } from "./message.js";
 import log from "loglevel";
 import { LogConfig, logEvent, logNode } from "./util/log.js";
+import { PendingInputState } from "./hooks/index.js";
+import { TypedEventTarget } from "./util/typed-event-target.js";
 
-type RunProps = {
-  id?: string;
-  element: PerformerElement;
-  node?: PerformerNode;
-  throwOnError?: boolean;
+type PerformerOptions = { throwOnError?: boolean };
+
+export type PendingInputNode = PerformerNode & {
+  hooks: { input: PendingInputState };
 };
 
-type EventHandler = (event: PerformerEvent) => void;
+export class Performer extends TypedEventTarget<PerformerEventMap> {
+  #uid: string;
 
-export class Performer {
-  id: string;
-  element: PerformerElement;
-  node?: PerformerNode;
-  errors: Error[] = [];
-  inputQueue: PerformerMessage[] = [];
-  inputNode: PerformerNode | undefined;
-  private eventHandler: EventHandler | undefined;
+  app: PerformerElement;
+  root?: PerformerNode;
+  options: PerformerOptions;
+  errors: PerformerErrorEvent[] = [];
+
   hasFinished: boolean = false;
-  finish: () => void = () => {};
+
   // todo add deadline
-  waitUntilFinished: Promise<void>;
-  inputResolver: () => void = () => {};
-  waitForInput: Promise<void>;
+  inputQueue: PerformerMessage[] = [];
+  inputNode: PendingInputNode | undefined;
 
-  abortController = new AbortController();
-
-  nodes: Map<PerformerElement, PerformerNode> = new Map();
-  depsInUse: Set<string> = new Set<string>();
-  config: Record<string, any> = {};
-  throwOnError = false;
+  controller = new AbortController();
 
   renderQueued = false;
-  rendering: ReturnType<typeof render> | null = null;
+  renderPromised: ReturnType<typeof render> | null = null;
 
   logConfig: LogConfig = {
-    showUpdateEvents: true,
+    showDeltaEvents: true,
     showResolveMessages: false,
   };
 
-  constructor({ id, element, node, throwOnError }: RunProps) {
-    this.id = id || crypto.randomUUID();
-    this.element = element;
-    this.node = node;
-    this.waitUntilFinished = new Promise<void>(
-      (resolve) =>
-        (this.finish = () => {
-          log.debug(`Session finished ${this.id}`);
-          if (!this.hasFinished) {
-            this.announce({
-              sid: crypto.randomUUID(),
-              op: "once",
-              type: "LIFECYCLE",
-              payload: {
-                state: "finished",
-              },
-            });
-          }
-          this.hasFinished = true;
-          resolve();
-        }),
-    ).catch(console.error);
-    this.waitForInput = new Promise<void>(
-      (resolve) => (this.inputResolver = resolve),
-    )
-      .catch(console.error)
-      .finally(() => console.log("wait for input complete"));
-    this.throwOnError =
-      throwOnError === undefined
-        ? globalThis.process && process.env["VITEST"] != null
-        : throwOnError;
+  constructor(app: PerformerElement, options: PerformerOptions = {}) {
+    super();
+    this.#uid = crypto.randomUUID();
+    this.app = app;
+    this.options = options;
+    if (
+      this.options.throwOnError === undefined &&
+      globalThis.process &&
+      process.env["VITEST"] != null
+    ) {
+      this.options.throwOnError = true;
+    }
+    this.addEventListener("delta", (delta) => {
+      logEvent(delta, this.logConfig);
+    });
+    this.addEventListener("error", (error) => {
+      this.errors.push(error);
+    });
   }
 
   start() {
-    this.rendering = render(this);
+    this.renderPromised = render(this);
   }
 
   abort() {
     // todo test action abort
-    this.announce({
-      sid: crypto.randomUUID(),
-      op: "once",
-      type: "LIFECYCLE",
-      payload: {
-        state: "aborted",
-      },
-    });
-    this.abortController.abort();
+    this.dispatchEvent(new PerformerLifecycleEvent({ state: "aborted" }));
+    this.controller.abort();
     this.finish();
   }
 
+  finish() {
+    this.hasFinished = true;
+    this.dispatchEvent(new PerformerLifecycleEvent({ state: "finished" }));
+  }
+
   get aborted() {
-    return this.abortController.signal.aborted;
+    return this.controller.signal.aborted;
   }
 
   queueRender() {
     if (this.renderQueued) {
       return;
     }
-    if (this.rendering) {
+    if (this.renderPromised) {
       this.renderQueued = true;
-      this.rendering.finally(() => {
+      this.renderPromised.finally(() => {
         this.renderQueued = false;
-        this.rendering = render(this);
+        this.renderPromised = render(this);
       });
     } else {
       this.renderQueued = true;
       Promise.resolve().then(() => {
         this.renderQueued = false;
-        this.rendering = render(this);
+        this.renderPromised = render(this);
       });
     }
   }
@@ -131,72 +109,55 @@ export class Performer {
   setInputNode(node: PerformerNode) {
     log.debug("Input node", logNode(node));
     // if input already queue then deliver to node immediately
+    const inputNode = node;
+    if (!inputNode.hooks.input) {
+      throw Error("Cannot set input not without input hook");
+    }
+    if (inputNode.hooks.input.state !== "pending") {
+      throw Error("Cannot set input, input state not pending");
+    }
     if (this.inputQueue.length) {
-      node.hooks.input!.resolve([...this.inputQueue]);
+      inputNode.hooks.input.resolve([...this.inputQueue]);
     } else {
-      this.inputNode = node;
-      this.inputResolver();
+      this.inputNode = inputNode as PendingInputNode;
+      this.dispatchEvent(new PerformerLifecycleEvent({ state: "listening" }));
     }
   }
 
-  input(event: PerformerEvent) {
-    if (event.type === "MESSAGE") {
-      if (this.inputNode) {
-        this.inputNode.hooks.input!.resolve([event.payload]);
-      } else {
-        this.inputQueue.push(event.payload);
-      }
+  input(message: PerformerMessage) {
+    if (this.inputNode) {
+      this.inputNode.hooks.input.resolve([message]);
+      this.inputNode = undefined;
     } else {
-      throw Error(`Input of event type ${event.type} not supported.`);
+      this.inputQueue.push(message);
     }
-  }
-
-  /**
-   * Events
-   */
-
-  announce(event: PerformerEvent) {
-    logEvent(event, this.logConfig);
-    if (this.eventHandler) {
-      this.eventHandler(event);
-    }
-  }
-
-  addEventHandler(handler: EventHandler) {
-    this.eventHandler = handler;
   }
 
   async waitUntilSettled() {
-    return Promise.race([this.waitForInput, this.waitUntilFinished]).finally(
-      () => {
-        this.waitForInput = new Promise<void>(
-          (resolve) => (this.inputResolver = resolve),
-        ).catch(console.error);
-      },
-    );
+    if (this.hasFinished) {
+      return;
+    }
+    if (this.inputNode) {
+      return;
+    }
+    return new Promise<void>((resolve) => {
+      this.addEventListener("lifecycle", (event) => {
+        if (
+          event.detail.state === "listening" ||
+          event.detail.state === "finished"
+        ) {
+          resolve();
+        }
+      });
+    });
   }
 
-  /**
-   * Errors
-   */
-
   onError(error: unknown) {
-    if (typeof error === "string") {
-      error = new Error(error);
-    }
-    if (!(error instanceof Error)) {
-      error = new Error("Unknown error");
-    }
-    if (error instanceof Error) {
-      this.errors.push(error);
-      this.announce({
-        type: "ERROR",
-        op: "once",
-        sid: crypto.randomUUID(),
-        payload: {
-          message: error.message,
-        },
-      });
+    this.finish();
+    if (this.options.throwOnError) {
+      throw error;
+    } else {
+      this.dispatchEvent(new PerformerErrorEvent(error));
     }
   }
 }

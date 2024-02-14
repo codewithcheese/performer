@@ -1,5 +1,8 @@
+import {
+  PerformerMessageEvent,
+  PerformerLifecycleEvent,
+} from "@performer/core";
 import { useEffect, useState } from "react";
-import { Component, isLifecycleEvent, isMessageEvent } from "@performer/core";
 import { usePerformerClient } from "./use-performer-client.ts";
 import {
   Divider,
@@ -8,6 +11,7 @@ import {
   ModelSelect,
   Splash,
 } from "./components";
+import { AppImport, importApps } from "./lib/import.ts";
 
 function Chat({ app }: { app: AppImport }) {
   const { events, sendMessage } = usePerformerClient(app.module.App);
@@ -57,13 +61,13 @@ function Chat({ app }: { app: AppImport }) {
               </div>
             </div>
             {events.map((event, index) => {
-              if (isMessageEvent(event)) {
-                return <Message key={index} message={event.payload} />;
-              } else if (isLifecycleEvent(event)) {
+              if (event instanceof PerformerMessageEvent) {
+                return <Message key={index} message={event.detail.message} />;
+              } else if (event instanceof PerformerLifecycleEvent) {
                 return (
                   <Divider
                     key={index}
-                    message={`Performer ${event.payload.state}`}
+                    message={`Performer ${event.detail.state}`}
                   />
                 );
               }
@@ -84,59 +88,32 @@ function Chat({ app }: { app: AppImport }) {
   );
 }
 
-type AppImport = {
-  name: string;
-  path: string;
-  module: Record<string, any>;
-};
-
-async function importApps(): Promise<AppImport[]> {
-  const modules = import.meta.glob("@app/*.(tsx|jsx)");
-  const imports: AppImport[] = [];
-  for (const [path, loader] of Object.entries(modules)) {
-    const module = (await loader()) as Record<string, unknown> & {
-      meta?: { name?: string };
-      App: Component<any>;
-    };
-    if (!("App" in module)) {
-      console.warn(`No \`App\` export found in ${path}, skipping import`);
-      continue;
-    }
-    let name: string;
-    if (
-      "meta" in module &&
-      module.meta &&
-      "name" in module.meta &&
-      module.meta.name
-    ) {
-      name = module.meta.name;
-    } else {
-      // use filename
-      name = path.split("/").pop()!.split(".").shift()!;
-    }
-    console.log(path, module);
-    imports.push({
-      name,
-      path,
-      module: module as Record<string, any>,
-    });
-  }
-  return imports;
-}
-
 function App() {
+  const [loading, setLoading] = useState(true);
   const [apps, setApps] = useState<AppImport[]>([]);
   const [selectedApp, setSelectedApp] = useState<AppImport | null>(null);
   useEffect(() => {
-    importApps().then((apps) => {
-      setApps(apps);
-      if (apps.length > 0) {
-        setSelectedApp(apps[0]);
-      }
-    });
+    importApps()
+      .then((apps) => {
+        setApps(apps);
+        if (apps.length > 0) {
+          setSelectedApp(apps[0]);
+        }
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  return selectedApp ? <Chat app={selectedApp} /> : <div>Loading...</div>;
+  return loading ? (
+    <div>Loading...</div>
+  ) : selectedApp ? (
+    <Chat app={selectedApp} />
+  ) : (
+    // todo nice UI with instructions for creating first app
+    <div>
+      <p>No apps found in {import.meta.env.VITE_PERFORMER_APP_PATH}</p>
+      <p>Usage: performer-ui &lt;import-path&gt;</p>
+    </div>
+  );
 }
 
 export default App;

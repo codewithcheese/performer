@@ -1,14 +1,17 @@
 import {
+  nodeToMessage,
+  PerformerDeltaEvent,
+  PerformerErrorEvent,
   PerformerEvent,
+  PerformerMessageEvent,
   PerformerNode,
-  isAssistantMessage,
-  Performer,
+  readTextContent,
 } from "../index.js";
 import log from "loglevel";
 import { isImageContent, isTextContent } from "../message.js";
 
 export type LogConfig = {
-  showUpdateEvents: boolean;
+  showDeltaEvents: boolean;
   showResolveMessages: boolean;
 };
 
@@ -19,37 +22,51 @@ function getNestedProperty(object: any, propertyPath: string): any {
 }
 
 export function logEvent(event: PerformerEvent, config: LogConfig) {
-  if (!config.showUpdateEvents && event.op === "update") return;
+  if (!config.showDeltaEvents && "delta" in event.detail) return;
 
-  let msg = `Event ${event.type} ${event.op}`;
-  if (event.type === "MESSAGE") {
-    msg += ` ${event.payload.role} `;
-    msg +=
-      typeof event.payload.content === "string"
-        ? event.payload.content
-        : event.payload.content
-            .map((content) => {
-              if (isTextContent(content) && content.text !== "") {
-                return `text:${content.text}`;
-              } else if (isImageContent(content)) {
-                return `image:${content.image_url}`;
-              } else {
-                return "";
-              }
-            })
-            .join(", ");
-    if (isAssistantMessage(event.payload) && event.payload.tool_calls) {
-      msg += ` ${event.payload.tool_calls
-        .map(
-          (toolCall) =>
-            `${toolCall.function.name ? toolCall.function.name + ":" : ""}${
+  let msg = `Event ${event.type}`;
+  if (
+    event instanceof PerformerMessageEvent ||
+    event instanceof PerformerDeltaEvent
+  ) {
+    const message =
+      "message" in event.detail ? event.detail.message : event.detail.delta;
+    if (message.role) {
+      msg += ` ${message.role} `;
+    } else {
+      msg += " ";
+    }
+    if (message.content) {
+      msg +=
+        typeof message.content === "string"
+          ? message.content
+          : message.content
+              .map((content) => {
+                if (isTextContent(content) && content.text !== "") {
+                  return `text:${content.text}`;
+                } else if (isImageContent(content)) {
+                  return `image:${content.image_url}`;
+                } else {
+                  return "";
+                }
+              })
+              .join(", ");
+    }
+    if ("tool_calls" in message && message.tool_calls) {
+      msg += ` ${message.tool_calls
+        .map((toolCall) => {
+          if (toolCall.function) {
+            return `${toolCall.function.name ? toolCall.function.name + ":" : ""}${
               toolCall.function.arguments
-            }`,
-        )
+            }`;
+          } else {
+            return "";
+          }
+        })
         .join(", ")}`;
     }
-  } else if (event.type === "ERROR") {
-    msg += ` ${event.payload.message}`;
+  } else if (event instanceof PerformerErrorEvent) {
+    msg += ` ${event.detail.message}`;
   }
 
   log.debug(msg);
@@ -66,6 +83,18 @@ export function logNode(node: PerformerNode) {
   return getHierarchy(node).join("->");
 }
 
+export function logContent(node: PerformerNode, length: number = 20) {
+  if (typeof node.type === "string" && node.type !== "raw") {
+    let content = readTextContent(nodeToMessage(node));
+    if (content.length > length) {
+      content = content.substring(0, length) + "...";
+    }
+    return `"${content}"`;
+  } else {
+    return "";
+  }
+}
+
 function getHierarchy(node: PerformerNode) {
   const names: string[] = [];
   if (node.parent) names.push(...getHierarchy(node.parent));
@@ -79,10 +108,6 @@ export function logResolveMessages(
 ) {
   if (!config.showResolveMessages) return;
   if (node) {
-    log.debug(
-      `Resolving messages for ${typeof node.type === "string" ? node.type : node.type.name}`,
-    );
-  } else {
-    log.debug(`Finished resolving messages`);
+    log.debug(`Resolving messages`, logNode(node));
   }
 }

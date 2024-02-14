@@ -1,6 +1,6 @@
 import log from "loglevel";
 
-// todo log level controls
+// fixme log level controls
 log.enableAll();
 
 export * from "./component.js";
@@ -12,3 +12,5 @@ export * from "./node.js";
 export * from "./render.js";
 export * from "./performer.js";
 export * from "./components/index.js";
+export * from "./hydration.js";
+export * from "./tool.js";

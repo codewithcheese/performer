@@ -1,10 +1,4 @@
-import {
-  BaseMessage,
-  HumanMessage,
-  AIMessage,
-  AIMessageChunk,
-  SystemMessage as LCSystemMessage,
-} from "langchain/schema";
+import { jsx } from "./jsx/index.js";
 
 export type PerformerMessage =
   | UserMessage
@@ -14,7 +8,7 @@ export type PerformerMessage =
 
 export type MessageImageUrlContent = {
   type: "image_url";
-  image_url: string;
+  image_url: { url: string; detail?: "auto" | "low" | "high" };
 };
 
 export type MessageTextContent = {
@@ -22,7 +16,10 @@ export type MessageTextContent = {
   text: string;
 };
 
-export type MessageContent = (MessageTextContent | MessageImageUrlContent)[];
+export type MessageContentItem = (
+  | MessageTextContent
+  | MessageImageUrlContent
+)[];
 
 export type ToolCall = {
   id: string;
@@ -40,96 +37,44 @@ export type FunctionCall = {
 
 export type UserMessage = {
   role: "user";
-  content: MessageContent;
+  content: string | MessageContentItem;
 };
 
 export type AssistantMessage = {
   role: "assistant";
-  content: MessageContent;
+  content: string | null;
   tool_calls?: ToolCall[];
   function_call?: FunctionCall;
 };
 
 export type SystemMessage = {
   role: "system";
-  content: MessageContent;
+  content: string;
 };
 
 export type ToolMessage = {
-  id: string;
+  tool_call_id: string;
   role: "tool";
   content: string;
 };
 
-export const fromLangchain = {
-  transform(
-    chunk: BaseMessage,
-    controller: TransformStreamDefaultController<PerformerMessage>,
-  ) {
-    let role: "user" | "assistant" | "system";
-    if (chunk instanceof HumanMessage) {
-      role = "user";
-    } else if (chunk instanceof AIMessage || chunk instanceof AIMessageChunk) {
-      role = "assistant";
-    } else if (chunk instanceof LCSystemMessage) {
-      role = "system";
-    } else {
-      throw new Error("Unknown message type");
-    }
-    let content: MessageContent = [];
-    let tool_calls;
-    let function_call;
-    if (typeof chunk.content === "string") {
-      content.push({ type: "text", text: chunk.content });
-    } else if (Array.isArray(chunk.content)) {
-      for (const contentPart of chunk.content) {
-        switch (contentPart.type) {
-          case "text":
-            content.push(contentPart);
-            break;
-          case "image_url":
-            content.push({
-              type: "image_url",
-              image_url:
-                typeof contentPart.image_url === "object"
-                  ? contentPart.image_url.url
-                  : contentPart.image_url,
-            });
-            break;
-          default:
-            throw new Error("Unsupported content type");
-        }
-      }
-    } else {
-      throw new Error("Unsupported content type");
-    }
-    if (chunk.additional_kwargs?.tool_calls) {
-      tool_calls = chunk.additional_kwargs.tool_calls;
-    }
-    if (chunk.additional_kwargs?.function_call) {
-      function_call = chunk.additional_kwargs.function_call;
-    }
-    controller.enqueue({ role, content, tool_calls, function_call });
-  },
+export type MessageDelta = {
+  role?: "system" | "user" | "assistant" | "tool";
+  content?: string | null;
+  function_call?: {
+    name?: string;
+    arguments?: string;
+  };
+  tool_calls?: {
+    index: number;
+    id?: string;
+    function?: {
+      name?: string;
+      arguments?: string;
+    };
+    type?: "function";
+  }[];
 };
-
-export function toLangchain(messages: PerformerMessage[]) {
-  const lcMessages: BaseMessage[] = [];
-  messages.forEach((message) => {
-    switch (message.role) {
-      case "system":
-        lcMessages.push(new LCSystemMessage({ content: message.content }));
-        break;
-      case "user":
-        lcMessages.push(new HumanMessage({ content: message.content }));
-        break;
-      case "assistant":
-        lcMessages.push(new AIMessage({ content: message.content }));
-        break;
-    }
-  });
-  return lcMessages;
-}
 
 export function isTextContent(content: unknown): content is MessageTextContent {
   return (
@@ -162,6 +107,17 @@ export function isMessage(message: unknown): message is PerformerMessage {
   );
 }
 
+export function isMessageDelta(delta: unknown): delta is MessageDelta {
+  return (
+    delta != null &&
+    typeof delta === "object" &&
+    ("role" in delta ||
+      "content" in delta ||
+      "tool_calls" in delta ||
+      "function_call" in delta)
+  );
+}
+
 export function isToolMessage(message: unknown): message is AssistantMessage {
   return isMessage(message) && message.role === "tool";
 }
@@ -181,10 +137,68 @@ export function isAssistantMessage(
 }
 
 export function readTextContent(message: PerformerMessage) {
+  if (!message.content) {
+    return "";
+  }
   return typeof message.content === "string"
     ? message.content
     : message.content
         .filter(isTextContent)
         .map((content) => content.text)
         .join(" ");
+}
+
+export function messagesToElements(
+  messages: PerformerMessage[],
+  onMessage?: (message: PerformerMessage) => void,
+) {
+  return messages.map((message) => {
+    return jsx(message.role, { ...message, onMessage });
+  });
+}
+
+export function concatDelta(previous: MessageDelta, delta: MessageDelta) {
+  if (delta.content != null) {
+    // Check for both null and undefined
+    previous.content = previous.content
+      ? previous.content + delta.content
+      : delta.content;
+  }
+
+  // Apply function_call
+  if (delta.function_call) {
+    if (!previous.function_call) {
+      previous.function_call = { name: "", arguments: "" };
+    }
+    previous.function_call.name += delta.function_call.name ?? "";
+    previous.function_call.arguments += delta.function_call.arguments ?? "";
+  }
+
+  // Apply tool_calls
+  if (delta.tool_calls && delta.tool_calls.length > 0) {
+    if (!previous.tool_calls) {
+      previous.tool_calls = [];
+    }
+    delta.tool_calls.forEach((toolCall) => {
+      const existingToolCall =
+        previous.tool_calls && previous.tool_calls[toolCall.index];
+      if (!existingToolCall) {
+        if (!previous.tool_calls) {
+          previous.tool_calls = [];
+        }
+        previous.tool_calls[toolCall.index] = toolCall;
+      } else {
+        // Example of concatenation/merge logic for existing tool calls
+        existingToolCall.id = existingToolCall.id + (toolCall.id ?? "");
+        if (toolCall.function) {
+          if (!existingToolCall.function) {
+            existingToolCall.function = { name: "", arguments: "" };
+          }
+          existingToolCall.function.name += toolCall.function.name ?? "";
+          existingToolCall.function.arguments +=
+            toolCall.function.arguments ?? "";
+        }
+      }
+    });
+  }
 }

@@ -6,51 +6,59 @@ import {
   Performer,
   useState,
 } from "../../src/index.js";
+import { testHydration } from "../util/test-hydration.js";
+import { ExpectNode, expectTree } from "../util/expect-tree.js";
 
-test("should repeat 2 times", async () => {
+test("should repeat multiple times", async () => {
   const app = (
     <>
-      <system>X = 0. Answer with scalar.</system>
+      <system>X = 0. Answer using scalar value only.</system>
       <Repeat times={2}>
         <system>Increment X by 1</system>
         <Assistant />
       </Repeat>
+      <Repeat times={2}>
+        <system>Increment X by 2</system>
+        <Assistant />
+      </Repeat>
     </>
   );
-  const performer = new Performer({ element: app });
+  const events = [];
+  const performer = new Performer(app);
+  performer.addEventListener("*", (event) => {
+    events.push(event);
+  });
   performer.start();
   await performer.waitUntilSettled();
   expect(performer.errors).toHaveLength(0);
-  expect(performer.node?.child?.type).toEqual("system");
-  assert(performer.node?.child?.nextSibling?.type instanceof Function);
-  expect(performer.node?.child?.nextSibling?.type.name).toEqual("Repeat");
-  expect(performer.node?.child?.nextSibling?.child?.type).toEqual("system");
-  assert(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.type instanceof
-      Function,
-  );
-  expect(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.type.name,
-  ).toEqual("Assistant");
-  expect(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling?.type,
-  ).toEqual("system");
-  assert(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling
-      ?.nextSibling?.type instanceof Function,
-  );
-  expect(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling
-      ?.nextSibling?.type.name,
-  ).toEqual("Assistant");
-  expect(
-    performer.node?.child?.nextSibling?.child?.nextSibling?.nextSibling
-      ?.nextSibling?.nextSibling,
-  ).toEqual(undefined);
-  const messages = resolveMessages(performer.node);
-  console.log(messages);
-  // testHydration(performer);
-}, 10_000);
+  expectTree(performer.root!, {
+    type: "Fragment",
+    children: [
+      { type: "system" },
+      {
+        type: "Repeat",
+        children: [
+          { type: "system" },
+          { type: "Assistant" },
+          { type: "system" },
+          { type: "Assistant" },
+        ],
+      },
+      {
+        type: "Repeat",
+        children: [
+          { type: "system" },
+          { type: "Assistant" },
+          { type: "system" },
+          { type: "Assistant" },
+        ],
+      },
+    ],
+  });
+  let messages = resolveMessages(performer.root);
+  expect(messages).toHaveLength(9);
+  await testHydration(performer);
+}, 30_000);
 
 test("should stop repeating using stop prop", async () => {
   function App() {
@@ -72,10 +80,10 @@ test("should stop repeating using stop prop", async () => {
       </>
     );
   }
-  const performer = new Performer({ element: <App /> });
+  const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.node);
+  const messages = resolveMessages(performer.root);
   expect(messages.length).toEqual(5);
-  // testHydration(performer);
+  await testHydration(performer);
 }, 10_000);

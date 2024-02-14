@@ -1,31 +1,37 @@
 import { type PerformerNode, getNearestParent } from "../node.js";
 import { useHook } from "./use-hook.js";
 import { Signal } from "@preact/signals-core";
+import { assertTrue } from "../util/assert.js";
 
-export interface ContextId<STATE> {
+export interface Context<STATE> {
   readonly __context_type: STATE;
   readonly name: string;
 }
 
-export function createContextId<STATE = unknown>(
-  name: string,
-): ContextId<STATE> {
+export function createContext<STATE = unknown>(name: string): Context<STATE> {
+  assertTrue(
+    /^[\w/.-]+$/.test(name),
+    `Context name "${name}" must only contain A-Z,a-z,0-9, _, -`,
+  );
   return Object.freeze({
     name,
   } as any);
 }
 
-export function initContext<STATE extends unknown>(
-  context: ContextId<STATE>,
-  initValue: STATE,
+export function useContextProvider<STATE extends unknown>(
+  context: Context<STATE>,
+  initialValue: STATE,
 ) {
   const contextKey = `context-${context.name}` as const;
-  const { value } = useHook<Signal<STATE>>(contextKey, new Signal(initValue));
+  const { value } = useHook<Signal<STATE>>(
+    contextKey,
+    new Signal(initialValue),
+  );
   return value;
 }
 
 export function useContext<STATE extends unknown>(
-  context: ContextId<STATE>,
+  context: Context<STATE>,
 ): Signal<STATE> {
   const providerKey = `provider-${context.name}` as const;
   const contextKey = `context-${context.name}` as const;
@@ -57,5 +63,3 @@ export type ProviderHookRecord = {
 export type ContextHookRecord = {
   [key in ContextHookKey]?: unknown;
 };
-
-export type UseContextHookRecord = ProviderHookRecord & ContextHookRecord;

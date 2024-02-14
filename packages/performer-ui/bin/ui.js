@@ -1,6 +1,8 @@
 import { spawn } from "child_process";
 import * as path from "path";
 import { fileURLToPath } from "url";
+import "dotenv/config";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv.slice(2);
@@ -14,12 +16,19 @@ const appPath = path.join(process.cwd(), args[0]);
 console.log("Starting Performer UI...", appPath);
 
 const vite = spawn(
-  path.join(__dirname, "../node_modules/.bin/vite"),
+  path.join(
+    process.cwd(),
+    "./node_modules/@performer/ui/node_modules/.bin/vite",
+  ),
   ["--port", 3011],
   {
-    env: { PERFORMER_APP_PATH: appPath },
+    env: {
+      VITE_PERFORMER_APP_PATH: appPath,
+      VITE_OPENAI_API_KEY: process.env["OPENAI_API_KEY"],
+    },
     stdio: "inherit",
     shell: true,
+    cwd: path.join(process.cwd(), "./node_modules/@performer/ui/"),
   },
 );
 

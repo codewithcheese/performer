@@ -27,14 +27,14 @@ test("should load root route by default and then goto /second", async () => {
     { path: "/second", component: <Second /> },
   ];
   const app = <Router routes={routes} />;
-  const performer = new Performer({ element: app });
+  const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  assert(performer.node?.type instanceof Function);
-  expect(performer.node?.type.name).toEqual("Router");
-  assert(performer.node?.child?.type instanceof Function);
-  expect(performer.node?.child?.type.name).toEqual("Second");
-  const messages = resolveMessages(performer.node!);
+  assert(performer.root?.type instanceof Function);
+  expect(performer.root?.type.name).toEqual("Router");
+  assert(performer.root?.child?.type instanceof Function);
+  expect(performer.root?.child?.type.name).toEqual("Second");
+  const messages = resolveMessages(performer.root!);
   expect(readTextContent(messages[0])).toEqual("Hello World");
 });
 
