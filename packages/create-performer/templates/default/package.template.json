@@ -1,0 +1,13 @@
+{
+    "name": "~TODO~",
+    "version": "0.0.1",
+    "scripts": {
+        "test": "vitest",
+        "ui": "performer-ui ./src"
+    },
+    "devDependencies": {
+        "@performer/core": "^0.0.0",
+        "@performer/ui": "^0.0.0"
+    },
+    "type": "module"
+}
