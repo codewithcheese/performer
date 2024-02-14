@@ -7,7 +7,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const args = process.argv.slice(2);
 if (args.length === 0 || !args[0]) {
-  console.error("Usage: npm run performer-ui <performer-app-path>");
+  console.error("Usage: npm run playground <performer-app-path>");
   process.exit(1); // Exits with a non-zero code to indicate an error
 }
 
@@ -18,7 +18,7 @@ console.log("Starting Performer UI...", appPath);
 const vite = spawn(
   path.join(
     process.cwd(),
-    "./node_modules/@performer/ui/node_modules/.bin/vite",
+    "./node_modules/@performer/playground/node_modules/.bin/vite",
   ),
   ["--port", 3011],
   {
@@ -28,7 +28,7 @@ const vite = spawn(
     },
     stdio: "inherit",
     shell: true,
-    cwd: path.join(process.cwd(), "./node_modules/@performer/ui/"),
+    cwd: path.join(process.cwd(), "./node_modules/@performer/playground/"),
   },
 );
 

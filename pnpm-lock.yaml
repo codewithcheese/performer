@@ -26,9 +26,9 @@ importers:
       '@performer/core':
         specifier: workspace:*
         version: link:../packages/performer-core
-      '@performer/ui':
+      '@performer/playground':
         specifier: workspace:*
-        version: link:../packages/performer-ui
+        version: link:../packages/performer-playground
       '@preact/signals-core':
         specifier: 1.5.1
         version: 1.5.1
@@ -94,9 +94,9 @@ importers:
       '@performer/core':
         specifier: workspace:*
         version: link:../../../performer-core
-      '@performer/ui':
+      '@performer/playground':
         specifier: workspace:*
-        version: link:../../../performer-ui
+        version: link:../../../performer-playground
     devDependencies:
       vitest:
         specifier: ^0.34.6
@@ -157,7 +157,7 @@ importers:
         specifier: 0.34.6
         version: 0.34.6
 
-  packages/performer-ui:
+  packages/performer-playground:
     dependencies:
       '@performer/core':
         specifier: workspace:*
