@@ -111,7 +111,7 @@ function App() {
     // todo nice UI with instructions for creating first app
     <div>
       <p>No apps found in {import.meta.env.VITE_PERFORMER_APP_PATH}</p>
-      <p>Usage: performer-ui &lt;import-path&gt;</p>
+      <p>Usage: playground &lt;import-path&gt;</p>
     </div>
   );
 }

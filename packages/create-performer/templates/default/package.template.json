@@ -3,11 +3,11 @@
     "version": "0.0.1",
     "scripts": {
         "test": "vitest",
-        "ui": "performer-ui ./src"
+        "ui": "playground ./src"
     },
     "devDependencies": {
         "@performer/core": "^0.0.0",
-        "@performer/ui": "^0.0.0"
+        "@performer/playground": "^0.0.0"
     },
     "type": "module"
 }

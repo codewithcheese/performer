@@ -1,4 +1,4 @@
-# @performer/ui
+# @performer/playground
 
 ## 0.0.2
 

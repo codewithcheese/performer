@@ -1,8 +1,8 @@
 {
-  "name": "@performer/ui",
+  "name": "@performer/playground",
   "private": false,
   "bin": {
-    "performer-ui": "./bin/ui.js"
+    "playground": "./bin/playground.js"
   },
   "version": "0.0.2",
   "type": "module",
