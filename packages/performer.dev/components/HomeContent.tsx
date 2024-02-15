@@ -1,6 +1,7 @@
 import ButtonLink from "./ButtonLink";
 import { Logo } from "./Logo";
 import { twMerge } from "tailwind-merge";
+import CodeBlock from "./CodeBlock";
 
 function Section({ children, background = null }) {
   return (
@@ -72,7 +73,7 @@ export function HomeContent() {
         <div className="mx-5 mt-12 lg:mt-24 mb-20 lg:mb-32 flex flex-col justify-center">
           <Logo
             className={twMerge(
-              "mt-4 mb-3 text-link dark:text-link-dark w-28 lg:w-32 self-center text-sm me-0 flex origin-center",
+              "mt-4 mb-3 text-link dark:text-link-dark w-30 lg:w-36 self-center text-sm me-0 flex origin-center",
             )}
           />
           <h1 className="text-4xl font-display lg:text-6xl self-center flex font-semibold leading-snug text-primary dark:text-primary-dark">
@@ -111,12 +112,42 @@ export function HomeContent() {
             Performer lets you build chatbots and agents out of components.
           </Para>
         </Center>
+        <FullBleed>
+          <CodeBlock
+            isFromPackageImport={false}
+            noShadow={true}
+            noMargin={true}
+          >
+            <div>{`function Video({ video }) {
+  return (
+    <div>
+      <Thumbnail video={video} />
+      <a href={video.url}>
+        <h3>{video.title}</h3>
+        <p>{video.description}</p>
+      </a>
+      <LikeButton video={video} />
+    </div>
+  );
+}
+          `}</div>
+          </CodeBlock>
+        </FullBleed>
+      </Section>
+
+      <Section background="left-card">
+        <Center>
+          <Header>Control your assistant with dynamic prompts</Header>
+          <Para>
+            Performer lets you build chatbots and agents out of components.
+          </Para>
+        </Center>
         <FullBleed>Insert example</FullBleed>
       </Section>
 
       <Section background="left-card">
         <Center>
-          <Header>Control your assistant with dynamic system prompts</Header>
+          <Header>Use tools to control the conversation flow</Header>
           <Para>
             Performer lets you build chatbots and agents out of components.
           </Para>

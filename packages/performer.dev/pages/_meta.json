@@ -14,5 +14,9 @@
   "reference": {
     "type": "page",
     "title": "Reference"
+  },
+  "examples": {
+    "type": "page",
+    "title": "Examples"
   }
 }
