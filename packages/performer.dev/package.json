@@ -9,11 +9,13 @@
     "start": "next start"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.0.16",
     "next": "^13.5.6",
     "nextra": "^2.13.3",
     "nextra-theme-docs": "^2.13.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
     "@types/node": "18.11.10",
