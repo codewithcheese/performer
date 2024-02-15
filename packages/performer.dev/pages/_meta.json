@@ -7,16 +7,12 @@
       "layout": "raw"
     }
   },
-  "-- Learn": {
-    "type": "separator",
+  "learn": {
+    "type": "page",
     "title": "Learn"
   },
-  "what-is-performer": "",
-  "the-basics": "",
-  "quickstart": "",
-  "-- @performer/core": {
-    "type": "separator",
-    "title": "@performer/core"
-  },
-  "apis": "API"
+  "reference": {
+    "type": "page",
+    "title": "Reference"
+  }
 }

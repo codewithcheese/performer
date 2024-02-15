@@ -106,7 +106,17 @@ export function HomeContent() {
 
       <Section background="left-card">
         <Center>
-          <Header>Create AIs from components</Header>
+          <Header>Build your backend with components</Header>
+          <Para>
+            Performer lets you build chatbots and agents out of components.
+          </Para>
+        </Center>
+        <FullBleed>Insert example</FullBleed>
+      </Section>
+
+      <Section background="left-card">
+        <Center>
+          <Header>Control your assistant with dynamic system prompts</Header>
           <Para>
             Performer lets you build chatbots and agents out of components.
           </Para>
@@ -116,6 +126,8 @@ export function HomeContent() {
     </>
   );
 }
+
+// Declarative
 
 // create your own building blocks
 // go beyond system prompts
