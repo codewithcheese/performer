@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.7
+
+### Patch Changes
+
+- fd909e4: Playground use vite createServer instead of spawn vite
+  - @performer/core@0.0.7
+
 ## 0.0.6
 
 ### Patch Changes
