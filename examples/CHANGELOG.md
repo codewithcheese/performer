@@ -1,5 +1,11 @@
 # performer-examples
 
+## 0.0.3
+
+### Patch Changes
+
+- 16d7aa7: Exclude examples from publish
+
 ## 0.0.2
 
 ### Patch Changes
