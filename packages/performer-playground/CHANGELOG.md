@@ -1,5 +1,13 @@
 # @performer/playground
 
+## 0.0.6
+
+### Patch Changes
+
+- 9b916f3: Fix playground when used from create template
+- Updated dependencies [9b916f3]
+  - @performer/core@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes
