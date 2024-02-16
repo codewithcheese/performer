@@ -2,6 +2,7 @@ import ButtonLink from "./ButtonLink";
 import { Logo } from "./Logo";
 import { twMerge } from "tailwind-merge";
 import CodeBlock from "./CodeBlock";
+import { Sandpack } from "@codesandbox/sandpack-react";
 
 function Section({ children, background = null }) {
   return (
@@ -113,25 +114,14 @@ export function HomeContent() {
           </Para>
         </Center>
         <FullBleed>
-          <CodeBlock
-            isFromPackageImport={false}
-            noShadow={true}
-            noMargin={true}
-          >
-            <div>{`function Video({ video }) {
-  return (
-    <div>
-      <Thumbnail video={video} />
-      <a href={video.url}>
-        <h3>{video.title}</h3>
-        <p>{video.description}</p>
-      </a>
-      <LikeButton video={video} />
-    </div>
-  );
-}
-          `}</div>
-          </CodeBlock>
+          <Sandpack
+            template="react"
+            files={{
+              "/App.js": `export default function App() {
+  return <h1>Hello Sandpack</h1>
+}`,
+            }}
+          />
         </FullBleed>
       </Section>
 
