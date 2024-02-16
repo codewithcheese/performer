@@ -7,7 +7,7 @@ import {
   PerformerNode,
   readTextContent,
 } from "../index.js";
-import log from "loglevel";
+import * as log from "loglevel";
 import { isImageContent, isTextContent } from "../message.js";
 
 export type LogConfig = {

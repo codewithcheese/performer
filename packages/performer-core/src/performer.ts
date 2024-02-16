@@ -3,12 +3,11 @@ import type { PerformerNode } from "./node.js";
 import { render } from "./render.js";
 import {
   PerformerErrorEvent,
-  PerformerLifecycleEvent,
-  PerformerMessageEvent,
   PerformerEventMap,
+  PerformerLifecycleEvent,
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
-import log from "loglevel";
+import * as log from "loglevel";
 import { LogConfig, logEvent, logNode } from "./util/log.js";
 import { PendingInputState } from "./hooks/index.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";

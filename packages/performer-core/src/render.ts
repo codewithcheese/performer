@@ -10,16 +10,11 @@ import type { Performer } from "./performer.js";
 import {
   AssistantMessage,
   concatDelta,
-  isAssistantMessage,
-  isImageContent,
-  isMessage,
   isMessageDelta,
-  isTextContent,
   MessageDelta,
   PerformerMessage,
-  ToolCall,
 } from "./message.js";
-import log from "loglevel";
+import * as log from "loglevel";
 import * as _ from "lodash";
 import { View } from "./component.js";
 import { effect } from "@preact/signals-core";

@@ -12,4 +12,5 @@ test("should create performer project", async () => {
     template: "default",
     types: "typescript",
   });
+  console.log(tmpdir);
 });

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { test, expect } from "vitest";
 import { Performer, resolveMessages } from "@performer/core";
 import { App } from "../src/chat.js";
