@@ -1,5 +1,11 @@
 # @performer/playground
 
+## 0.0.5
+
+### Patch Changes
+
+- @performer/core@0.0.5
+
 ## 0.0.4
 
 ### Patch Changes
