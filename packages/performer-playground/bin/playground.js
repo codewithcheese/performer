@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+import { createServer } from "vite";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import "dotenv/config";
@@ -11,27 +11,26 @@ if (args.length === 0 || !args[0]) {
   process.exit(1); // Exits with a non-zero code to indicate an error
 }
 
-const appPath = path.join(process.cwd(), args[0]);
-
-console.log("Starting Performer UI...", appPath);
-
-const vite = spawn(
-  path.join(
-    process.cwd(),
-    "./node_modules/@performer/playground/node_modules/.bin/vite",
-  ),
-  ["--port", 3011],
-  {
-    env: {
-      VITE_PERFORMER_APP_PATH: appPath,
-      VITE_OPENAI_API_KEY: process.env["OPENAI_API_KEY"],
-    },
-    stdio: "inherit",
-    shell: true,
-    cwd: path.join(process.cwd(), "./node_modules/@performer/playground/"),
-  },
+const playgroundDir = path.join(
+  process.cwd(),
+  "./node_modules/@performer/playground/",
 );
 
-vite.on("close", (code) => {
-  console.log(`Vite process exited with code ${code}`);
+const appPath = path.join(process.cwd(), args[0]);
+
+console.log("Starting playground...", appPath);
+
+const server = await createServer({
+  root: playgroundDir,
+  server: {
+    port: 3011,
+  },
+  resolve: {
+    alias: {
+      "@app": appPath,
+    },
+  },
 });
+
+await server.listen();
+server.printUrls();
