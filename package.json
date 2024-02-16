@@ -7,7 +7,7 @@
   },
   "scripts": {
     "watch": "pnpm --recursive --parallel run watch",
-    "ci:publish": "pnpm publish -r --dry-run --no-git-checks --access public",
+    "ci:publish": "pnpm publish -r --no-git-checks --access public",
     "test": "vitest run",
     "typecheck": "pnpm --recursive --parallel run typecheck",
     "e2e": "playwright test packages/performer-playground --config packages/performer-playground/playwright.config.ts"
