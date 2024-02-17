@@ -1,5 +1,6 @@
 {
-    "name": "examples",
+    "name": "default-template",
+    "private": true,
     "version": null,
     "scripts": {
         "test": "vitest",
