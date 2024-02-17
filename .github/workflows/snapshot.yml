@@ -1,0 +1,52 @@
+name: Snapshot
+
+on:
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  snapshot:
+    if: contains(github.event.comment.body, '+snapshot ') && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'MEMBER')
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract snapshot name
+        id: extract_snapshot
+        run: |
+          snapshot_name=$(echo "${{ github.event.comment.body }}" | grep -oP '\+snapshot \K\S+')
+          if [[ -z "$snapshot_name" ]]; then
+            echo "Error: Snapshot name is empty or not properly specified."
+            echo "Usage: Comment on the PR review with '+snapshot <name>' to trigger a snapshot release, where <name> should be a single word or a specifically formatted string without spaces."
+            exit 1
+          fi
+          echo "::set-output name=snapshot_name::$snapshot_name"
+
+      - name: checkout code repository
+        uses: actions/checkout@v3
+
+      - name: setup node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: install pnpm
+        run: npm i pnpm@latest -g
+
+      - name: setup pnpm config
+        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
+
+      - name: install dependencies
+        run: pnpm install
+
+      - name: Version snapshot
+        run: pnpm changeset version --snapshot ${{ steps.extract_snapshot.outputs.snapshot_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish snapshot
+        run: pnpm run ci:snapshot ${{ steps.extract_snapshot.outputs.snapshot_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
