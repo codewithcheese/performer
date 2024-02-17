@@ -1,28 +1,40 @@
 name: Snapshot
 
 on:
-  pull_request_review_comment:
-    types: [created]
+  workflow_dispatch:
+    inputs:
+      snapshotName:
+        description: 'Tag name'
+        required: true
+      targetBranch:
+        description: 'Branch'
+        required: true
 
 jobs:
   snapshot:
-    if: contains(github.event.comment.body, '+snapshot ') && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
-    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
-      - name: Extract snapshot name
-        id: extract_snapshot
+
+      - name: Validate snapshot name
+        id: validate_snapshot_name
         run: |
-          snapshot_name=$(echo "${{ github.event.comment.body }}" | grep -oP '\+snapshot \K\S+')
-          if [[ -z "$snapshot_name" ]]; then
-            echo "Error: Snapshot name is empty or not properly specified."
-            echo "Usage: Comment on the PR review with '+snapshot <name>' to trigger a snapshot release, where <name> should be a single word or a specifically formatted string without spaces."
+          SNAPSHOT_NAME="${{ github.event.inputs.snapshotName }}"
+          # Regex explanation:
+          # ^[^\._] : Asserts the name does not start with a dot or underscore
+          # [a-zA-Z0-9\-._]+ : Matches alphanumeric characters, hyphens, dots, or underscores
+          # [^\._]$ : Asserts the name does not end with a dot or underscore
+          # Overall, this pattern asserts the string is 1-214 characters long, not starting/ending with a dot/underscore, and contains only allowed characters.
+          if [[ ! "$SNAPSHOT_NAME" =~ ^[^\._][a-zA-Z0-9\-._]{0,212}[^\._]$ ]]; then
+            echo "Error: Snapshot name '$SNAPSHOT_NAME' is invalid."
+            echo "Snapshot names must not start or end with a dot or an underscore, cannot contain spaces, and must be 1-214 characters long."
             exit 1
           fi
-          echo "::set-output name=snapshot_name::$snapshot_name"
+          echo "Snapshot name '$SNAPSHOT_NAME' is valid."
 
       - name: checkout code repository
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.targetBranch }}
 
       - name: setup node.js
         uses: actions/setup-node@v3
@@ -40,13 +52,13 @@ jobs:
         run: pnpm install
 
       - name: Version snapshot
-        run: pnpm changeset version --snapshot ${{ steps.extract_snapshot.outputs.snapshot_name }}
+        run: pnpm changeset version --snapshot ${{ github.event.inputs.snapshotName }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish snapshot
-        run: pnpm run ci:snapshot ${{ steps.extract_snapshot.outputs.snapshot_name }}
+        run: pnpm run ci:snapshot ${{ github.event.inputs.snapshotName }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
