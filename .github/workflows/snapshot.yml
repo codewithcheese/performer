@@ -1,0 +1,61 @@
+name: Snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      snapshotName:
+        description: 'Tag name'
+        required: true
+      targetBranch:
+        description: 'Branch'
+        required: true
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Validate snapshot name
+        id: validate_snapshot_name
+        run: |
+          SNAPSHOT_NAME="${{ github.event.inputs.snapshotName }}"
+          # Regex explanation:
+          # ^[^\._] : Asserts the name does not start with a dot or underscore
+          # [a-zA-Z0-9\-._]+ : Matches alphanumeric characters, hyphens, dots, or underscores
+          # [^\._]$ : Asserts the name does not end with a dot or underscore
+          # Overall, this pattern asserts the string is 1-214 characters long, not starting/ending with a dot/underscore, and contains only allowed characters.
+          if [[ ! "$SNAPSHOT_NAME" =~ ^[^\._][a-zA-Z0-9\-._]{0,212}[^\._]$ ]]; then
+            echo "Error: Snapshot name '$SNAPSHOT_NAME' is invalid."
+            echo "Snapshot names must not start or end with a dot or an underscore, cannot contain spaces, and must be 1-214 characters long."
+            exit 1
+          fi
+          echo "Snapshot name '$SNAPSHOT_NAME' is valid."
+
+      - name: checkout code repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.targetBranch }}
+
+      - name: setup node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: install pnpm
+        run: npm i pnpm@latest -g
+
+      - name: setup pnpm config
+        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
+
+      - name: install dependencies
+        run: pnpm install
+
+      - name: Version snapshot
+        run: pnpm changeset version --snapshot ${{ github.event.inputs.snapshotName }}
+
+      - name: Publish snapshot
+        run: pnpm run ci:snapshot ${{ github.event.inputs.snapshotName }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
