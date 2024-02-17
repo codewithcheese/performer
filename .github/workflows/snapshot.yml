@@ -6,7 +6,7 @@ on:
 
 jobs:
   snapshot:
-    if: contains(github.event.comment.body, '+snapshot ') && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'MEMBER')
+    if: contains(github.event.comment.body, '+snapshot ') && (github.event.comment.author_association == 'COLLABORATOR' || github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
