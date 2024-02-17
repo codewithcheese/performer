@@ -18,10 +18,10 @@ jobs:
           SNAPSHOT_NAME="${{ github.event.inputs.snapshotName }}"
           # Regex explanation:
           # ^[^\._] : Asserts the name does not start with a dot or underscore
-          # [a-zA-Z0-9\-._]+ : Matches alphanumeric characters, hyphens, dots, or underscores
+          # [-_a-zA-Z0-9]+ : Matches alphanumeric characters, hyphens, or underscores
           # [^\._]$ : Asserts the name does not end with a dot or underscore
           # Overall, this pattern asserts the string is 1-214 characters long, not starting/ending with a dot/underscore, and contains only allowed characters.
-          if [[ ! "$SNAPSHOT_NAME" =~ ^[^\._][a-zA-Z0-9\-._]{0,212}[^\._]$ ]]; then
+          if [[ ! "$SNAPSHOT_NAME" =~ ^[^\._][-_a-zA-Z0-9]{0,212}[^\._]$ ]]; then
             echo "Error: Snapshot name '$SNAPSHOT_NAME' is invalid."
             echo "Snapshot names must not start or end with a dot or an underscore, cannot contain spaces, and must be 1-214 characters long."
             exit 1
