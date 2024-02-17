@@ -6,9 +6,6 @@ on:
       snapshotName:
         description: 'Tag name'
         required: true
-      targetBranch:
-        description: 'Branch'
-        required: true
 
 jobs:
   snapshot:
@@ -33,8 +30,6 @@ jobs:
 
       - name: checkout code repository
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.inputs.targetBranch }}
 
       - name: setup node.js
         uses: actions/setup-node@v3
@@ -54,6 +49,7 @@ jobs:
       - name: Version snapshot
         run: pnpm changeset version --snapshot ${{ github.event.inputs.snapshotName }}
 
+      # https://github.com/changesets/changesets/blob/main/docs/snapshot-releases.md
       - name: Publish snapshot
         run: pnpm run ci:snapshot ${{ github.event.inputs.snapshotName }}
         env:
