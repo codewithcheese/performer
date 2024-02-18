@@ -2,7 +2,7 @@
   "name": "@performer/playground",
   "private": false,
   "bin": {
-    "playground": "./bin/playground.js"
+    "playground": "./bin/playground.mjs"
   },
   "version": "0.0.7",
   "type": "module",

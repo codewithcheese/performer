@@ -1,7 +1,10 @@
+#!/usr/bin/env node
+
 import { createServer } from "vite";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import "dotenv/config";
+import react from "@vitejs/plugin-react";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -11,20 +14,20 @@ if (args.length === 0 || !args[0]) {
   process.exit(1); // Exits with a non-zero code to indicate an error
 }
 
-const playgroundDir = path.join(
-  process.cwd(),
-  "./node_modules/@performer/playground/",
-);
-
+const rootPath = path.join(__dirname, "../");
 const appPath = path.join(process.cwd(), args[0]);
 
 console.log("Starting playground...", appPath);
 
 const server = await createServer({
-  root: playgroundDir,
+  configFile: false,
+  root: rootPath,
   server: {
     port: 3011,
   },
+  plugins: [
+    react()
+  ],
   resolve: {
     alias: {
       "@app": appPath,
