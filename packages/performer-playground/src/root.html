@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Performer Playground</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter var', 'sans-serif']
+          }
+        }
+      },
+    }
+  </script>
+</head>
+<body class="antialiased">
+<div  id="root"></div>
+<script type="module">
+  import '@performer/playground/src/main.tsx'
+</script>
+</body>
+</html>
