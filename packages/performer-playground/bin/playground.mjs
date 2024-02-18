@@ -1,22 +1,10 @@
 #!/usr/bin/env node
 
 import * as path from "path";
-import * as fs from "fs";
 import "dotenv/config";
 import { fileURLToPath } from "url";
 import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
-
-export function mkdirp(dir) {
-  try {
-    fs.mkdirSync(dir, { recursive: true });
-  } catch (e) {
-    if (e && typeof e === "object" && "code" in e && e.code === "EEXIST") {
-      return;
-    }
-    throw e;
-  }
-}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,18 +14,21 @@ if (args.length === 0 || !args[0]) {
   process.exit(1); // Exits with a non-zero code to indicate an error
 }
 
-const srcPath = path.join(__dirname, '../src/')
-const rootPath = path.join(process.cwd(), './.playground/')
+const rootPath = path.join(__dirname, '../')
 const appPath = path.join(process.cwd(), args[0]);
 
-mkdirp(rootPath)
-fs.copyFileSync(path.join(srcPath, './root.html'), path.join(rootPath, './index.html'));
-
-console.log("Starting playground...", appPath);
+console.log("Starting playground...");
+console.log("Discovering performers in: ", appPath);
 
 const server = await createServer({
   configFile: false,
   root: rootPath,
+  optimizeDeps: {
+    // when root is in node_modules vite does not detect dependencies that need to be pre-bundled
+    include: ['react-dom', 'react-dom/client', 'loglevel'],
+    // it seems vite also ignore entries when the root is in node modules
+    // entries: ['./src/main.tsx']
+  },
   server: {
     port: 3011,
   },
