@@ -31,7 +31,7 @@ const rootPath = path.join(process.cwd(), './.playground/')
 const appPath = path.join(process.cwd(), args[0]);
 
 mkdirp(rootPath)
-fs.copyFileSync(path.join(srcPath, '../root.html'), path.join(rootPath, './index.html'));
+fs.copyFileSync(path.join(srcPath, './root.html'), path.join(rootPath, './index.html'));
 
 console.log("Starting playground...", appPath);
 
