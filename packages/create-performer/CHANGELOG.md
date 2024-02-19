@@ -1,5 +1,11 @@
 # create-performer
 
+## 0.0.8
+
+### Patch Changes
+
+- 7fb8f2b: Fix playground vite dependency bundling when using playground cli
+
 ## 0.0.7
 
 ## 0.0.6
