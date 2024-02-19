@@ -58,8 +58,14 @@ jobs:
 
       - name: Create job summary from published packages
         run: |
-          echo "## Published Packages" >> $GITHUB_STEP_SUMMARY
-          echo "- Snapshot Name: ${{ github.event.inputs.snapshotName }}" >> $GITHUB_STEP_SUMMARY
-
-          # Read the JSON file and format its contents
-          jq -r '.publishedPackages[] | "- \(.name) version \(.version)"' pnpm-publish-summary.json >> $GITHUB_STEP_SUMMARY
+          echo "## Published Packages :package:" >> $GITHUB_STEP_SUMMARY
+          echo "Snapshot Name: **${{ github.event.inputs.snapshotName }}**" >> $GITHUB_STEP_SUMMARY
+          
+          # Check if the publishedPackages array is empty
+          PACKAGES_COUNT=$(jq '.publishedPackages | length' pnpm-publish-summary.json)
+          if [ "$PACKAGES_COUNT" -eq 0 ]; then
+            echo "No packages were published." >> $GITHUB_STEP_SUMMARY
+          else
+            # If packages were published, format and list them
+            jq -r '.publishedPackages[] | "- [\(.name)@\(.version)](https://www.npmjs.com/package/\(.name)/v/\(.version))"' pnpm-publish-summary.json >> $GITHUB_STEP_SUMMARY
+          fi
