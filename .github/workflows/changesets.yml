@@ -12,22 +12,27 @@ jobs:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
-      - name: checkout code repository
+      - name: Checkout code repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: setup node.js
+
+      - name: Setup node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-      - name: install pnpm
+
+      - name: Install pnpm
         run: npm i pnpm@latest -g
-      - name: setup pnpm config
+
+      - name: Setup pnpm config
         run: pnpm config set store-dir $PNPM_CACHE_FOLDER
-      - name: install dependencies
+
+      - name: Install dependencies
         run: pnpm install
-      - name: create and publish versions
+
+      - name: Create and publish versions
         uses: changesets/action@v1
         with:
           version: pnpm changeset version
@@ -37,3 +42,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create job summary from published packages
+        run: |
+          echo "## Published Packages" >> $GITHUB_STEP_SUMMARY          
+          
+          # Read the JSON file and format its contents
+          jq -r '.publishedPackages[] | "- \(.name) version \(.version)"' pnpm-publish-summary.json >> $GITHUB_STEP_SUMMARY        

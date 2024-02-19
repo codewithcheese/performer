@@ -55,3 +55,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create job summary from published packages
+        run: |
+          echo "## Published Packages" >> $GITHUB_STEP_SUMMARY
+          echo "- Snapshot Name: ${{ github.event.inputs.snapshotName }}" >> $GITHUB_STEP_SUMMARY
+
+          # Read the JSON file and format its contents
+          jq -r '.publishedPackages[] | "- \(.name) version \(.version)"' pnpm-publish-summary.json >> $GITHUB_STEP_SUMMARY
