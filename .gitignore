@@ -29,7 +29,7 @@ lerna-debug.log*
 dist/
 .tshy/
 .tshy-build/
-src/package.json
+**/src/package.json
 
 # CI
 .pnpm-store
