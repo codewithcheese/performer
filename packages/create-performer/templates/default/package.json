@@ -8,7 +8,7 @@
     },
     "devDependencies": {
         "dotenv": "^16.4.4",
-        "vitest": "^1.2.2"
+        "vitest": "^0.34.6"
     },
     "dependencies": {
         "@performer/core": "workspace:*",
