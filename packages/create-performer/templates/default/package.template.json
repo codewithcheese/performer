@@ -3,11 +3,15 @@
     "version": "0.0.1",
     "scripts": {
         "test": "vitest",
-        "ui": "playground ./src"
+        "playground": "playground ./src"
     },
     "devDependencies": {
-        "@performer/core": "^0.0.0",
-        "@performer/playground": "^0.0.0"
+        "dotenv": "^16.4.4",
+        "vitest": "^0.34.6"
+    },
+    "dependencies": {
+        "@performer/core": "latest",
+        "@performer/playground": "latest"
     },
     "type": "module"
 }

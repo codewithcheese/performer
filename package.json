@@ -1,13 +1,15 @@
 {
   "name": "performer",
   "type": "module",
+  "private": true,
   "packageManager": "pnpm@8.6.12",
   "engines": {
     "pnpm": "^8.0.1"
   },
   "scripts": {
     "watch": "pnpm --recursive --parallel run watch",
-    "ci:publish": "pnpm publish -r --dry-run --no-git-checks --access public",
+    "ci:publish": "pnpm publish -r --report-summary --no-git-checks --access public ",
+    "ci:snapshot": "pnpm publish -r --report-summary --no-git-checks --access public --tag",
     "test": "vitest run",
     "typecheck": "pnpm --recursive --parallel run typecheck",
     "e2e": "playwright test packages/performer-playground --config packages/performer-playground/playwright.config.ts"

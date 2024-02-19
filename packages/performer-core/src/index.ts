@@ -1,4 +1,4 @@
-import log from "loglevel";
+import * as log from "loglevel";
 
 // fixme log level controls
 log.enableAll();

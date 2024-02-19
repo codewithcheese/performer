@@ -62,7 +62,10 @@ if (relative !== "") {
 
 console.log(`  ${i++}: ${bold(cyan(`${package_manager} install`))}`);
 console.log(
-  `  ${i++}: ${bold(cyan(`Edit \`src/chat.tsx\` to customize your AI app.`))}`,
+  `  ${i++}: ${bold(cyan(`Edit \`src/chat.tsx\` to customize your app`))}`,
+);
+console.log(
+  `  ${i++}: ${bold(cyan(`Test your app \`${package_manager} run playground\``))}`,
 );
 
 console.log(`\nNeed help? Visit us at ${cyan("https://performer.dev/")}`);

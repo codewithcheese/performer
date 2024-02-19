@@ -1,16 +1,18 @@
 {
-    "name": "examples",
-    "type": "module",
+    "name": "default-template",
+    "private": true,
+    "version": null,
     "scripts": {
         "test": "vitest",
         "playground": "playground ./src"
     },
     "devDependencies": {
+        "dotenv": "^16.4.4",
         "vitest": "^0.34.6"
     },
     "dependencies": {
         "@performer/core": "workspace:*",
         "@performer/playground": "workspace:*"
     },
-    "version": null
+    "type": "module"
 }
