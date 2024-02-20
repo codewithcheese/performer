@@ -21,7 +21,6 @@ export type Component<P extends Props> = {
   (
     props: P & {
       children?: PerformerElement | PerformerElement[] | string;
-      content?: string;
       controller?: AbortController;
     },
     asyncHooks: AsyncHooks,

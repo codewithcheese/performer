@@ -376,12 +376,12 @@ export function nodeToMessage(node: PerformerNode): PerformerMessage {
     return {
       tool_call_id: node.props.tool_call_id,
       role: node.type,
-      content: node.props.content,
+      content: childrenToContent(node.props.children) || node.props.content,
     };
   } else if (node.type === "assistant") {
     return {
       role: node.type,
-      content: node.props.content,
+      content: childrenToContent(node.props.children) || node.props.content,
       ...(node.props.tool_calls ? { tool_calls: node.props.tool_calls } : {}),
       ...(node.props.function_call
         ? { function_call: node.props.function_call }
@@ -390,12 +390,12 @@ export function nodeToMessage(node: PerformerNode): PerformerMessage {
   } else if (node.type === "system") {
     return {
       role: node.type,
-      content: node.props.content,
+      content: childrenToContent(node.props.children) || node.props.content,
     };
   } else if (node.type === "user") {
     return {
       role: node.type,
-      content: node.props.content,
+      content: childrenToContent(node.props.children) || node.props.content,
     };
   }
   throw Error(`Unexpected message element ${node.type}`);
@@ -425,6 +425,16 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
     node.element.type === element.type &&
     _.isEqualWith(node.element.props, element.props, functionComparison)
   );
+}
+
+function childrenToContent(children: unknown): string {
+  if (!children) {
+    return "";
+  } else if (Array.isArray(children)) {
+    return children.flat(99).map(String).join("");
+  } else {
+    return String(children);
+  }
 }
 
 function normalizeChildren(children: ReturnType<View>): PerformerElement[] {

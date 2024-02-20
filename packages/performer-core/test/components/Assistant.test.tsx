@@ -19,7 +19,7 @@ test("should call model with messages", async () => {
   performer.start();
   await performer.waitUntilSettled();
   expect(performer.root?.child?.type).toEqual("system");
-  expect(performer.root?.child?.props.content).toEqual(
+  expect(performer.root?.child?.props.children).toEqual(
     "Hello world in Javascript. Code only.",
   );
   assert(performer.root?.child?.nextSibling?.type instanceof Function);
