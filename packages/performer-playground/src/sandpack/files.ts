@@ -57,7 +57,7 @@ root.render(
     code: JSON.stringify({
       dependencies: {
         "@performer/core": "latest",
-        "@performer/playground": "0.0.0-sandpack-20240220091733",
+        "@performer/playground": "latest",
         tslib: "latest",
         react: "^18.0.0",
         "react-dom": "^18.0.0",
