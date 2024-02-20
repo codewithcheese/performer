@@ -2,4 +2,4 @@
 "@performer/playground": patch
 ---
 
-Export Sandpack and Chat components
+Add Sandpack component to playground
