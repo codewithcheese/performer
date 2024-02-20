@@ -131,6 +131,9 @@ importers:
       openai:
         specifier: ^4.24.7
         version: 4.24.7
+      tslib:
+        specifier: ^2.6.2
+        version: 2.6.2
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -150,9 +153,6 @@ importers:
       tshy:
         specifier: ^1.8.2
         version: 1.8.2
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
       typescript:
         specifier: ^5.2.2
         version: 5.3.3
@@ -6352,6 +6352,7 @@ packages:
   /yaml@2.3.4:
     resolution: {integrity: sha512-8aAvwVUSHpfEqTQ4w/KMlf3HcRdt50E5ODIQJBw1fQ5RL34xabzxtUlzTXVqc4rkZsPbvrXKWnABCD7kWSmocA==}
     engines: {node: '>= 14'}
+    dev: false
     dev: false
 
   /yargs-parser@18.1.3:
