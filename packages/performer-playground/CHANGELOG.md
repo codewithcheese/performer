@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.12
+
+### Patch Changes
+
+- 0751881: Bump sandpack playground dependency
+  - @performer/core@0.0.12
+
 ## 0.0.11
 
 ### Patch Changes
