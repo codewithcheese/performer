@@ -1,2 +1,2 @@
-export * from "./components/ChatWindow.tsx";
-export * from "./hooks/use-performer-client.ts";
+export * from "./components/ChatWindow.js";
+export * from "./hooks/use-performer-client.js";

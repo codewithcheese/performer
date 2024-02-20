@@ -7,9 +7,8 @@
   "version": "0.0.8",
   "type": "module",
   "scripts": {
+    "prepare": "tshy",
     "dev": "vite --port 3011",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "e2e": "playwright test",
     "test": "vitest"
@@ -34,6 +33,25 @@
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "esbuild": "^0.19.10",
+    "tshy": "^1.11.1",
     "typescript": "^5.2.2"
+  },
+  "tshy": {
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    }
   }
 }

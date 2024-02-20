@@ -1,12 +1,11 @@
-import { AppImport } from "../lib/import.ts";
-import { Divider, Message, ModelSelect, Splash } from "./index.tsx";
+import { Divider, Message, ModelSelect, Splash } from "./index.js";
 import {
   Component,
   PerformerLifecycleEvent,
   PerformerMessageEvent,
 } from "@performer/core";
-import { usePerformerClient } from "../hooks/use-performer-client.ts";
-import { MessageInput } from "./MessageInput.tsx";
+import { usePerformerClient } from "../hooks/use-performer-client.js";
+import { MessageInput } from "./MessageInput.js";
 
 export function ChatWindow({ App }: { App: Component<any> }) {
   const { events, sendMessage } = usePerformerClient(App);

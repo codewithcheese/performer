@@ -214,6 +214,9 @@ importers:
       esbuild:
         specifier: ^0.19.10
         version: 0.19.11
+      tshy:
+        specifier: ^1.11.1
+        version: 1.11.1
       typescript:
         specifier: ^5.2.2
         version: 5.3.3
@@ -5311,6 +5314,11 @@ packages:
       fsevents: 2.3.2
     dev: true
 
+  /polite-json@4.0.1:
+    resolution: {integrity: sha512-8LI5ZeCPBEb4uBbcYKNVwk4jgqNx1yHReWoW4H4uUihWlSqZsUDfSITrRhjliuPgxsNPFhNSudGO2Zu4cbWinQ==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    dev: true
+
   /postcss@8.4.33:
     resolution: {integrity: sha512-Kkpbhhdjw2qQs2O2DGX+8m5OVqEcbB9HRBvuYM9pgrjEFUg30A9LmXNlTAUj4S9kgtGyrMbTzVjH7E+s5Re2yg==}
     engines: {node: ^10 || ^12 || >=14}
@@ -6328,6 +6336,23 @@ packages:
       chokidar: 3.5.3
       foreground-child: 3.1.1
       mkdirp: 3.0.1
+      resolve-import: 1.4.5
+      rimraf: 5.0.5
+      sync-content: 1.0.2
+      typescript: 5.3.3
+      walk-up-path: 3.0.1
+    dev: true
+
+  /tshy@1.11.1:
+    resolution: {integrity: sha512-AzATR8weBaUW46Nh4B1k5cfxVuADKJTXe95xHh7BzcI1RjQQy6HeUXQDY+erGEGTLpiv6N6xMFmtEsMMc7x40Q==}
+    engines: {node: 16 >=16.17 || 18 >=18.15.0 || >=20.6.1}
+    hasBin: true
+    dependencies:
+      chalk: 5.3.0
+      chokidar: 3.5.3
+      foreground-child: 3.1.1
+      mkdirp: 3.0.1
+      polite-json: 4.0.1
       resolve-import: 1.4.5
       rimraf: 5.0.5
       sync-content: 1.0.2

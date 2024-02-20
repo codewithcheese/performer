@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { AppImport, importApps } from "./lib/import.ts";
-import { ChatWindow } from "./components/ChatWindow.tsx";
-import { Component } from "@performer/core";
+import { AppImport, importApps } from "./lib/import.js";
+import { ChatWindow } from "./components/ChatWindow.js";
 
 function App() {
   const [loading, setLoading] = useState(true);

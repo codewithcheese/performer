@@ -1,7 +1,6 @@
-import { KeyboardEventHandler, useEffect, useRef, useState } from "react";
-import { PerformerMessage } from "@performer/core";
-import { toTitleCase } from "../lib/message.ts";
-import { readTextContent } from "@performer/core";
+import { useState } from "react";
+import { PerformerMessage, readTextContent } from "@performer/core";
+import { toTitleCase } from "../lib/message.js";
 
 export function Divider({ message }: { message: string }) {
   return (

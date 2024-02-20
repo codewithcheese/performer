@@ -6,7 +6,7 @@ import {
   PerformerDeltaEvent,
   PerformerEvent,
 } from "@performer/core";
-import { jsx } from "../../../performer-core/dist/esm/jsx";
+import { jsx } from "@performer/core/jsx-runtime";
 
 export function usePerformerClient(app: Component<any> | null) {
   const [events, setEvents] = useState<PerformerEvent[]>([]);
