@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   Component,
-  isTextContent,
-  MessageDelta,
+  concatDelta,
   Performer,
   PerformerDeltaEvent,
   PerformerEvent,
 } from "@performer/core";
-import { jsx } from "@performer/core/jsx-runtime";
-import { concatDelta, ToolCall } from "@performer/core";
+import { jsx } from "../../../performer-core/dist/esm/jsx";
 
 export function usePerformerClient(app: Component<any> | null) {
   const [events, setEvents] = useState<PerformerEvent[]>([]);
