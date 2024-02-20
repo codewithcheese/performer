@@ -1,8 +1,7 @@
 {
     "index": {
         "type": "page",
-        "title": "Performer",
-        "display": "hidden",
+        "title": "Examples",
         "theme": {
             "layout": "raw"
         }

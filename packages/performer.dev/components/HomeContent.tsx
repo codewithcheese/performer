@@ -1,7 +1,6 @@
 import ButtonLink from "./ButtonLink";
 import { Logo } from "./Logo";
 import { twMerge } from "tailwind-merge";
-import { PerformerSandpack } from "@performer/playground/sandpack";
 
 function Section({ children, background = null }) {
   return (
@@ -113,7 +112,7 @@ export function HomeContent() {
           </Para>
         </Center>
         <FullBleed>
-          <PerformerSandpack showCodeEditor />
+          <></>
         </FullBleed>
       </Section>
 
@@ -125,7 +124,7 @@ export function HomeContent() {
           </Para>
         </Center>
         <FullBleed>
-          <PerformerSandpack showCodeEditor />
+          <></>
         </FullBleed>
       </Section>
 
