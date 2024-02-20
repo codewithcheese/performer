@@ -331,11 +331,11 @@ test("should render tree", async () => {
   const expected = {
     type: "Fragment",
     children: [
-      { type: "First", props: { content: "Greet the user" } },
+      { type: "First", props: { children: "Greet the user" } },
       {
         type: "Second",
         children: [
-          { type: "Greet", props: { content: "Hello world" } },
+          { type: "Greet", props: { children: "Hello world" } },
           { type: "Third" },
         ],
       },
@@ -378,3 +378,21 @@ test("should catch async component that throws", async () => {
   expect(performer.hasFinished).toEqual(true);
   expect(events).toHaveLength(1);
 });
+
+// fixme: correct handle exception
+// test("should throw if component children contains both strings and elements", async () => {
+//   expect(async () => {
+//     function App() {
+//       return () => (
+//         <>
+//           Hello World
+//           <></>
+//         </>
+//       );
+//     }
+//
+//     const performer = new Performer(<App />, { throwOnError: true });
+//     performer.start();
+//     await performer.waitUntilSettled();
+//   }).toThrow();
+// });

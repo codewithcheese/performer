@@ -47,24 +47,14 @@ test("should create element from JSX", () => {
   expect(app.type.name).toEqual("Fragment");
   expect(app.props.children).toHaveLength(2);
   expect(app.props.children[0].type.name).toEqual("TextChild");
-  expect(app.props.children[0].props.content).toEqual("Greet the user");
-  expect(app.props.children[1].props.children).toHaveLength(1);
-  expect(app.props.children[1].props.children[0].type.name).toEqual("NoProps");
+  expect(app.props.children[0].props.children).toEqual("Greet the user");
+  expect(app.props.children[1].props.children.type.name).toEqual("NoProps");
 });
 
 test("should concatenate multiple string children", () => {
   const name = "world";
   const app = <>Hello {name}, how are you?</>;
   console.log(app);
-});
-
-test("should throw if text and element children", () => {
-  expect(() => (
-    <>
-      Hello World
-      <></>
-    </>
-  )).toThrow();
 });
 
 test("should accept empty array", async () => {

@@ -1,5 +1,5 @@
 import type { Component } from "../component.js";
-import type { PerformerElement } from "../element.js";
+import { PerformerElement } from "../element.js";
 import {
   AssistantMessage,
   MessageDelta,
@@ -54,48 +54,26 @@ export function Fragment({ children }: any) {
 
 type Props = Record<string, any> & { children?: any };
 
-export function jsx<Type extends Component<P>, P extends Props>(
-  type: Type | PerformerMessage["role"] | "raw",
-  props: P,
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+/**
+ * PerformerElement is compatible with ReactElement, so that bundlers
+ * may use the React JSX transpiler for both, simplifying bundler config.
+ *
+ * Adapted directly from React's jsxProd.
+ * https://github.com/facebook/react/blob/5fb2c93f3924ba980444da5698f60651b5ef0689/packages/react/src/jsx/ReactJSXElement.js#L209
+ */
+export function jsxProd(
+  type: any,
+  config: Record<string, any>,
 ): PerformerElement {
-  if (type === undefined) {
-    // @ts-ignore
-    type = Fragment;
-  }
-  if (props.children == null) {
-    props.children = [];
-  } else if (typeof props.children === "string") {
-    // move single text child to content prop
-    // @ts-ignore
-    props.content = props.children;
-    props.children = [];
-  } else if (typeof props.children === "object") {
-    if (Array.isArray(props.children)) {
-      const children = props.children.flat(9);
-      const countString = children.filter(
-        (child: any) => child == null || typeof child === "string",
-      ).length;
-      if (countString && countString !== children.length) {
-        // throw if only subset is string
-        const strIndex = children.findIndex(
-          (child) => child == null || typeof child === "string",
-        );
-        const objIndex = children.findIndex(
-          (child) => typeof child === "object",
-        );
-        throw Error(
-          `Element children cannot contain both strings (index: ${strIndex}) and objects (index: ${objIndex}). ` +
-            `Found in ${typeof type === "string" ? type : type.name}`,
-        );
-      } else if (countString) {
-        // concatenate if all are string
-        // @ts-ignore
-        props.content = children.join("");
-        props.children = [];
-      }
-    } else {
-      // move object child to array
-      props.children = [props.children];
+  let propName;
+
+  const props: Record<string, any> = {};
+
+  for (propName in config) {
+    if (hasOwnProperty.call(config, propName)) {
+      props[propName] = config[propName];
     }
   }
 
@@ -106,6 +84,8 @@ export function jsx<Type extends Component<P>, P extends Props>(
     props,
   };
 }
+
+export const jsx = jsxProd;
 
 export function jsxs<Type extends Component<P>, P extends Props>(
   type: Type,
