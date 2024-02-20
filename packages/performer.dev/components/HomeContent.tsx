@@ -1,8 +1,7 @@
 import ButtonLink from "./ButtonLink";
 import { Logo } from "./Logo";
 import { twMerge } from "tailwind-merge";
-import CodeBlock from "./CodeBlock";
-import { Sandpack } from "@codesandbox/sandpack-react";
+import { PerformerSandpack } from "@performer/playground/sandpack";
 
 function Section({ children, background = null }) {
   return (
@@ -114,14 +113,7 @@ export function HomeContent() {
           </Para>
         </Center>
         <FullBleed>
-          <Sandpack
-            template="react"
-            files={{
-              "/App.js": `export default function App() {
-  return <h1>Hello Sandpack</h1>
-}`,
-            }}
-          />
+          <PerformerSandpack showCodeEditor />
         </FullBleed>
       </Section>
 
@@ -132,7 +124,9 @@ export function HomeContent() {
             Performer lets you build chatbots and agents out of components.
           </Para>
         </Center>
-        <FullBleed>Insert example</FullBleed>
+        <FullBleed>
+          <PerformerSandpack showCodeEditor />
+        </FullBleed>
       </Section>
 
       <Section background="left-card">

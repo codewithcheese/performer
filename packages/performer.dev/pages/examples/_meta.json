@@ -1,0 +1,10 @@
+{
+    "index": {
+        "type": "page",
+        "title": "Performer",
+        "display": "hidden",
+        "theme": {
+            "layout": "raw"
+        }
+    }
+}

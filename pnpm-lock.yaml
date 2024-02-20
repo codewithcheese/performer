@@ -229,27 +229,15 @@ importers:
 
   packages/performer.dev:
     dependencies:
-      '@codemirror/lang-html':
-        specifier: ^6.4.8
-        version: 6.4.8
-      '@codemirror/lang-javascript':
-        specifier: ^6.2.1
-        version: 6.2.1
-      '@codemirror/language':
-        specifier: ^6.10.1
-        version: 6.10.1
-      '@codesandbox/sandpack-react':
-        specifier: ^2.12.1
-        version: 2.12.1(@lezer/common@1.2.1)(react-dom@18.2.0)(react@18.2.0)
       '@fontsource-variable/inter':
         specifier: ^5.0.16
         version: 5.0.16
       '@fontsource-variable/source-code-pro':
         specifier: ^5.0.17
         version: 5.0.17
-      '@lezer/highlight':
-        specifier: ^1.2.0
-        version: 1.2.0
+      '@performer/playground':
+        specifier: workspace:*
+        version: link:../performer-playground
       next:
         specifier: ^13.5.6
         version: 13.5.6(react-dom@18.2.0)(react@18.2.0)
