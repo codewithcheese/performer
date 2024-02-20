@@ -7,9 +7,8 @@
   "version": "0.0.9",
   "type": "module",
   "scripts": {
+    "prepare": "tshy",
     "dev": "vite --port 3011",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "e2e": "playwright test",
     "test": "vitest"
@@ -22,7 +21,9 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "ws": "^8.16.0",
-    "vite": "^5.0.8"
+    "vite": "^5.0.8",
+    "@codesandbox/sandpack-react": "^2.12.1",
+    "@codesandbox/sandpack-client": "^2.12.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.41.2",
@@ -34,6 +35,32 @@
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "esbuild": "^0.19.10",
+    "tshy": "^1.11.1",
     "typescript": "^5.2.2"
+  },
+  "tshy": {
+    "dialects": [
+      "esm"
+    ],
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts",
+      "./sandpack": "./src/sandpack"
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./sandpack": {
+      "import": {
+        "types": "./dist/esm/sandpack",
+        "default": "./dist/esm/sandpack"
+      }
+    }
   }
 }

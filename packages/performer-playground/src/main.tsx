@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
+import App from "./App.js";
 import "./index.css";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
