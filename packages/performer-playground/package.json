@@ -45,7 +45,7 @@
     "exports": {
       "./package.json": "./package.json",
       ".": "./src/index.ts",
-      "./sandpack": "./src/sandpack"
+      "./sandpack": "./src/sandpack/index.tsx"
     }
   },
   "exports": {
