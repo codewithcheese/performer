@@ -55,8 +55,9 @@ export function Append({ path }: { path: string }) {
 }
 
 function createSelectPathTool(
-  decision: Signal<{ reasoning: string; path: string } | null>,
+  decision: Signal<{ reasoning: string; nextPath: string } | null>,
   paths: string[],
+  currentPath: string,
 ) {
   const DecisionSchema = z
     .object({
@@ -65,11 +66,11 @@ function createSelectPathTool(
         .describe(
           "Use deductive logic to reason about the next path. Think out loud and reason step by step.",
         ),
-      path: z.string(),
+      nextPath: z.string(),
+      currentPath: z.literal(currentPath),
     })
     .describe(
-      "Examine the conversation history and select the next path to take. The possible paths are: " +
-        paths.join(", "),
+      `Examine the conversation history and select the next path to take. The possible paths are: ${paths.join(", ")}. If unsure select the current path.`,
     );
   return createTool("select_path", DecisionSchema, (data) => {
     decision.value = data;
@@ -83,13 +84,19 @@ export function Decision({
   instruction: string;
   operation?: "append" | "goto";
 }) {
-  const decision = useState<{ reasoning: string; path: string } | null>(null);
-  const next = useState<string | null>(null);
+  const decision = useState<{ reasoning: string; nextPath: string } | null>(
+    null,
+  );
+  const currentPath = useContext(pathContext);
   const routes = useContext(routesContext);
 
   return () => {
     const paths = routes.value.map((route) => route.path);
-    const selectPathTool = createSelectPathTool(decision, paths);
+    const selectPathTool = createSelectPathTool(
+      decision,
+      paths,
+      currentPath.value,
+    );
 
     if (decision.value === null) {
       return (
@@ -103,9 +110,9 @@ export function Decision({
         <>
           <system>{decision.value.reasoning}</system>
           {operation === "append" ? (
-            <Append path={decision.value.path} />
+            <Append path={decision.value.nextPath} />
           ) : (
-            <Goto path={decision.value.path} />
+            <Goto path={decision.value.nextPath} />
           )}
         </>
       );

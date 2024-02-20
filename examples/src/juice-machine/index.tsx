@@ -32,7 +32,7 @@ function Select() {
       <system>Ask the user to select the fruit for their juice</system>
       <Assistant />
       <User />
-      <Decision instruction="If the user correctly selected fruit then go to /payment" />
+      <Decision instruction="If the user correctly selected fruit then go to /payment, otherwise select current." />
     </>
   );
 }

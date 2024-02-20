@@ -38,7 +38,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `export VITE_PERFORMER_APP_PATH=${appPath} && npm run dev`,
+    command: `npm run dev`,
     url: "http://localhost:3011",
     reuseExistingServer: !process.env.CI,
     timeout: 10_000,

@@ -4,6 +4,7 @@ import type { HookRecord } from "./hooks/index.js";
 import { MessageDelta, PerformerMessage } from "./message.js";
 import { hydrateHooks } from "./hydration.js";
 import { nanoid } from "nanoid";
+import { logNode } from "./util/log.js";
 
 export type PerformerNode = {
   uid: string;
@@ -45,6 +46,14 @@ export interface RawNode extends PerformerNode {
   };
 }
 
+function validateElement(element: unknown, parent?: PerformerNode) {
+  if (!(typeof element === "object")) {
+    throw Error(
+      `Invalid Child Type - The ${parent && logNode(parent)} component has child of type "${typeof element}" with value: "${element}".\nComponent children must be other components or elements, not primitive values.\nOnly message elements (system, user, assistant) elements support non-object children values.`,
+    );
+  }
+}
+
 export function createNode({
   element,
   parent,
@@ -58,6 +67,7 @@ export function createNode({
   child?: PerformerNode;
   serialized?: SerializedNode;
 }): PerformerNode {
+  validateElement(element, parent);
   return {
     uid: serialized ? serialized.uid : nanoid(),
     type: element.type,

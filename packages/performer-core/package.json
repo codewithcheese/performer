@@ -1,6 +1,6 @@
 {
   "name": "@performer/core",
-  "version": "0.0.2",
+  "version": "0.0.11",
   "description": "",
   "files": [
     "dist",
@@ -25,7 +25,6 @@
     "dotenv": "^16.3.1",
     "prettier": "^3.0.3",
     "tshy": "^1.8.2",
-    "tslib": "^2.6.2",
     "typescript": "^5.2.2",
     "vitest": "0.34.6"
   },
@@ -39,7 +38,8 @@
     "nanoid": "^3.3.7",
     "openai": "^4.24.7",
     "zod": "^3.22.4",
-    "zod-to-json-schema": "^3.21.4"
+    "zod-to-json-schema": "^3.21.4",
+    "tslib": "^2.6.2"
   },
   "tshy": {
     "exports": {
