@@ -1,5 +1,13 @@
 # performer-examples
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [768c569]
+  - @performer/core@0.0.9
+  - @performer/playground@0.0.9
+
 ## 0.0.7
 
 ### Patch Changes
