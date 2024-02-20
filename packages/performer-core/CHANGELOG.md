@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.9
+
+### Patch Changes
+
+- 768c569: Add tslib dependency for cjs builds
+
 ## 0.0.8
 
 ## 0.0.7
