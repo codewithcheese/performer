@@ -11,28 +11,40 @@ import {
 
 type IntrinsicProps = { onMessage?: (message: PerformerMessage) => void };
 
+export type MessageElementChildren =
+  | string
+  | number
+  | boolean
+  | MessageElementChildren[];
+
 export namespace JSX {
   export type ElementType = Component<any> | string;
   export type Element = PerformerElement;
   export interface ElementChildrenAttribute {
     children: PerformerElement | string;
   }
-  // fixme infer
+  // fixme infer from message types
   export type IntrinsicElements = {
     user: IntrinsicProps &
-      ({ content: UserMessage["content"] } | { children: string | string[] });
+      (
+        | { content: UserMessage["content"] }
+        | { children: MessageElementChildren }
+      );
     assistant: IntrinsicProps &
       Omit<AssistantMessage, "content" | "role"> &
       (
         | { content: AssistantMessage["content"] }
         | { children: string | string[] }
       );
-    system: IntrinsicProps &
-      ({ content: SystemMessage["content"] } | { children: string | string[] });
+    system: {
+      onMessage?: (message: PerformerMessage) => void;
+      content?: SystemMessage["content"];
+      children?: MessageElementChildren;
+    };
     tool: IntrinsicProps &
       (
         | { id: ToolMessage["tool_call_id"]; content?: ToolMessage["content"] }
-        | { children: string | string[] }
+        | { children: MessageElementChildren }
       );
     raw: IntrinsicProps & {
       message?: PerformerMessage;

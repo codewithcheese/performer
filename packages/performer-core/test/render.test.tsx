@@ -379,7 +379,27 @@ test("should catch async component that throws", async () => {
   expect(events).toHaveLength(1);
 });
 
-// fixme: correct handle exception
+test("should cast non-string message children", async () => {
+  function App() {
+    return () => (
+      <system>
+        {/* @ts-expect-error null | undefined invalid message child type */}
+        Message with {1} and {0} and {true} and {false} and {null} and{" "}
+        {/* @ts-expect-error null | undefined invalid message child type */}
+        {undefined} {{}}
+      </system>
+    );
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = resolveMessages(performer.root);
+  expect(messages[0].content).toEqual(
+    "Message with 1 and 0 and true and false and null and undefined [object Object]",
+  );
+});
+
+// fixme: correctly handle exception
 // test("should throw if component children contains both strings and elements", async () => {
 //   expect(async () => {
 //     function App() {

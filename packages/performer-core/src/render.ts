@@ -427,13 +427,13 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
   );
 }
 
-function childrenToContent(children: string | string[]) {
-  if (!children || typeof children === "string") {
-    return children;
+function childrenToContent(children: unknown): string {
+  if (!children) {
+    return "";
   } else if (Array.isArray(children)) {
-    return children.flat(99).filter(Boolean).join("");
+    return children.flat(99).map(String).join("");
   } else {
-    return children;
+    return String(children);
   }
 }
 
