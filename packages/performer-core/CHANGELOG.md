@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.11
+
+### Patch Changes
+
+- 12dd142: Change PerformerElement to be compatible with React JSX transpilers
+
 ## 0.0.10
 
 ## 0.0.9
