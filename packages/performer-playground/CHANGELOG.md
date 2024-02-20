@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.10
+
+### Patch Changes
+
+- 4a25f74: Add Sandpack component to playground
+  - @performer/core@0.0.10
+
 ## 0.0.9
 
 ### Patch Changes
