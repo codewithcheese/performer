@@ -58,8 +58,8 @@
     },
     "./sandpack": {
       "import": {
-        "types": "./dist/esm/sandpack",
-        "default": "./dist/esm/sandpack"
+        "types": "./dist/esm/sandpack/index.d.ts",
+        "default": "./dist/esm/sandpack/index.js"
       }
     }
   }
