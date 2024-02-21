@@ -1,40 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import classNames from "classnames";
 
-const examples = [
-  {
-    title: "Introduction",
-    examples: [
-      {
-        slug: "messages",
-        title: "Messages",
-      },
-      {
-        slug: "elements",
-        title: "Elements",
-      },
-    ],
-  },
-  {
-    title: "Components",
-    examples: [
-      {
-        slug: "assistant",
-        title: "Assistant",
-      },
-      {
-        slug: "user",
-        title: "User",
-      },
-    ],
-  },
-];
-
-export function TableOfContents({
-  sections = examples,
-  activeSection,
-  isLoading,
-}) {
+export function TableOfContents({ sections, activeSection, isLoading, goto }) {
   const activeElRef = useRef(null);
 
   useEffect(() => {
@@ -54,18 +21,11 @@ export function TableOfContents({
             <li key={section.title}>
               <span className="section-title text-sm">{section.title}</span>
               {section.examples.map((example) => (
-                <div
-                  key={example.slug}
-                  className={classNames("row", {
-                    active: example.slug === activeSection,
-                    loading: isLoading,
-                  })}
-                >
+                <div key={example.slug} className={classNames("row", {})}>
                   <a
-                    href={`/examples/${example.slug}`}
+                    onClick={() => goto(`/${example.slug}`)}
                     className={classNames("row", {
                       active: example.slug === activeSection,
-                      loading: isLoading,
                     })}
                   >
                     <img
@@ -75,15 +35,6 @@ export function TableOfContents({
                     />
                     <span>{example.title}</span>
                   </a>
-                  {example.slug === activeSection && (
-                    <a
-                      href={`/repl/${example.slug}`}
-                      className="repl-link"
-                      ref={activeElRef}
-                    >
-                      REPL
-                    </a>
-                  )}
                 </div>
               ))}
             </li>
