@@ -7,7 +7,7 @@ const config: DocsThemeConfig = {
   logo: (
     <div className="flex flex-row items-center gap-2">
       <Image alt="logo-small" src={logo} width="40" height="40" />
-      <div className="text-gray-700 text-xl">Performer</div>
+      <div className="text-gray-700 text-xl dark:text-gray-5">Performer</div>
     </div>
   ),
   project: {

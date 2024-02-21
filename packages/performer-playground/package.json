@@ -11,7 +11,8 @@
     "dev": "vite --port 3011",
     "typecheck": "tsc --noEmit",
     "e2e": "playwright test",
-    "test": "vitest"
+    "test": "vitest",
+    "watch": "tshy --watch"
   },
   "dependencies": {
     "@performer/core": "workspace:*",
