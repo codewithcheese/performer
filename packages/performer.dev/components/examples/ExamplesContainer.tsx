@@ -8,6 +8,11 @@ import {
 import { createHashRouter } from "react-router-dom";
 import { PERFORMER_TEMPLATE } from "./templates.ts";
 
+import messagesJsx from "../../examples/messages.jsx.sandpack";
+import elementsJsx from "../../examples/elements.jsx.sandpack";
+
+console.log("content", messagesJsx);
+
 const sections = [
   {
     title: "Introduction",
@@ -16,24 +21,14 @@ const sections = [
         slug: "messages",
         title: "Messages",
         files: {
-          "/App.js": {
-            code: `export default function App() {
-  return () => <system>Hello messages</system>
-}
-`,
-          },
+          "/App.js": { code: messagesJsx },
         },
       },
       {
         slug: "elements",
         title: "Elements",
         files: {
-          "/App.js": {
-            code: `export default function App() {
-  return () => <system>Hello elements</system>
-}
-`,
-          },
+          "/App.js": { code: elementsJsx },
         },
       },
     ],
@@ -101,7 +96,7 @@ const ExamplesContainer = ({ data }) => {
         </div>
 
         <SandpackProvider
-          files={{ ...PERFORMER_TEMPLATE }}
+          files={{ ...PERFORMER_TEMPLATE, ...example.files }}
           options={{
             autoReload: true,
             externalResources: [
@@ -117,10 +112,10 @@ const ExamplesContainer = ({ data }) => {
           template="react"
         >
           <div className="flex flex-col flex-1 lg:flex-row">
-            <div className="w-full lg:flex-1 bg-green-200 md:border-r md:border-gray-200">
+            <div className="w-full overflow-auto lg:flex-1 bg-green-200 md:border-r md:border-gray-200">
               <SandpackCodeEditor />
             </div>
-            <div className="w-full lg:flex-1 bg-blue-200 md:border-r md:border-gray-200">
+            <div className="w-full overflow-auto lg:flex-1 bg-blue-200 md:border-r md:border-gray-200">
               <SandpackPreview />
             </div>
           </div>

@@ -16,6 +16,6 @@
     "jsx": "preserve",
     "allowImportingTsExtensions": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "./sandpack.d.ts"],
   "exclude": ["node_modules"]
 }

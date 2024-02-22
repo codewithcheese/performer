@@ -19,10 +19,14 @@ html, body, #root {
 import { ChatWindow } from "@performer/playground";
 import App from "./App";
 
+export { App }
+
 if (module.hot) {
     module.hot.accept('./App', async function() {
         console.log('App update')
-        module.hot.invalidate();
+        module.hot.accept();
+        // module.hot.invalidate();
+        // self.$RefreshHelpers$.scheduleUpdate();
     });
 }
 
@@ -48,6 +52,7 @@ tailwind.config = {
 }
 
 import Chat from "./Chat";
+import App from "./App";
 
 const root = createRoot(document.getElementById("root"));
 root.render(
