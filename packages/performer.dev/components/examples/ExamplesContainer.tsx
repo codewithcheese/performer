@@ -8,10 +8,10 @@ import {
 import { createHashRouter } from "react-router-dom";
 import { PERFORMER_TEMPLATE } from "./templates.ts";
 
-import messagesJsx from "../../sandpack/examples/01-messages.jsx.sandpack";
-import AssistantJsx from "../../sandpack/examples/02-Assistant.jsx.sandpack";
+import messagesCode from "../../sandpack/examples/01-messages.jsx.sandpack";
+import assistantCode from "../../sandpack/examples/02-Assistant.jsx.sandpack";
 
-console.log("content", messagesJsx);
+console.log("content", messagesCode);
 
 const sections = [
   {
@@ -21,14 +21,14 @@ const sections = [
         slug: "messages",
         title: "Messages",
         files: {
-          "/App.js": { code: messagesJsx },
+          "/App.js": { code: messagesCode },
         },
       },
       {
-        slug: "Assistant",
+        slug: "assistant",
         title: "Assistant",
         files: {
-          "/App.js": { code: AssistantJsx },
+          "/App.js": { code: assistantCode },
         },
       },
     ],

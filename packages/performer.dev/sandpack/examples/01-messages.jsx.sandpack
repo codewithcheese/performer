@@ -4,7 +4,7 @@
  * Message contents can be created from props and variables.
  */
 
-export default function App({ name = 'Jarvis' }) {
+export function App({ name = 'Jarvis' }) {
   return () => (
     <>
       <system>Your name is {name}</system>

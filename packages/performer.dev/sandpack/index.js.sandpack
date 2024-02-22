@@ -12,8 +12,7 @@ tailwind.config = {
   },
 }
 
-// import Chat from "./Chat";
-import App from "./App";
+import { App } from "./App";
 
 let chat = <ChatWindow App={App} />
 const root = createRoot(document.getElementById("root"));
@@ -21,7 +20,7 @@ root.render(chat);
 
 if (module.hot) {
   module.hot.accept('./App', async function(...args) {
-    const { default: NewApp } = await import('./App')
+    const { App: NewApp } = await import('./App')
     console.log('App', App.toString(), NewApp.toString(), args)
     chat = <ChatWindow App={NewApp} />
     root.render(chat)
