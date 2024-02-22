@@ -8,8 +8,8 @@ import {
 import { createHashRouter } from "react-router-dom";
 import { PERFORMER_TEMPLATE } from "./templates.ts";
 
-import messagesJsx from "../../examples/messages.jsx.sandpack";
-import elementsJsx from "../../examples/elements.jsx.sandpack";
+import messagesJsx from "../../sandpack/examples/01-messages.jsx.sandpack";
+import AssistantJsx from "../../sandpack/examples/02-Assistant.jsx.sandpack";
 
 console.log("content", messagesJsx);
 
@@ -25,24 +25,11 @@ const sections = [
         },
       },
       {
-        slug: "elements",
-        title: "Elements",
-        files: {
-          "/App.js": { code: elementsJsx },
-        },
-      },
-    ],
-  },
-  {
-    title: "Components",
-    examples: [
-      {
-        slug: "assistant",
+        slug: "Assistant",
         title: "Assistant",
-      },
-      {
-        slug: "user",
-        title: "User",
+        files: {
+          "/App.js": { code: AssistantJsx },
+        },
       },
     ],
   },
@@ -112,10 +99,10 @@ const ExamplesContainer = ({ data }) => {
           template="react"
         >
           <div className="flex flex-col flex-1 lg:flex-row">
-            <div className="w-full overflow-auto lg:flex-1 bg-green-200 md:border-r md:border-gray-200">
-              <SandpackCodeEditor />
+            <div className="w-full overflow-auto flex-1 bg-green-200 md:border-r md:border-gray-200">
+              <SandpackCodeEditor wrapContent />
             </div>
-            <div className="w-full overflow-auto lg:flex-1 bg-blue-200 md:border-r md:border-gray-200">
+            <div className="w-full overflow-auto flex-1 bg-blue-200 md:border-r md:border-gray-200">
               <SandpackPreview />
             </div>
           </div>

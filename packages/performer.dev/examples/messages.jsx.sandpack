@@ -1,3 +1,0 @@
-export default function App() {
-  return () => <system>This is a system message</system>;
-}

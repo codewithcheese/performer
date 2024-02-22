@@ -1,0 +1,15 @@
+/**
+ * `system`, `user`, `assistant` elements represent message literals.
+ * Components can return message elements to influence the conversation.
+ * Message contents can be created from props and variables.
+ */
+
+export default function App({ name = 'Jarvis' }) {
+  return () => (
+    <>
+      <system>Your name is {name}</system>
+      <user>Whats your name?</user>
+      <assistant>My name is Jarvis</assistant>
+    </>
+  );
+}

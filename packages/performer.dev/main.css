@@ -7,5 +7,5 @@
 }
 
 .examples-sp-stack {
-    @apply h-full flex flex-1 !important
+    @apply h-full flex flex-1 max-w-full !important
 }

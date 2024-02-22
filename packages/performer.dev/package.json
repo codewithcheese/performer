@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "playground": "playground ./sandpack/examples"
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "2.12.1",

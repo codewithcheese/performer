@@ -1,7 +1,7 @@
-import indexHtml from "../../examples/index.html.sandpack";
-import indexJs from "../../examples/index.js.sandpack";
-import ChatJsx from "../../examples/Chat.jsx.sandpack";
-import stylesCss from "../../examples/styles.css.sandpack";
+import indexHtml from "../../sandpack/index.html.sandpack";
+import indexJs from "../../sandpack/index.js.sandpack";
+import ChatJsx from "../../sandpack/Chat.jsx.sandpack";
+import stylesCss from "../../sandpack/styles.css.sandpack";
 
 export const PERFORMER_TEMPLATE = {
   "styles.css": {

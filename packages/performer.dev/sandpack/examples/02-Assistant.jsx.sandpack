@@ -1,0 +1,4 @@
+export default function App() {
+  const name = 'Jarvis';
+  return () => <system>Your name is {name}</system>;
+}
