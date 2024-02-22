@@ -6,15 +6,19 @@ import stylesCss from "../../examples/styles.css.sandpack";
 export const PERFORMER_TEMPLATE = {
   "styles.css": {
     code: stylesCss,
+    hidden: true,
   },
   "/Chat.js": {
     code: ChatJsx,
+    hidden: true,
   },
-  "/index.js": {
+  "/main.jsx": {
     code: indexJs,
+    hidden: true,
   },
   "/public/index.html": {
     code: indexHtml,
+    hidden: true,
   },
   "/package.json": {
     code: JSON.stringify({
@@ -26,7 +30,8 @@ export const PERFORMER_TEMPLATE = {
         "react-dom": "^18.0.0",
         "react-scripts": "^5.0.0",
       },
-      main: "/index.js",
+      main: "/main.jsx",
     }),
+    hidden: true,
   },
 };
