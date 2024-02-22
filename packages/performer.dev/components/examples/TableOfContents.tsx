@@ -24,9 +24,12 @@ export function TableOfContents({ sections, activeSection, isLoading, goto }) {
                 <div key={example.slug} className={classNames("row", {})}>
                   <a
                     onClick={() => goto(`/${example.slug}`)}
-                    className={classNames("row", {
-                      active: example.slug === activeSection,
-                    })}
+                    className={classNames(
+                      "row hover:cursor-pointer hover:underline",
+                      {
+                        active: example.slug === activeSection,
+                      },
+                    )}
                   >
                     <img
                       className="thumbnail"

@@ -1,79 +1,20 @@
+import indexHtml from "../../examples/index.html.sandpack";
+import indexJs from "../../examples/index.js.sandpack";
+import ChatJsx from "../../examples/Chat.jsx.sandpack";
+import stylesCss from "../../examples/styles.css.sandpack";
+
 export const PERFORMER_TEMPLATE = {
   "styles.css": {
-    code: `
-html, body, #root {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}`,
-  },
-  "/App.js": {
-    code: `export default function App() {
-  return () => <system>Hello world</system>
-}
-`,
+    code: stylesCss,
   },
   "/Chat.js": {
-    code: `
-import { ChatWindow } from "@performer/playground";
-import App from "./App";
-
-export { App }
-
-if (module.hot) {
-    module.hot.accept('./App', async function() {
-        console.log('App update')
-        module.hot.accept();
-        // module.hot.invalidate();
-        // self.$RefreshHelpers$.scheduleUpdate();
-    });
-}
-
-export default function Chat() {
-  return <ChatWindow App={App} />
-}
-`,
+    code: ChatJsx,
   },
   "/index.js": {
-    code: `
-import { createRoot } from "react-dom/client";
-import { ChatWindow } from "@performer/playground";
-import "./styles.css"
-
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ['Inter var', 'sans-serif']
-      }
-    }
-  },
-}
-
-import Chat from "./Chat";
-import App from "./App";
-
-const root = createRoot(document.getElementById("root"));
-root.render(
-  <Chat  />
-);`,
+    code: indexJs,
   },
   "/public/index.html": {
-    code: `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Performer Sandbox</title>    
-  </head>
-  <body>
-    <div id="root"></div>
-    <script>
-      
-    </script>
-  </body>
-</html>`,
+    code: indexHtml,
   },
   "/package.json": {
     code: JSON.stringify({

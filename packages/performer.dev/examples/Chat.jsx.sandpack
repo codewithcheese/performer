@@ -1,0 +1,17 @@
+import { ChatWindow } from "@performer/playground";
+import App from "./App";
+
+export { App }
+
+if (module.hot) {
+    module.hot.accept('./App', async function() {
+        console.log('App update')
+        // module.hot.accept();
+        module.hot.invalidate();
+        // self.$RefreshHelpers$.scheduleUpdate();
+    });
+}
+
+export default function Chat() {
+  return <ChatWindow App={App} />
+}
