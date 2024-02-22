@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@codesandbox/sandpack-react@^2.12.1>@codesandbox/sandpack-client': 2.10.0
+
 importers:
 
   .:
@@ -230,7 +233,7 @@ importers:
   packages/performer.dev:
     dependencies:
       '@codesandbox/sandpack-react':
-        specifier: ^2.12.1
+        specifier: 2.12.1
         version: 2.12.1(@lezer/common@1.2.1)(react-dom@18.2.0)(react@18.2.0)
       '@fontsource-variable/inter':
         specifier: ^5.0.16
@@ -853,6 +856,16 @@ packages:
       strict-event-emitter: 0.4.6
     dev: false
 
+  /@codesandbox/sandpack-client@2.10.0:
+    resolution: {integrity: sha512-1vLN0j8ElzTmTG43yoBj1dsOyuw6SqRH9rRa13D32jtM4v2qPFLWIFElcyNpH/YbWsCRZTUCN6ku6U4Yw/Xdvg==}
+    dependencies:
+      '@codesandbox/nodebox': 0.1.8
+      buffer: 6.0.3
+      dequal: 2.0.3
+      outvariant: 1.4.0
+      static-browser-server: 1.0.3
+    dev: false
+
   /@codesandbox/sandpack-client@2.12.0:
     resolution: {integrity: sha512-p0+yGdiJx8klwGzy+6mJCs1gKJG5mrYgXQ2HIHWKhWTBtiNI+DipGvxsR+yXXVHFm4NmnJbQtrTFtZDDpf4sIA==}
     dependencies:
@@ -877,7 +890,7 @@ packages:
       '@codemirror/language': 6.10.1
       '@codemirror/state': 6.4.0
       '@codemirror/view': 6.24.0
-      '@codesandbox/sandpack-client': 2.12.0
+      '@codesandbox/sandpack-client': 2.10.0
       '@lezer/highlight': 1.2.0
       '@react-hook/intersection-observer': 3.1.1(react@18.2.0)
       '@stitches/core': 1.2.8
