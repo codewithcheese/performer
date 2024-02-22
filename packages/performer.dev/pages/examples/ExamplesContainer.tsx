@@ -6,7 +6,7 @@ import {
   SandpackProvider,
 } from "@codesandbox/sandpack-react";
 import { createHashRouter } from "react-router-dom";
-import { files } from "@performer/playground/sandpack";
+import { PERFORMER_TEMPLATE } from "./templates.ts";
 
 const sections = [
   {
@@ -101,7 +101,7 @@ const ExamplesContainer = ({ data }) => {
         </div>
 
         <SandpackProvider
-          files={{ ...files, ...example.files }}
+          files={{ ...PERFORMER_TEMPLATE }}
           options={{
             autoReload: true,
             externalResources: [
