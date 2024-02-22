@@ -14,6 +14,23 @@ html, body, #root {
 }
 `,
   },
+  "/Chat.js": {
+    code: `
+import { ChatWindow } from "@performer/playground";
+import App from "./App";
+
+if (module.hot) {
+    module.hot.accept('./App', async function() {
+        console.log('App update')
+        module.hot.invalidate();
+    });
+}
+
+export default function Chat() {
+  return <ChatWindow App={App} />
+}
+`,
+  },
   "/index.js": {
     code: `
 import { createRoot } from "react-dom/client";
@@ -30,11 +47,11 @@ tailwind.config = {
   },
 }
 
-import App from "./App";
+import Chat from "./Chat";
 
 const root = createRoot(document.getElementById("root"));
 root.render(
-  <ChatWindow App={App}  />
+  <Chat  />
 );`,
   },
   "/public/index.html": {
