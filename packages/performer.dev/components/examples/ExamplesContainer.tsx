@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { TableOfContents } from "./TableOfContents";
+import { TableOfContents } from "./TableOfContents.tsx";
 import {
   SandpackCodeEditor,
   SandpackPreview,
