@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.13
+
+### Patch Changes
+
+- 9e05994: Fix Fragment handling when using React JSX runtime
+
 ## 0.0.12
 
 ## 0.0.11
