@@ -5,7 +5,7 @@ import { MessageDelta, PerformerMessage } from "./message.js";
 import { hydrateHooks } from "./hydration.js";
 import { nanoid } from "nanoid";
 import { logNode } from "./util/log.js";
-import { Fragment } from "../src/jsx/index.js";
+import { Fragment } from "./jsx/index.js";
 
 export type PerformerNode = {
   uid: string;

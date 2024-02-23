@@ -26,7 +26,7 @@ import {
 } from "./util/log.js";
 import { createUseResourceHook } from "./hooks/index.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
-import { Fragment } from "../src/jsx/index.js";
+import { Fragment } from "./jsx/index.js";
 
 export async function render(performer: Performer) {
   try {
