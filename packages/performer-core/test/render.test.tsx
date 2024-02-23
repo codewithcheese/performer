@@ -1,11 +1,11 @@
 import { sleep } from "../src/util/sleep.js";
-import { assert, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import {
+  Performer,
+  PerformerErrorEvent,
   PerformerMessage,
   resolveMessages,
-  Performer,
   useState,
-  PerformerErrorEvent,
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
 import { expectTree } from "./util/expect-tree.js";
