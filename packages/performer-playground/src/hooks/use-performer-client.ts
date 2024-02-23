@@ -24,6 +24,7 @@ export function usePerformerClient(app: Component<any> | null) {
       return;
     }
     try {
+      setEvents([]);
       const performer = new Performer(jsx(app, {}));
       setPerformer(performer);
 

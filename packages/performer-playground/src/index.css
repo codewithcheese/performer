@@ -12,6 +12,83 @@ body, html, #root {
     outline: none;
 }
 
+/* Layout */
+
+.bg-token-border-light {
+    background-color:rgba(0,0,0,.1);
+    /*background-color:var(--border-light)*/
+}
+.bg-token-border-medium {
+    background-color:rgba(0,0,0,.15);
+    /*background-color:var(--border-medium)*/
+}
+.bg-token-main-surface-primary {
+    background-color:#fff;
+    /*background-color:var(--main-surface-primary)*/
+}
+.bg-token-main-surface-secondary {
+    background-color:#f9f9f9;
+    /*background-color:var(--main-surface-secondary)*/
+}
+.bg-token-main-surface-tertiary {
+    background-color:#ececec;
+    /*background-color:var(--main-surface-tertiary)*/
+}
+.bg-token-sidebar-surface-primary {
+    background-color:#f9f9f9;
+    /*! background-color:var(--sidebar-surface-primary); */
+}
+.bg-token-sidebar-surface-secondary {
+    background-color:#ececec;
+    /*background-color:var(--sidebar-surface-secondary)*/
+}
+.bg-token-sidebar-surface-tertiary {
+    background-color:#ececec;
+    /*background-color:var(--sidebar-surface-tertiary)*/
+}
+.bg-token-text-primary {
+    background-color:#0d0d0d;
+    /*background-color:var(--text-primary)*/
+}
+.bg-token-text-quaternary {
+    background-color:#b4b4b4;
+    /*background-color:var(--text-quaternary)*/
+}
+.bg-token-text-secondary {
+    background-color:#424242;
+    /*background-color:var(--text-secondary)*/
+}
+.bg-token-text-tertiary {
+    background-color:#676767;
+    /*background-color:var(--text-tertiary)*/
+}
+
+.gizmo-shadow-stroke {
+    position:relative
+}
+.gizmo-shadow-stroke:after {
+    --tw-shadow:inset 0 0 0 1px rgba(0,0,0,.1);
+    /*--tw-shadow-colored:inset 0 0 0 1px var(--tw-shadow-color);*/
+    border-radius:9999px;
+    bottom:0;
+    content:"";
+    left:0;
+    position:absolute;
+    right:0;
+    top:0
+}
+.dark .gizmo-shadow-stroke:after,
+.gizmo-shadow-stroke:after {
+    box-shadow:0 0 transparent,0 0 transparent,var(--tw-shadow);
+    /*box-shadow:var(--tw-ring-offset-shadow,0 0 transparent),var(--tw-ring-shadow,0 0 transparent),var(--tw-shadow)*/
+}
+.dark .gizmo-shadow-stroke:after {
+    --tw-shadow:inset 0 0 0 1px hsla(0,0%,100%,.2);
+    /*--tw-shadow-colored:inset 0 0 0 1px var(--tw-shadow-color)*/
+}
+
+/* Other */
+
 .btn {
     align-items: center;
     border-color: transparent;
