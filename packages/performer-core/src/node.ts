@@ -5,6 +5,7 @@ import { MessageDelta, PerformerMessage } from "./message.js";
 import { hydrateHooks } from "./hydration.js";
 import { nanoid } from "nanoid";
 import { logNode } from "./util/log.js";
+import { Fragment } from "../src/jsx/index.js";
 
 export type PerformerNode = {
   uid: string;
@@ -68,11 +69,12 @@ export function createNode({
   serialized?: SerializedNode;
 }): PerformerNode {
   validateElement(element, parent);
+  // React compat Fragment type is Symbol(react.fragment)
+  const type = typeof element.type === "symbol" ? Fragment : element.type;
   return {
     uid: serialized ? serialized.uid : nanoid(),
-    type: element.type,
-    _typeName:
-      typeof element.type === "string" ? element.type : element.type.name,
+    type,
+    _typeName: typeof type === "string" ? type : type.name,
     props: element.props,
     element,
     hooks: serialized ? hydrateHooks(serialized.hooks) : {},
