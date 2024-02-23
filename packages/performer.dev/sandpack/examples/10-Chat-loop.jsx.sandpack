@@ -1,0 +1,13 @@
+import { Assistant, Repeat, User } from "@performer/core";
+
+export function App() {
+  return () => (
+    <>
+      <system>You are a friendly, helpful AI assistant.</system>
+      <Repeat>
+        <User />
+        <Assistant />
+      </Repeat>
+    </>
+  );
+}
