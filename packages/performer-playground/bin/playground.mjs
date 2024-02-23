@@ -5,6 +5,8 @@ import "dotenv/config";
 import { fileURLToPath } from "url";
 import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
+import svgr from "vite-plugin-svgr";
+import { transform } from "esbuild";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,6 +35,31 @@ const server = await createServer({
     port: 3011,
   },
   plugins: [
+    {
+      /**
+       * Support JSX transpiling for .sandpack files.
+       * .sandpack is an arbitrary extension used to store the examples code on performer.dev
+       * performer.dev next.js is configured to import .sandpack as a static assets, so the source code can be loaded into the examples code editor
+       * playground supports loading .sandpack files for developing the examples
+       * This plugin is necessary since the React plugin esbuild config doest not transpiling .sandpack as JSX
+       */
+      name: "transformer-sandpack-files",
+      async transform(code, id) {
+        if (!id.match(/\.(sandpack)$/)) {
+          return null;
+        }
+        const result = await transform(code, {
+          loader: "jsx",
+          jsx: "automatic",
+          sourcefile: id
+        });
+        return {
+          code: result.code,
+          map: result.map
+        };
+      }
+    },
+    svgr(),
     react()
   ],
   resolve: {

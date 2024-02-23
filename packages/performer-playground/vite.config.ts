@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import svgr from "vite-plugin-svgr";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
@@ -10,24 +11,7 @@ export default defineConfig({
     include: ["test/**.*"],
   },
   plugins: [
-    // {
-    //   name: "performer-jsx-transformer",
-    //   async transform(code, id) {
-    //     if (id.startsWith(examplesPath)) {
-    //       console.log(`Performer JSX transformed ${id}`);
-    //       const result = await transform(code, {
-    //         loader: "jsx",
-    //         jsx: "automatic",
-    //         jsxImportSource: "@performer/core",
-    //         sourcefile: id,
-    //       });
-    //       return {
-    //         code: result.code,
-    //         map: result.map,
-    //       };
-    //     }
-    //   },
-    // },
+    svgr(),
     react(),
   ],
   resolve: {
