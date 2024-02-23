@@ -26,6 +26,7 @@ import {
 } from "./util/log.js";
 import { createUseResourceHook } from "./hooks/index.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
+import { Fragment } from "./jsx/index.js";
 
 export async function render(performer: Performer) {
   try {
@@ -421,8 +422,10 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
     }
     return undefined;
   };
+  // React compat Fragment type is Symbol(react.fragment)
   return (
-    node.element.type === element.type &&
+    (node.element.type === element.type ||
+      (typeof element.type === "symbol" && node.type === Fragment)) &&
     _.isEqualWith(node.element.props, element.props, functionComparison)
   );
 }

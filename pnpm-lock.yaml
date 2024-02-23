@@ -147,12 +147,18 @@ importers:
       '@types/lodash':
         specifier: ^4.14.200
         version: 4.14.202
+      '@types/react':
+        specifier: ^18.2.43
+        version: 18.2.48
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
       prettier:
         specifier: ^3.0.3
         version: 3.2.2
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
       tshy:
         specifier: ^1.8.2
         version: 1.8.2
@@ -5645,7 +5651,6 @@ packages:
     hasBin: true
     dependencies:
       js-tokens: 4.0.0
-    dev: false
 
   /loupe@2.3.7:
     resolution: {integrity: sha512-zSMINGVYkdpYSOBmLi0D1Uo7JU9nVdQKrHxC8eYlV+9YKK9WePqAlL7lSlorG/U2Fw1w0hTBmaa/jrQ3UbPHtA==}
@@ -7566,7 +7571,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
-    dev: false
 
   /read-cache@1.0.0:
     resolution: {integrity: sha512-Owdv/Ft7IjOgm/i0xvNDZ1LrRANRfew4b2prF3OWMQLxLfu3bS8FVhCsrSCMK4lR56Y9ya+AThoTpDCTxCmpRA==}
