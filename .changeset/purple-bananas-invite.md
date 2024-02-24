@@ -2,4 +2,4 @@
 "@performer/core": patch
 ---
 
-Add getCurrentMessages() helper
+Add getCurrentMessages() helper to Performer class
