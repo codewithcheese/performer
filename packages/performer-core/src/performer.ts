@@ -1,6 +1,6 @@
 import type { PerformerElement } from "./element.js";
 import type { PerformerNode } from "./node.js";
-import { render } from "./render.js";
+import { render, resolveMessages } from "./render.js";
 import {
   PerformerErrorEvent,
   PerformerEventMap,
@@ -80,6 +80,10 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
 
   get aborted() {
     return this.controller.signal.aborted;
+  }
+
+  getCurrentMessages() {
+    return resolveMessages(this.root);
   }
 
   queueRender() {

@@ -116,7 +116,7 @@ test("message element should resolve stream into message object", async () => {
   });
   performer.start();
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.root);
+  const messages = performer.getCurrentMessages();
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual(userMessage);
   expect(onMessageValue).toEqual(userMessage);
@@ -137,7 +137,7 @@ test("message element should accept message object without stream", async () => 
   const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  const messages = resolveMessages(performer.root);
+  const messages = performer.getCurrentMessages();
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual(userMessage);
 });
