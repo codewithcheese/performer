@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.15
+
+### Patch Changes
+
+- be2f237: Add getCurrentMessages() helper to Performer class
+
 ## 0.0.14
 
 ## 0.0.13
