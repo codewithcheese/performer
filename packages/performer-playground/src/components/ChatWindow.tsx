@@ -1,11 +1,13 @@
 import { Divider, Message, ModelSelect, Splash } from "./index.js";
 import {
   Component,
+  PerformerErrorEvent,
   PerformerLifecycleEvent,
   PerformerMessageEvent,
 } from "@performer/core";
 import { usePerformerClient } from "../hooks/use-performer-client.js";
 import { MessageInput } from "./MessageInput.js";
+import { Alert } from "./Alert.js";
 
 export function ChatWindow({ App }: { App: Component<any> }) {
   const { events, sendMessage } = usePerformerClient(App);
@@ -25,6 +27,12 @@ export function ChatWindow({ App }: { App: Component<any> }) {
                     key={index}
                     message={`Performer ${event.detail.state}`}
                   />
+                );
+              } else if (event instanceof PerformerErrorEvent) {
+                return (
+                  <div className="group mx-auto flex flex-1 gap-3 text-base md:max-w-3xl md:px-5 lg:max-w-[40rem] lg:px-1 xl:max-w-[48rem] xl:px-5">
+                    <Alert title="Error" message={event.detail.message} />
+                  </div>
                 );
               }
             })}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PerformerMessage, readTextContent } from "@performer/core";
 import { toTitleCase } from "../lib/message.js";
+import { MessageMarkdown } from "./MessageMarkdown.js";
 
 export function Divider({ message }: { message: string }) {
   return (
@@ -434,7 +435,7 @@ export function Message({ message }: MessageProps) {
                     data-message-author-role={message.role}
                     className="text-message flex min-h-[20px] flex-col items-start gap-3 overflow-x-auto whitespace-pre-wrap break-words [.text-message+&]:mt-5"
                   >
-                    <div>{readTextContent(message)}</div>
+                    <MessageMarkdown content={readTextContent(message)} />
                   </div>
                 )}
               </div>

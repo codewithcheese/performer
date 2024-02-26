@@ -10,6 +10,10 @@ test("has messages", async ({ page }) => {
   await expect(
     page.getByText("Tell the valet I will be leaving at 6pm"),
   ).toBeVisible();
+  await expect(page.getByText("This is an error message")).toBeVisible();
+  await expect(
+    page.getByText("tellValet('User leaving at 6pm');"),
+  ).toBeVisible();
 
   // Expect a title "to contain" a substring.
   await expect(page).toHaveTitle("Performer Playground");
