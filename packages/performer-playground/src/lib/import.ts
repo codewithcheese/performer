@@ -1,4 +1,5 @@
 import { Component } from "@performer/core";
+import { slugify } from "./slugify.js";
 
 export type AppImport = {
   slug: string;
@@ -7,7 +8,7 @@ export type AppImport = {
   module: Record<string, any>;
 };
 
-export async function importApps(): Promise<AppImport[]> {
+export async function importApps(target = "browser"): Promise<AppImport[]> {
   const modules = import.meta.glob("@app/**/*.(tsx|jsx)");
   const imports: AppImport[] = [];
   for (const [path, loader] of Object.entries(modules)) {
@@ -22,14 +23,20 @@ export async function importApps(): Promise<AppImport[]> {
       }
       let slug: string;
       let name: string;
-      // default slug and name to filename
-      slug = name = path.split("/").pop()!.split(".").shift()!;
-      if (module.meta && typeof module.meta === "object") {
-        if ("name" in module.meta && typeof module.meta.name === "string") {
-          name = module.meta.name;
-        }
-        if ("slug" in module.meta && typeof module.meta.slug === "string") {
-          slug = module.meta.slug;
+      // default name to filename
+      name = path.split("/").pop()!.split(".").shift()!;
+      if ("name" in module && typeof module.name === "string") {
+        name = module.name;
+      }
+      if ("slug" in module && typeof module.slug === "string") {
+        slug = module.slug;
+      } else {
+        slug = slugify(name);
+      }
+      if ("target" in module && typeof module.target === "string") {
+        if (module.target !== target) {
+          // skip if module does not match target
+          continue;
         }
       }
       console.log(path, module);
