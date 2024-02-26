@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.16
+
+### Patch Changes
+
+- 479bbca: Add Playground message markdown and code formatting
+  - @performer/core@0.0.16
+
 ## 0.0.15
 
 ### Patch Changes
