@@ -11,6 +11,8 @@ import {
  * todo fallback for when the user does not meet the criteria
  */
 
+export const name = "JuiceAI";
+
 export function App() {
   const routes = [
     { path: "/", component: <Append path="/select" /> },

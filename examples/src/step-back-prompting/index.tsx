@@ -14,6 +14,8 @@ import { JSDOM } from "jsdom";
  * todo UX notifications from custom effects
  */
 
+export const name = "Step back prompting";
+
 const questionContext = createContext<string>("question");
 const stepBackContext = createContext<string>("stepBack");
 

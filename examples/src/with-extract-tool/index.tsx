@@ -1,8 +1,7 @@
-/**
- * Based on https://github.com/langchain-ai/langchain/blob/master/cookbook/extraction_openai_tools.ipynb
- */
 import { Assistant, createTool } from "@performer/core";
 import { z } from "zod";
+
+export const name = "Data extraction tool";
 
 const PeopleSchema = z
   .object({

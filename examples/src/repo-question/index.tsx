@@ -1,5 +1,7 @@
 import { Assistant, AsyncHooks } from "@performer/core";
 
+export const name = "Repo question";
+
 async function fetchRepos(controller: AbortController, user: string) {
   const response = await fetch(
     `https://api.github.com/users/${user}/repos?sort=updated`,
@@ -25,7 +27,7 @@ async function Repos({ user }: { user: string }, { useResource }: AsyncHooks) {
   );
 }
 
-export function RecentWork({ user }: { user: string }) {
+export function App({ user = "openai" }: { user: string }) {
   return () => (
     <>
       <Repos user={user} />
