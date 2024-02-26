@@ -4,6 +4,14 @@
 
 ### Patch Changes
 
+- Updated dependencies [c427ae1]
+  - @performer/playground@0.0.17
+  - @performer/core@0.0.17
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [479bbca]
   - @performer/playground@0.0.16
   - @performer/core@0.0.16

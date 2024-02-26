@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.17
+
+### Patch Changes
+
+- c427ae1: Change playground app import to use `name` and `target` exports
+  - @performer/core@0.0.17
+
 ## 0.0.16
 
 ### Patch Changes
