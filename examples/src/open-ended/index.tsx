@@ -2,6 +2,8 @@ import { Assistant, Repeat, User, useToolData } from "@performer/core";
 import { computed } from "@preact/signals-core";
 import { z } from "zod";
 
+export const name = "Chat until goodbye";
+
 const ChatStateSchema = z
   .object({
     hasEnded: z.boolean().default(false),

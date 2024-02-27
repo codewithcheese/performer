@@ -28,14 +28,15 @@ Will start the playground on port 3011 (ChatGPT launch date 30th November).
 
 An app is any file that exports an `App` component function. 
 
-Export `meta` object to provide a name for the app.
+Export `name` to provide a name your app.
+
+Export `target` with `browser | node | edge` to mark where your app can run.
 
 ```tsx
 import { Assistant } from "@performer/core";
 
-export const meta = {
-  name: 'joke',
-}
+export const name = 'Joker.ai';
+export const target = 'browser'
 
 export function App () {
   return () => (

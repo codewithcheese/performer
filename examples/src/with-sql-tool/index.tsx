@@ -8,6 +8,9 @@ import { z } from "zod";
 import * as path from "path";
 import sqlite3 from "sqlite3";
 
+export const name = "SQL Tool";
+export const target = "node";
+
 sqlite3.verbose();
 
 const SQLSelectSchema = z

@@ -5,6 +5,7 @@ import "dotenv/config";
 import { fileURLToPath } from "url";
 import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
+import svgr from "vite-plugin-svgr";
 import { transform } from "esbuild";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -58,6 +59,7 @@ const server = await createServer({
         };
       }
     },
+    svgr(),
     react()
   ],
   resolve: {

@@ -1,5 +1,33 @@
 # @performer/playground
 
+## 0.0.17
+
+### Patch Changes
+
+- c427ae1: Change playground app import to use `name` and `target` exports
+  - @performer/core@0.0.17
+
+## 0.0.16
+
+### Patch Changes
+
+- 479bbca: Add Playground message markdown and code formatting
+  - @performer/core@0.0.16
+
+## 0.0.15
+
+### Patch Changes
+
+- Updated dependencies [be2f237]
+  - @performer/core@0.0.15
+
+## 0.0.14
+
+### Patch Changes
+
+- 5179ddf: Add sidebar and router to playground
+  - @performer/core@0.0.14
+
 ## 0.0.13
 
 ### Patch Changes

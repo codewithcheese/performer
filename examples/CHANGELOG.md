@@ -1,5 +1,38 @@
 # performer-examples
 
+## 0.0.16
+
+### Patch Changes
+
+- c427ae1: Change playground app import to use `name` and `target` exports
+- Updated dependencies [c427ae1]
+  - @performer/playground@0.0.17
+  - @performer/core@0.0.17
+
+## 0.0.15
+
+### Patch Changes
+
+- Updated dependencies [479bbca]
+  - @performer/playground@0.0.16
+  - @performer/core@0.0.16
+
+## 0.0.14
+
+### Patch Changes
+
+- Updated dependencies [be2f237]
+  - @performer/core@0.0.15
+  - @performer/playground@0.0.15
+
+## 0.0.13
+
+### Patch Changes
+
+- Updated dependencies [5179ddf]
+  - @performer/playground@0.0.14
+  - @performer/core@0.0.14
+
 ## 0.0.12
 
 ### Patch Changes
