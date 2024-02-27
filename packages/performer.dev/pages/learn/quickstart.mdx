@@ -1,5 +1,30 @@
----
-title: Quickstart
----
-
 # Quickstart
+
+Follow this quickstart guide to create and deploy your first Performer app in just a few minutes.
+
+## Create a new project
+
+To start your adventure, run the following command in your terminal to create a new Performer project:
+
+```sh npm2yarn
+npm create performer@latest
+```
+
+That’s it! Navigate to your project’s directory, and explore your first Performer app 🥳
+
+## Run the playground
+
+Start the playground to start a chat with your Performer app:
+
+```sh npm2yarn
+npm run playground
+```
+
+You will be prompted to enter your OpenAI API Key. The key lives in your browser's local storage and does not leave your machine.
+Alternatively create a `.env` file and set `VITE_OPENAI_API_KEY=`.
+
+## Start editing your app
+
+A Performer project can contain multiple apps. The `create` command creates a single app in the `src` directory. `./src/chat.tsx`
+
+Edit this file to customize the behaviour of your app.
