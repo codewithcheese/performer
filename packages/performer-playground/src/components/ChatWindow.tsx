@@ -1,4 +1,7 @@
-import { Divider, Message, ModelSelect, Splash } from "./index.js";
+import { ModelSelect } from "./ModelSelect.js";
+import { Splash } from "./Splash.js";
+import { Message } from "./Message.js";
+import { MessageDivider } from "./MessageDivider.js";
 import {
   Component,
   PerformerErrorEvent,
@@ -23,7 +26,7 @@ export function ChatWindow({ App }: { App: Component<any> }) {
                 return <Message key={index} message={event.detail.message} />;
               } else if (event instanceof PerformerLifecycleEvent) {
                 return (
-                  <Divider
+                  <MessageDivider
                     key={index}
                     message={`Performer ${event.detail.state}`}
                   />
