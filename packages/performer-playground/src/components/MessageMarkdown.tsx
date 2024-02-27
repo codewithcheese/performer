@@ -1,6 +1,6 @@
 import React, { FC } from "react";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
+// import remarkGfm from "remark-gfm";
+// import remarkMath from "remark-math";
 import { MessageCodeBlock } from "./MessageCodeblock.js";
 import { MessageMarkdownMemoized } from "./MessageMarkdownMemoized.js";
 
@@ -12,7 +12,7 @@ export const MessageMarkdown: FC<MessageMarkdownProps> = ({ content }) => {
   return (
     <MessageMarkdownMemoized
       className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 min-w-full break-words"
-      remarkPlugins={[remarkGfm, remarkMath]}
+      // remarkPlugins={[remarkGfm, remarkMath]}
       components={{
         p({ children }) {
           return <p className="mb-2 last:mb-0">{children}</p>;
