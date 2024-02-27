@@ -39,7 +39,7 @@ export function Message({ message }: MessageProps) {
                     data-message-author-role={message.role}
                     className="text-message flex min-h-[20px] flex-col items-start gap-3 overflow-x-auto whitespace-pre-wrap break-words [.text-message+&]:mt-5"
                   >
-                    <MessageMarkdown content={readTextContent(message)} />
+                    {readTextContent(message)}
                   </div>
                 )}
               </div>
