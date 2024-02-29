@@ -91,6 +91,41 @@ test.skipIf(!process.env.OPENROUTER_API_KEY)(
   20_000,
 );
 
+test.skipIf(!process.env.PERPLEXITY_API_KEY)(
+  "should use perplexity",
+
+  async () => {
+    function Perplexity(props: any, asyncHooks: AsyncHooks) {
+      return Assistant(
+        {
+          model: "sonar-medium-online",
+          baseURL: "https://api.perplexity.ai",
+          apiKey: process.env.PERPLEXITY_API_KEY,
+          ...props,
+        },
+        asyncHooks,
+      );
+    }
+
+    function App() {
+      return () => (
+        <>
+          <user>Has GPT-5 been released yet</user>
+          <Perplexity />
+        </>
+      );
+    }
+    const performer = new Performer(<App />);
+    performer.start();
+    await performer.waitUntilSettled();
+    const messages = performer.getCurrentMessages();
+    expect(messages).toHaveLength(2);
+    expect(messages[0].role).toEqual("user");
+    expect(messages[1].role).toEqual("assistant");
+  },
+  20_000,
+);
+
 test.skipIf(process.env.USE_OLLAMA !== "true")(
   "should use ollama model",
 
