@@ -143,81 +143,99 @@ export async function renderElement(
     nextSibling.prevSibling = node;
   }
   if (node.type instanceof Function) {
-    // call component and get view function
-    let viewPromised: Promise<unknown>;
-    try {
-      const scope = setRenderScope({ performer, node, nonce: 0 });
-      const useResource = createUseResourceHook(scope, performer.controller);
-      const componentReturn = node.type(node.props, { useResource });
-      viewPromised = !(componentReturn instanceof Promise)
-        ? Promise.resolve(componentReturn)
-        : componentReturn;
-    } finally {
-      clearRenderScope();
-    }
-    const requiresInput =
-      node.hooks.input && node.hooks.input.state === "pending";
-    if (requiresInput) {
-      performer.setInputNode(node);
-      viewPromised
-        .then((view) => {
-          node.viewResolved = true;
-          registerView(performer, node, view);
-        })
-        .catch((e) => performer.onError(e));
-    } else {
-      const view = await viewPromised;
-      node.viewResolved = true;
-      registerView(performer, node, view);
-    }
+    await renderComponent(performer, node);
   } else {
     // else intrinsic
-    if (isRawNode(node)) {
-      if (!node.props.stream && !node.props.message) {
-        throw Error("`raw` element requires `stream` OR `message` prop");
-      }
-      if (node.props.stream != null) {
-        // process stream
-        if (node.isHydrating) {
-          const message = await consumeDeltaStream(
-            performer,
-            node,
-            node.props.stream,
-          );
-          node.hooks.message = message;
-          if (node.props.onResolved) {
-            await node.props.onResolved(message);
-          }
-          node.viewResolved = true;
-        } else {
-          consumeDeltaStream(performer, node, node.props.stream)
-            .then(async (message) => {
-              node.hooks.message = message;
-              if (node.props.onResolved) {
-                await node.props.onResolved(message);
-              }
-              node.viewResolved = true;
-              dispatchMessageElement(performer, node, message);
-              performer.queueRender();
-            })
-            .catch((error) => performer.onError(error));
-        }
-      } else if (node.props.message != null) {
+    await renderIntrinsic(performer, node);
+  }
+  return node;
+}
+
+async function renderComponent(performer: Performer, node: PerformerNode) {
+  if (!(node.type instanceof Function)) {
+    throw new Error(
+      `Invalid node type: renderComponent() expects 'node.type' to be a function`,
+    );
+  }
+  // call component and get view function
+  let viewPromised: Promise<unknown>;
+  try {
+    const scope = setRenderScope({ performer, node, nonce: 0 });
+    const useResource = createUseResourceHook(scope, performer.controller);
+    const componentReturn = node.type(node.props, { useResource });
+    viewPromised = !(componentReturn instanceof Promise)
+      ? Promise.resolve(componentReturn)
+      : componentReturn;
+  } finally {
+    clearRenderScope();
+  }
+  const requiresInput =
+    node.hooks.input && node.hooks.input.state === "pending";
+  if (requiresInput) {
+    performer.setInputNode(node);
+    viewPromised
+      .then((view) => {
         node.viewResolved = true;
-        if (!node.isHydrating) {
-          dispatchMessageElement(performer, node);
-          performer.queueRender();
+        registerView(performer, node, view);
+      })
+      .catch((e) => performer.onError(e));
+  } else {
+    const view = await viewPromised;
+    node.viewResolved = true;
+    registerView(performer, node, view);
+  }
+}
+
+async function renderIntrinsic(performer: Performer, node: PerformerNode) {
+  if (typeof node.type !== "string") {
+    throw new Error(
+      `Invalid node type: renderIntrinsic() expects 'node.type' to be a string`,
+    );
+  }
+  if (isRawNode(node)) {
+    if (!node.props.stream && !node.props.message) {
+      throw Error("`raw` element requires `stream` OR `message` prop");
+    }
+    if (node.props.stream != null) {
+      // process stream
+      if (node.isHydrating) {
+        const message = await consumeDeltaStream(
+          performer,
+          node,
+          node.props.stream,
+        );
+        node.hooks.message = message;
+        if (node.props.onResolved) {
+          await node.props.onResolved(message);
         }
+        node.viewResolved = true;
+      } else {
+        consumeDeltaStream(performer, node, node.props.stream)
+          .then(async (message) => {
+            node.hooks.message = message;
+            if (node.props.onResolved) {
+              await node.props.onResolved(message);
+            }
+            node.viewResolved = true;
+            dispatchMessageElement(performer, node, message);
+            performer.queueRender();
+          })
+          .catch((error) => performer.onError(error));
       }
-    } else {
+    } else if (node.props.message != null) {
       node.viewResolved = true;
       if (!node.isHydrating) {
         dispatchMessageElement(performer, node);
         performer.queueRender();
       }
     }
+  } else {
+    node.viewResolved = true;
+    if (!node.isHydrating) {
+      dispatchMessageElement(performer, node);
+      performer.queueRender();
+    }
   }
-  return node;
 }
 
 function registerView(
