@@ -149,11 +149,9 @@ export async function renderElement(
       const scope = setRenderScope({ performer, node, nonce: 0 });
       const useResource = createUseResourceHook(scope, performer.controller);
       const componentReturn = node.type(node.props, { useResource });
-      if (!(componentReturn instanceof Promise)) {
-        viewPromised = Promise.resolve(componentReturn);
-      } else {
-        viewPromised = componentReturn;
-      }
+      viewPromised = !(componentReturn instanceof Promise)
+        ? Promise.resolve(componentReturn)
+        : componentReturn;
     } finally {
       clearRenderScope();
     }
