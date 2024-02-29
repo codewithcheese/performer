@@ -1,0 +1,41 @@
+---
+title: useAfterChildren
+---
+
+# useAfterChildren
+
+`useAfterChildren` lets you update state after child components have been created.
+
+```js
+useAfterChildren(callback)
+```
+
+## Reference
+
+Call `useAfterChildren` at the top level of your component to register a callback. The callback is called after child components have been created.
+
+```js
+import { useAfterChildren } from '@performer/core';
+
+function MyAssistant() {
+  const done = useState(false);
+  useAfterChildren(() => {
+    if (!done.value) {
+      done.value = true
+    }
+  });
+  // ...
+```
+
+#### Parameters
+
+* `callback` A function. Called after children created.
+
+#### Returns
+
+`useAfterChildren` does not return anything.
+
+#### Caveats
+
+- `useAfterChildren` can result in an infinite loop. An infinite loop can arise when the callback repeatedly modifies state that causes child components to be recreated. To avoid infinite loops, state updates in callback should be conditional with clear end states.
+- `useAfterChildren` is a Hook, it must be called at the top level of the component or your own Hooks. You can't call it inside loops or conditions. It must be called before any `await` expressions.

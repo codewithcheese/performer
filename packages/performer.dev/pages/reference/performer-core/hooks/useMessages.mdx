@@ -1,0 +1,40 @@
+---
+title: useMessages
+---
+
+# useMessages
+
+`useMessages` lets you get the currently rendered messages.
+
+```js
+const messages = useMessages()
+```
+
+## Reference
+
+### `useMessages()`
+
+Call `useMessages` at the top level of your component to an ordered array of currently rendered messages.
+
+```js
+import { useMessages } from '@performer/core';
+
+function MyAssistant () {
+  const messages = useMessages();
+  // send message to language model for completion
+  // ...
+```
+
+`useMessages` is used by the [`Assistant`](/components/Assistant) component to make a request to the language model.
+
+#### Parameters
+
+`useMessages` does not take any parameters.
+
+#### Returns
+
+`useMessages` returns an array of `PerformerMessage`.
+
+#### Caveats
+
+- `useMessages` is a Hook, it must be called at the top level of the component or your own Hooks. You can't call it inside loops or conditions. It must be called before any `await` expressions.

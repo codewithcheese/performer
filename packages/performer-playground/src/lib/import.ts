@@ -9,11 +9,11 @@ export type AppImport = {
 };
 
 export async function importApps(target = "browser"): Promise<AppImport[]> {
-  const modules = import.meta.glob("@app/**/*.(tsx|jsx)");
+  const modules = import.meta.glob("@app/**/*.(tsx|jsx|sandpack)");
   const imports: AppImport[] = [];
   for (const [path, loader] of Object.entries(modules)) {
     try {
-      const module = (await loader()) as Record<string, unknown> & {
+      let module = (await loader()) as Record<string, unknown> & {
         meta?: unknown;
         App: Component<any>;
       };

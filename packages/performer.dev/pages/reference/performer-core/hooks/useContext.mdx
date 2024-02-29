@@ -1,0 +1,110 @@
+---
+title: useContext
+---
+
+# useContext
+
+`useContext` lets you read context from your component.
+
+```js
+const signal = useContext(context)
+```
+
+## Reference
+
+Call `useContext` at the top level of your component to get a reference to the context signal.
+
+```js
+import { useContext } from '@performer/core';
+import { ConfigContext } from "..."
+
+function MyAssistant() {
+  const config = useContext(ConfigContext);
+  // ...
+```
+
+[See more examples below.](#usage)
+
+#### Parameters
+
+* `context`: The context that you've previously created with [`createContext`](/hooks/createContext). The context itself does not hold the information, it only represents the kind of information you can provide or read from components.
+
+#### Returns
+
+`useContext` returns a signal containing a context value. It is determined as the `value` passed to the closest `useContextProvider` above the calling component in the tree. If there is no such provider, a provider not found error will be thrown.
+
+#### Caveats
+
+- `useContext` is a Hook, it must be called at the top level of the component or your own Hooks. You can't call it inside loops or conditions. It must be called before any `await` expressions.
+
+---
+
+## Usage
+
+
+### Passing data deeply into the tree
+
+Call `useContext` at the top level of your component to get a reference to the context signal.
+
+```js [[2, 4, "config"], [1, 4, "ConfigContext"]]
+import { useContext } from '@performer/core';
+
+function MyAssistant() {
+  const config = useContext(ConfigContext);
+  // ...
+```
+
+`useContext` returns the signal containing the context value for the context you passed. To determine the context signal, Performer searches the component tree and finds **the closest context provider above** for that particular context.
+
+To pass context to a `MyAssistant`, call `useContextProvider` with the context value in one of its parent components:
+
+```js [[1, 2, "ConfigContext"], [2, 2, "{ model: 'gpt-4' }"]]
+function App() {
+  useContextProvider(ConfigContext, { model: 'gpt-4' })
+
+  return () => (
+    <MyChatbot />
+    // ...
+  );
+}
+
+function MyChatbot() {
+
+  return () => (
+    <MyAssistant />
+    // ...
+  );
+}
+```
+
+---
+
+### Updating data passed via context
+
+Often, you'll want the context to change over time. Both `useContextProvider` and `useContext` return a signal containing the context value. Update the context using the `value` property.
+
+```js {2} [[1, 2, "ConfigContext"], [2, 2, "{ model: 'gpt-4' }"]]
+function App() {
+  const config = useContextProvider(ConfigContext, { model: 'gpt-4' });
+
+  function onMessage() {
+    config.value = { model: 'gpt-3.5-turbo' }
+  }
+}
+```
+
+Now all `MyAssistant` components below `App` in the component tree will receive this new value.
+
+Child components like `MyAssistant` can also update the context by assigning to the `value` prop:
+
+```js {2} [[1, 2, "ConfigContext"], [2, 5, "{ model: 'gpt-3.5-turbo' }"]]
+function MyAssistant() {
+  const config = useContext(ConfigContext);
+
+  function onMessage() {
+    config.value = { model: 'gpt-3.5-turbo' }
+  }
+}
+```
+
+

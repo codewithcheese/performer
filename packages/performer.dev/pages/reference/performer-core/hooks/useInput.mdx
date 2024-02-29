@@ -1,0 +1,40 @@
+---
+title: useInput
+---
+
+# useInput
+
+`useInput` lets you wait for input messages.
+
+```js
+const messages = await useInput()
+```
+
+## Reference
+
+### `useInput()`
+
+Call `useInput` at the top level of your component to wait for input messages.
+
+```js
+import { useInput } from '@performer/core';
+
+async function User() {
+  const messages = await useInput();
+  // ...
+}
+```
+
+Used by the [`User`](/components/User) component to wait for user input.
+
+#### Parameters
+
+`useInput` does not take any parameters.
+
+#### Returns
+
+`useInput` returns a Promise that resolves to an array of `PerformerMessage`
+
+#### Caveats
+
+- `useInput` is a Hook, it must be called at the top level of the component or your own Hooks. You can't call it inside loops or conditions. It must be called before any `await` expressions.

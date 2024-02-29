@@ -1,0 +1,10 @@
+{
+    "index": {
+        "type": "page",
+        "title": "Examples",
+        "theme": {
+            "layout": "full",
+            "footer": true
+        }
+    }
+}

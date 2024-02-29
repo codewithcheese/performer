@@ -16,23 +16,23 @@ if (args.length === 0 || !args[0]) {
   process.exit(1); // Exits with a non-zero code to indicate an error
 }
 
-const rootPath = path.join(__dirname, '../')
+const rootPath = path.join(__dirname, "../");
 const appPath = path.join(process.cwd(), args[0]);
 
 console.log("Starting playground...");
 console.log("Discovering performers in: ", appPath);
+
+process.env["VITE_PERFORMER_APP_PATH"] = appPath;
 
 const server = await createServer({
   configFile: false,
   root: rootPath,
   optimizeDeps: {
     // when root is in node_modules vite does not detect dependencies that need to be pre-bundled
-    include: ['react-dom', 'react-dom/client', 'loglevel'],
-    // it seems vite also ignore entries when the root is in node modules
-    // entries: ['./src/main.tsx']
+    include: ["react-dom", "react-dom/client", "loglevel"]
   },
   server: {
-    port: 3011,
+    port: 3011
   },
   plugins: [
     {
@@ -63,10 +63,11 @@ const server = await createServer({
     react()
   ],
   resolve: {
+    extensions: [".mjs", ".js", ".mts", ".ts", ".jsx", ".tsx", ".json", ".sandpack"],
     alias: {
-      "@app": appPath,
-    },
-  },
+      "@app": appPath
+    }
+  }
 });
 
 await server.listen();

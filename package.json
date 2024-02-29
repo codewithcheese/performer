@@ -19,5 +19,11 @@
     "@playwright/test": "^1.41.2",
     "@types/node": "^20.11.17",
     "vitest": "0.34.6"
+  },
+
+  "pnpm": {
+    "overrides": {
+      "@codesandbox/sandpack-react@^2.12.1>@codesandbox/sandpack-client": "2.10.0"
+    }
   }
 }

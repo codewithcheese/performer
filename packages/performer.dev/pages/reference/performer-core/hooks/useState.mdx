@@ -1,0 +1,108 @@
+---
+title: useState
+---
+
+# useState
+
+`useState` that lets you add state to your component.
+
+```js
+useState(initialValue)
+```
+
+## Reference
+
+### `useState(initialValue)`
+
+Call `useState` at the top level of your component to create a signal that contains the initial value.
+
+```js
+import { useState } from '@performer/core';
+
+function MyComponent() {
+  const age = useState(28);
+  const name = useState('Taylor');
+  const todos = useState(() => createTodos());
+  // ...
+```
+
+Signals are objects that wrap state values. When a signal value is changed Performer automatically updates any JSX that uses it.
+
+[See more examples below.](#usage)
+
+#### Parameters
+
+* `initialValue`: The value you want the state to be initially. It can be a value of any type, but there is a special behavior for functions.
+  * If you pass a function as `initialValue`, it will be treated as an _initializer function_. It should be pure, should take no arguments, and should return a value of any type. React will call your initializer function when initializing the component, and store its return value as the initial state. [See an example below.](#avoiding-recreating-the-initial-state)
+
+#### Returns
+
+`useState` returns a `Signal` that wraps the `initialValue`.
+
+#### Caveats
+
+* `useState` is a Hook, so you can only call it **at the top level of your component** or your own Hooks. You can't call it inside loops or conditions. If you need that, extract a new component and move the signal into it.
+* `useState` must be used before any `await` calls, it cannot be used after `await` calls.
+
+---
+
+## Usage
+
+### Adding signals to a component
+
+Call `useState` at the top level of your component to create one or more signals containing the initial value.
+
+```js [[1, 4, "age"], [2, 4, "42"], [1, 5, "name"], [2, 5, "'Taylor'"]]
+import { useState } from '@performer/core';
+
+function MyComponent() {
+  const age = useState(42);
+  const name = useState('Taylor');
+  // ...
+```
+
+Change the value by using the `value` property. Performer will automatically update any JSX that depends on this signal.
+
+```js [[1, 2, "name.value"]]
+function onMessage() {
+  name.value = 'Robin'; // any JSX that uses this signal will update
+}
+```
+
+### Using signal values in JSX
+
+To use the signal value in JSX use the `value` property. Performer will track when the `value` property is accessed in JSX, and update the JSX when the value changes.
+
+```js
+function MyComponent () {
+  const age = useState(42);
+  const name = useState('Taylor');
+  return () => {
+    <>
+      // ✅ Access name using the signals `value` property
+      <system>The users name is {name.value}</system>
+      // 🚩 Using the signal directly will error
+      <system>The users age is {age}</system>
+    </>
+  }
+}
+```
+
+
+### Updating objects and arrays in state
+
+Signals can contain objects or arrays. Objects in signals are frozen. To modify an object in a signal it must be **replaced not mutated**.
+
+```js
+const user = useState({ name: 'Taylor', age: 42 });
+// 🚩 Don't mutate an object in state like this:
+user.value.name = 'Robin';
+user.value.age = 28;
+```
+
+Instead, replace the whole object by creating a new one:
+
+```js
+// ✅ Replace state with a new object
+user.value = { name: 'Robin', age: 28 }
+```

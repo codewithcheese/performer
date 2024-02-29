@@ -15,7 +15,8 @@
   },
   "scripts": {
     "test": "vitest",
-    "prepare": "tshy"
+    "prepare": "tshy",
+    "watch": "tshy --watch"
   },
   "devDependencies": {
     "@types/gitignore-parser": "^0.0.3",

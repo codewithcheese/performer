@@ -1,0 +1,78 @@
+---
+title: useDispatchEvent
+---
+
+# useDispatchEvent
+
+import {Callout} from "nextra/components";
+
+<Callout type="warning" emoji="⚠️">
+
+Do not use `useDispatchEvent` to communicate between components. Performer events are used to communicate with code external to Performer. To communicate between component use props or context.
+
+</Callout>
+
+
+`useDispatchEvent` lets you dispatch an event.
+
+```js
+const dispatchEvent = useDispatchEvent()
+```
+
+## Reference
+
+Call `useDispatchEvent` at the top level of your component to get a dispatch function.
+
+```js
+import { useDispatchEvent } from '@performer/core';
+
+function MyAssistant() {
+  const dispatchEvent = useDispatchEvent();
+  dispatchEvent(new CustomEvent('my-event', { detail: { value: 42 } }))
+  // ...
+}
+```
+
+Performer uses [EventTarget](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget) and supports dispatching `CustomEvent`.
+
+#### Parameters
+
+`useDispatchEvent` does not take any parameters.
+
+#### Returns
+
+`useDispatchEvent` returns a dispatch function. The dispatch function requires `CustomEvent` argument.
+
+#### Caveats
+
+- `useDispatchEvent` is a Hook, it must be called at the top level of the component or your own Hooks. You can't call it inside loops or conditions. It must be called before any `await` expressions.
+
+---
+
+## Usage
+
+### Subclass and extend event types
+
+When using TypeScript, you can extend Performer event types using [declaration merging](https://www.typescriptlang.org/docs/handbook/declaration-merging.html).
+
+```tsx
+import { useDispatchEvent } from '@performer/core';
+
+class MyEvent extends CustomEvent<{ value: number }> {
+  constructor(detail: { value: number }) {
+    super("my-event", { detail });
+  }
+}
+
+declare module "@performer/core" {
+  interface PerformerEventMap {
+    "my-event": MyEvent;
+  }
+}
+
+function MyAssistant() {
+  const dispatchEvent = useDispatchEvent();
+  dispatchEvent(new MyEvent({ value: 1337 }))
+  // ...
+}
+```

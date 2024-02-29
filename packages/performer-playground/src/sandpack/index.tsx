@@ -1,32 +1,11 @@
 import { files } from "./files.js";
-import {
-  SandpackCodeEditor,
-  SandpackConsole,
-  SandpackFileExplorer,
-  SandpackLayout,
-  SandpackPreview,
-  SandpackProvider,
-} from "@codesandbox/sandpack-react";
+import { Sandpack, SandpackProps } from "@codesandbox/sandpack-react";
 
-export type PerformerSandpackProps = {
-  showFileExplorer?: boolean;
-  showCodeEditor?: boolean;
-  showConsole?: boolean;
-  fileExplorerProps?: Record<string, any>;
-  codeEditorProps?: Record<string, any>;
-  previewProps?: Record<string, any>;
-};
+export { files };
 
-export function PerformerSandpack({
-  showFileExplorer,
-  showCodeEditor,
-  showConsole,
-  fileExplorerProps = {},
-  codeEditorProps = {},
-  previewProps = {},
-}: PerformerSandpackProps) {
+export function PerformerSandpack(props: SandpackProps) {
   return (
-    <SandpackProvider
+    <Sandpack
       options={{
         bundlerTimeOut: 90000,
         // fixme: new bundler throws, not sure why
@@ -38,20 +17,8 @@ export function PerformerSandpack({
       }}
       template={"react"}
       files={files}
-    >
-      <SandpackLayout>
-        {showFileExplorer && <SandpackFileExplorer {...fileExplorerProps} />}
-        {showCodeEditor && <SandpackCodeEditor {...codeEditorProps} />}
-        <SandpackPreview {...previewProps} />
-      </SandpackLayout>
-      {showConsole && (
-        <>
-          <br />
-          <SandpackLayout>
-            <SandpackConsole />
-          </SandpackLayout>
-        </>
-      )}
-    </SandpackProvider>
+      theme="auto"
+      {...props}
+    />
   );
 }
