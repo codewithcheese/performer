@@ -93,6 +93,7 @@ test("should include tool message before resolving", async () => {
   const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
+  testHydration(performer);
 });
 
 test.skipIf(!process.env.OPENROUTER_API_KEY)(

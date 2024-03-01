@@ -91,24 +91,25 @@ export const Assistant: Component<AssistantProps> = function ({
 
   async function callTools(message: PerformerMessage) {
     if (isAssistantMessage(message) && message.tool_calls) {
-      for (const toolCall of message.tool_calls) {
-        const tool = tools.find((tool) => tool.name === toolCall.function.name);
-        if (!tool) {
-          throw Error(`Tool not found for tool call: ${toolCall.id}`);
-        }
-        const message = await tool.callback(
-          JSON.parse(toolCall.function.arguments),
-          toolCall.id,
-        );
-        if (!message) {
-          toolMessages.value = [
-            ...toolMessages.value,
-            { role: "tool", tool_call_id: toolCall.id, content: "" },
-          ];
-        } else {
-          toolMessages.value = [...toolMessages.value, message];
-        }
-      }
+      toolMessages.value = await Promise.all(
+        message.tool_calls.map(async (toolCall) => {
+          const tool = tools.find(
+            (tool) => tool.name === toolCall.function.name,
+          );
+          if (!tool) {
+            throw Error(`Tool not found for tool call: ${toolCall.id}`);
+          }
+          const message = await tool.callback(
+            JSON.parse(toolCall.function.arguments),
+            toolCall.id,
+          );
+          if (message) {
+            return message;
+          } else {
+            return { role: "tool", tool_call_id: toolCall.id, content: "" };
+          }
+        }),
+      );
     }
   }
 
