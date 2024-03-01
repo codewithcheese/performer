@@ -1,12 +1,16 @@
 import { assert, expect, test } from "vitest";
 import {
   Assistant,
-  AsyncHooks,
+  createTool,
   isMessage,
   Performer,
   resolveMessages,
+  useMessages,
+  useState,
 } from "../../src/index.js";
 import "dotenv/config";
+import { testHydration } from "../util/test-hydration.js";
+import { z } from "zod";
 
 test("should call model with messages", async () => {
   const app = (
@@ -42,35 +46,66 @@ test("should call model with messages", async () => {
   expect(
     performer.root?.child?.nextSibling?.child?.child?.hooks?.message.content,
   ).not.toBeNull();
+  testHydration(performer);
 }, 10_000);
 
 test("should call onMessage event handler after assistant response", async () => {
-  let eventHandlerCalled = false;
+  function App() {
+    const received = useState(false);
+    return () => (
+      <>
+        <system>1+1. Scalar only, no preamble.</system>
+        <Assistant onMessage={() => (received.value = true)} />
+        {received && <user>Thank you</user>}
+      </>
+    );
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = performer.getCurrentMessages();
+  expect(messages).toHaveLength(3);
+  expect(messages[2]).toEqual({ role: "user", content: "Thank you" });
+  const hydratedPerformer = await testHydration(performer);
+  const hydratedMessages = hydratedPerformer.getCurrentMessages();
+  expect(hydratedMessages).toHaveLength(3);
+});
+
+test("should include tool message before resolving", async () => {
+  const tool = createTool(
+    "answer",
+    z.object({ answer: z.boolean() }),
+    () => {},
+  );
+  // expect that tool message is available immediately after Assistant resolves
+  function CheckForToolMessage() {
+    const messages = useMessages();
+    expect(messages).toHaveLength(3);
+    return () => {};
+  }
   const app = (
     <>
       <system>1+1. Scalar only, no preamble.</system>
-      <Assistant onMessage={() => (eventHandlerCalled = true)} />
+      <Assistant tools={[tool]} toolChoice={tool} />
+      <CheckForToolMessage />
     </>
   );
   const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  expect(eventHandlerCalled).toEqual(true);
 });
 
 test.skipIf(!process.env.OPENROUTER_API_KEY)(
   "should use open router",
 
   async () => {
-    function Mixtral({}, asyncHooks: AsyncHooks) {
-      return Assistant(
-        {
-          model: "mistralai/mixtral-8x7b-instruct",
-          baseURL: "https://openrouter.ai/api/v1",
-          apiKey: process.env.OPENROUTER_API_KEY,
-        },
-        asyncHooks,
-      );
+    function Mixtral(props: any) {
+      return Assistant({
+        model: "mistralai/mixtral-8x7b-instruct",
+        baseURL: "https://openrouter.ai/api/v1",
+        apiKey: process.env.OPENROUTER_API_KEY,
+        ...props,
+      });
     }
 
     function App() {
@@ -95,16 +130,13 @@ test.skipIf(!process.env.PERPLEXITY_API_KEY)(
   "should use perplexity",
 
   async () => {
-    function Perplexity(props: any, asyncHooks: AsyncHooks) {
-      return Assistant(
-        {
-          model: "sonar-medium-online",
-          baseURL: "https://api.perplexity.ai",
-          apiKey: process.env.PERPLEXITY_API_KEY,
-          ...props,
-        },
-        asyncHooks,
-      );
+    function Perplexity(props: any) {
+      return Assistant({
+        model: "sonar-medium-online",
+        baseURL: "https://api.perplexity.ai",
+        apiKey: process.env.PERPLEXITY_API_KEY,
+        ...props,
+      });
     }
 
     function App() {
@@ -130,14 +162,11 @@ test.skipIf(process.env.USE_OLLAMA !== "true")(
   "should use ollama model",
 
   async () => {
-    function Ollama({ model }: { model: string }, asyncHooks: AsyncHooks) {
-      return Assistant(
-        {
-          model,
-          baseURL: "http://localhost:11434/v1",
-        },
-        asyncHooks,
-      );
+    function Ollama({ model }: { model: string }) {
+      return Assistant({
+        model,
+        baseURL: "http://localhost:11434/v1",
+      });
     }
 
     function App() {

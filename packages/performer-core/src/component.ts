@@ -23,6 +23,5 @@ export type Component<P extends Props> = {
       children?: PerformerElement | PerformerElement[] | string;
       controller?: AbortController;
     },
-    asyncHooks: AsyncHooks,
-  ): View | Promise<View>;
+  ): View;
 };

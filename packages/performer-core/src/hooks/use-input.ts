@@ -1,7 +1,6 @@
-import { useHook } from "./use-hook.js";
 import { PerformerMessage } from "../message.js";
 import { useRenderScope } from "./use-render-scope.js";
-import type { PerformerNode } from "../node.js";
+import { DeferInput } from "../util/defer.js";
 
 export type PendingInputState = {
   state: "pending";
@@ -12,34 +11,19 @@ export type PendingInputState = {
 };
 
 export type InputState =
-  | PendingInputState
+  | { state: "pending" }
   | { state: "fulfilled"; value: PerformerMessage[] };
 
-export async function useInput(): Promise<PerformerMessage[]> {
+export function useInput(): PerformerMessage[] {
   const scope = useRenderScope();
   const key: InputHookKey = `input`;
-  if (
-    key in scope.node.hooks &&
-    scope.node.hooks.input?.state === "fulfilled"
-  ) {
-    // return pre-existing value if set
+  if (key in scope.node.hooks && scope.node.hooks[key]?.state === "fulfilled") {
+    // return fulfilled value
     return scope.node.hooks[key]?.value;
   }
-  const set = (state: InputState) => (scope.node.hooks.input = state);
 
-  return new Promise<PerformerMessage[]>((resolve, reject) => {
-    set({
-      state: "pending",
-      resolve,
-      reject,
-    });
-  }).then((value) => {
-    set({
-      state: "fulfilled",
-      value: value,
-    });
-    return value;
-  });
+  scope.node.hooks[key] = { state: "pending" };
+  throw new DeferInput();
 }
 
 type InputHookKey = `input`;

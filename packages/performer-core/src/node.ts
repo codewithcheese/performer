@@ -15,7 +15,7 @@ export type PerformerNode = {
   hooks: Record<string, unknown> & HookRecord;
   element: PerformerElement;
   childElements?: PerformerElement[] | undefined;
-  viewResolved: boolean;
+  status: "PENDING" | "PAUSED" | "RESOLVED";
   disposeView?: () => void | undefined;
   isHydrating: boolean;
   childRenderCount: number;
@@ -78,7 +78,7 @@ export function createNode({
     props: element.props,
     element,
     hooks: serialized ? hydrateHooks(serialized.hooks) : {},
-    viewResolved: false,
+    status: "PENDING",
     isHydrating: !!serialized,
     childRenderCount: 0,
     parent,

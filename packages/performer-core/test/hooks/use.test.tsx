@@ -1,18 +1,18 @@
 import { expect, test } from "vitest";
 import {
-  AsyncHooks,
   MessageDelta,
   Performer,
   resolveMessages,
-  UseResourceHook,
-  UserMessage,
+  use,
 } from "../../src/index.js";
 
+test("should throw if component is async function");
+
 test("should retain state across async contexts", async () => {
-  async function App({}, { useResource }: AsyncHooks) {
-    const c42 = await useResource(() => Promise.resolve(42));
-    const c420 = await useResource(() => Promise.resolve(420));
-    const c1337 = await useResource(() => Promise.resolve(1337));
+  function App() {
+    const c42 = use(() => Promise.resolve(42));
+    const c420 = use(() => Promise.resolve(420));
+    const c1337 = use(() => Promise.resolve(1337));
     return () => (
       <>
         <system>{`${c42}`}</system>
@@ -55,8 +55,8 @@ test("should write stream chunks to hook state", async () => {
     });
   }
 
-  async function App({}, { useResource }: AsyncHooks) {
-    const stream = await useResource(fetcher);
+  function App() {
+    const stream = use(fetcher);
     return () => <raw stream={stream} />;
   }
 
@@ -75,8 +75,8 @@ test("should write stream chunks to hook state", async () => {
 test("should pass additional arguments", async () => {
   let args: any[] = [];
   function three() {}
-  async function App({}, { useResource }: AsyncHooks) {
-    await useResource((_, ...rest) => args.push(...rest), 1, "2", three);
+  function App() {
+    use((_, ...rest) => args.push(...rest), 1, "2", three);
     return () => {};
   }
   const performer = new Performer(<App />);

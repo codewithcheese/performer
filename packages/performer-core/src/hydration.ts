@@ -51,7 +51,7 @@ export async function hydrate(
   if (!parent) {
     // evaluate if finished
     let hasFinished = true;
-    walk(node, () => (hasFinished = node.viewResolved));
+    walk(node, () => (hasFinished = node.status === "RESOLVED"));
     if (hasFinished) {
       performer.finish();
     }

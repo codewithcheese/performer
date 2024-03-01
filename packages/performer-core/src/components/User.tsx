@@ -4,7 +4,7 @@ import { messagesToElements, PerformerMessage } from "../message.js";
 
 export const User: Component<{
   onMessage?: (message: PerformerMessage) => void;
-}> = async function ({ onMessage = () => {} }) {
-  const messages = await useInput();
+}> = function ({ onMessage = () => {} }) {
+  const messages = useInput();
   return () => messagesToElements(messages, onMessage);
 };

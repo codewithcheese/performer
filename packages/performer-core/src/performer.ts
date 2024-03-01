@@ -14,10 +14,6 @@ import { TypedEventTarget } from "./util/typed-event-target.js";
 
 type PerformerOptions = { throwOnError?: boolean };
 
-export type PendingInputNode = PerformerNode & {
-  hooks: { input: PendingInputState };
-};
-
 export class Performer extends TypedEventTarget<PerformerEventMap> {
   #uid: string;
 
@@ -30,7 +26,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
 
   // todo add deadline
   inputQueue: PerformerMessage[] = [];
-  inputNode: PendingInputNode | undefined;
+  inputNode: PerformerNode | undefined;
 
   controller = new AbortController();
 
@@ -114,23 +110,31 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     // if input already queue then deliver to node immediately
     const inputNode = node;
     if (!inputNode.hooks.input) {
-      throw Error("Cannot set input not without input hook");
+      throw Error("Unable to set input node. Node does not have input hook.");
     }
     if (inputNode.hooks.input.state !== "pending") {
-      throw Error("Cannot set input, input state not pending");
+      throw Error("Unable to set input node. Input hook state not pending.");
     }
     if (this.inputQueue.length) {
-      inputNode.hooks.input.resolve([...this.inputQueue]);
+      inputNode.hooks.input = {
+        state: "fulfilled",
+        value: [...this.inputQueue],
+      };
+      this.queueRender();
     } else {
-      this.inputNode = inputNode as PendingInputNode;
+      this.inputNode = inputNode;
       this.dispatchEvent(new PerformerLifecycleEvent({ state: "listening" }));
     }
   }
 
   input(message: PerformerMessage) {
     if (this.inputNode) {
-      this.inputNode.hooks.input.resolve([message]);
+      this.inputNode.hooks.input = {
+        state: "fulfilled",
+        value: [message],
+      };
       this.inputNode = undefined;
+      this.queueRender();
     } else {
       this.inputQueue.push(message);
     }

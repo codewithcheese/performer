@@ -1,4 +1,5 @@
 export * from "./use-after-children.js";
+export * from "./use.js";
 export * from "./use-context.js";
 export * from "./use-dispatch-event.js";
 export * from "./use-messages.js";
@@ -14,10 +15,12 @@ import { InputHookRecord } from "./use-input.js";
 import { StateHookRecord } from "./use-state.js";
 import { ContextHookRecord, ProviderHookRecord } from "./use-context.js";
 import { UseResourceHookRecord } from "./use-resource.js";
+import { UseHookRecord } from "./use.js";
 
 export type HookRecord = AfterChildrenHookRecord &
   InputHookRecord &
   StateHookRecord &
   ContextHookRecord &
   ProviderHookRecord &
-  UseResourceHookRecord;
+  UseResourceHookRecord &
+  UseHookRecord;
