@@ -189,7 +189,8 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     if (typeof view !== "function") {
       const returnType = view instanceof Promise ? "Promise" : typeof view;
       throw Error(
-        `Component "${logNode(node)}" returned invalid type: ${returnType}. Components must return a non-async function when using JSX.`,
+        `Component "${logNode(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
+          `To make async calls in your component use the \`useResource\` hook`,
       );
     }
     registerView(performer, node, view);

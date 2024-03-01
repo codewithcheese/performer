@@ -380,6 +380,17 @@ test("should catch resumed component that throws", async () => {
   expect(errors).toHaveLength(1);
 });
 
+test("should throw if component is async function", async () => {
+  async function App() {
+    return () => <user>Hello, world!</user>;
+  }
+  // @ts-ignore
+  const performer = new Performer(<App />, { throwOnError: false });
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(performer.errors).toHaveLength(1);
+});
+
 test("should cast non-string message children", async () => {
   function App() {
     return () => (
