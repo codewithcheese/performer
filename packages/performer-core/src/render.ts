@@ -165,7 +165,6 @@ export async function renderElement(
   if (node.type instanceof Function) {
     await renderComponent(performer, node);
   } else {
-    // else intrinsic
     await renderIntrinsic(performer, node);
   }
   return node;
@@ -210,28 +209,6 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   } finally {
     clearRenderScope();
   }
-
-  // const requiresInput =
-  //   node.hooks.input && node.hooks.input.state === "pending";
-  // if (requiresInput) {
-  //   performer.setInputNode(node);
-  //   viewPromised
-  //     .then((view) => {
-  //       node.viewResolved = true;
-  //       registerView(performer, node, view);
-  //     })
-  //     .catch((e) => performer.onError(e));
-  // } else {
-  //   try {
-  //     const view = await viewPromised;
-  //     node.viewResolved = true;
-  //     registerView(performer, node, view);
-  //   } catch (e) {
-  //     if (!handleDeferredResource(e)) {
-  //       throw e;
-  //     }
-  //   }
-  // }
 }
 
 async function renderIntrinsic(performer: Performer, node: PerformerNode) {
@@ -240,48 +217,51 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
       `Invalid node type: renderIntrinsic() expects 'node.type' to be a string`,
     );
   }
-  if (isRawNode(node)) {
-    if (!node.props.stream && !node.props.message) {
-      throw Error("`raw` element requires `stream` OR `message` prop");
+
+  if (!isRawNode(node)) {
+    node.status = "RESOLVED";
+    if (!node.isHydrating) {
+      dispatchMessageElement(performer, node);
+      performer.queueRender();
     }
-    if (node.props.stream != null) {
-      // process stream
-      if (node.isHydrating) {
-        const message = await consumeDeltaStream(
-          performer,
-          node,
-          node.props.stream,
-        );
+    return;
+  }
+
+  if (!node.props.stream && !node.props.message) {
+    throw Error("`raw` element requires `stream` OR `message` prop");
+  }
+
+  if (node.props.message != null) {
+    node.status = "RESOLVED";
+    if (!node.isHydrating) {
+      dispatchMessageElement(performer, node);
+      performer.queueRender();
+    }
+    return;
+  }
+
+  if (node.props.stream != null) {
+    const messagePromised = consumeDeltaStream(
+      performer,
+      node,
+      node.props.stream,
+    )
+      .then(async (message) => {
         node.hooks.message = message;
         if (node.props.onResolved) {
           await node.props.onResolved(message);
         }
         node.status = "RESOLVED";
-      } else {
-        consumeDeltaStream(performer, node, node.props.stream)
-          .then(async (message) => {
-            node.hooks.message = message;
-            if (node.props.onResolved) {
-              await node.props.onResolved(message);
-            }
-            node.status = "RESOLVED";
-            dispatchMessageElement(performer, node, message);
-            performer.queueRender();
-          })
-          .catch((error) => performer.onError(error));
-      }
-    } else if (node.props.message != null) {
-      node.status = "RESOLVED";
-      if (!node.isHydrating) {
-        dispatchMessageElement(performer, node);
-        performer.queueRender();
-      }
-    }
-  } else {
-    node.status = "RESOLVED";
-    if (!node.isHydrating) {
-      dispatchMessageElement(performer, node);
-      performer.queueRender();
+        if (!node.isHydrating) {
+          dispatchMessageElement(performer, node, message);
+          performer.queueRender();
+        }
+      })
+      .catch((error) => performer.onError(error));
+
+    // process stream
+    if (node.isHydrating) {
+      await messagePromised;
     }
   }
 }

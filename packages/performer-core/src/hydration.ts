@@ -68,6 +68,7 @@ export function serialize(node: PerformerNode): SerializedNode {
     children: [],
   };
   // serialize hooks
+  // todo serialize any signal to object that self identifies as signal instead of key based serialization
   for (const [key, value] of Object.entries(node.hooks)) {
     if (key.startsWith("state-") || key.startsWith("context-")) {
       if (value instanceof Signal) {
