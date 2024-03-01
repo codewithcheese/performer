@@ -19,17 +19,7 @@ const PeopleSchema = z
   );
 
 export function App() {
-  const extractTool = createTool(
-    "extract",
-    PeopleSchema,
-    (data, toolCallId) => {
-      return {
-        role: "tool",
-        tool_call_id: toolCallId,
-        content: JSON.stringify(data),
-      };
-    },
-  );
+  const extractTool = createTool("extract", PeopleSchema);
   return () => (
     <>
       <system>

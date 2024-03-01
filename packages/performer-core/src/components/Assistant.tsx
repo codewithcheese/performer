@@ -1,4 +1,4 @@
-import { useResource, useMessages, useState } from "../hooks/index.js";
+import { useMessages, useResource, useState } from "../hooks/index.js";
 import type { Component } from "../component.js";
 import {
   isAssistantMessage,
@@ -92,22 +92,28 @@ export const Assistant: Component<AssistantProps> = function ({
   async function callTools(message: PerformerMessage) {
     if (isAssistantMessage(message) && message.tool_calls) {
       toolMessages.value = await Promise.all(
-        message.tool_calls.map(async (toolCall) => {
+        message.tool_calls.map(async (toolCall): Promise<ToolMessage> => {
           const tool = tools.find(
             (tool) => tool.name === toolCall.function.name,
           );
           if (!tool) {
             throw Error(`Tool not found for tool call: ${toolCall.id}`);
           }
-          const message = await tool.callback(
-            JSON.parse(toolCall.function.arguments),
-            toolCall.id,
-          );
-          if (message) {
-            return message;
-          } else {
-            return { role: "tool", tool_call_id: toolCall.id, content: "" };
+          if (tool.callback) {
+            const message = await tool.callback(
+              JSON.parse(toolCall.function.arguments),
+              toolCall.id,
+            );
+            if (message) {
+              return message;
+            }
           }
+
+          return {
+            role: "tool",
+            tool_call_id: toolCall.id,
+            content: toolCall.function.arguments,
+          };
         }),
       );
     }

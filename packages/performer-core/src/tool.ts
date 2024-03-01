@@ -5,7 +5,7 @@ export interface Tool {
   name: string;
   description: string;
   schema: z.ZodObject<any>;
-  callback: (
+  callback?: (
     params: z.infer<any>,
     tool_call_id: string,
   ) => void | ToolMessage | Promise<ToolMessage | void>;
@@ -14,7 +14,7 @@ export interface Tool {
 export function createTool<T extends z.ZodObject<any>>(
   name: string,
   schema: T,
-  callback: (
+  callback?: (
     params: z.infer<T>,
     tool_call_id: string,
   ) => void | ToolMessage | Promise<ToolMessage | void>,
