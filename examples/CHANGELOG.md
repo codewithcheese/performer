@@ -1,5 +1,14 @@
 # performer-examples
 
+## 0.0.18
+
+### Patch Changes
+
+- b484caa: Change Tool callback to be optional
+- Updated dependencies [b484caa]
+  - @performer/core@0.0.19
+  - @performer/playground@0.0.19
+
 ## 0.0.17
 
 ### Patch Changes
