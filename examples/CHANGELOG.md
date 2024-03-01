@@ -1,5 +1,14 @@
 # performer-examples
 
+## 0.0.17
+
+### Patch Changes
+
+- 60cee33: Replace scoped async hooks with exception based suspend and resume
+- Updated dependencies [60cee33]
+  - @performer/core@0.0.18
+  - @performer/playground@0.0.18
+
 ## 0.0.16
 
 ### Patch Changes
