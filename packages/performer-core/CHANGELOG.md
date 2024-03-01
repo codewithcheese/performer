@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.19
+
+### Patch Changes
+
+- b484caa: Change Tool callback to be optional
+
 ## 0.0.18
 
 ### Patch Changes
