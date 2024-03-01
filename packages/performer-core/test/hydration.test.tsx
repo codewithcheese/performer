@@ -4,7 +4,7 @@ import {
   isTextContent,
   messagesToElements,
   Performer,
-  use,
+  useResource,
   useContextProvider,
   useInput,
   UserMessage,
@@ -16,7 +16,7 @@ test("should serialize hooks", async () => {
   function App() {
     const context = useContextProvider(createContext<string>("test"), "1337");
     const state = useState("42");
-    const resource = use(() => Promise.resolve("420"));
+    const resource = useResource(() => Promise.resolve("420"));
     return () => (
       <>
         <system>{context.value}</system>

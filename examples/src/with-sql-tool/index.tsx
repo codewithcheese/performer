@@ -1,7 +1,13 @@
 /**
  * Based on https://js.langchain.com/docs/modules/chains/popular/sqlite
  */
-import { Assistant, AsyncHooks, createTool, Tool, User } from "@performer/core";
+import {
+  Assistant,
+  createTool,
+  Tool,
+  User,
+  useResource,
+} from "@performer/core";
 import { DataSource } from "typeorm";
 import { SqlDatabase } from "langchain/sql_db";
 import { z } from "zod";
@@ -21,20 +27,19 @@ const SQLSelectSchema = z
     "Write a SQLite 3 query to select data that answers the users question.",
   );
 
-export async function App({}, { useResource }: AsyncHooks) {
-  const datasource = new DataSource({
-    type: "sqlite",
-    database: path.join(__dirname, "Chinook.db"),
-  });
+const datasource = new DataSource({
+  type: "sqlite",
+  database: path.join(__dirname, "Chinook.db"),
+});
 
-  const db = await SqlDatabase.fromDataSourceParams({
-    appDataSource: datasource,
-  });
-
+export function App() {
   const selectTool = createTool(
     "query_tool",
     SQLSelectSchema,
     async ({ query }, tool_call_id) => {
+      const db = await SqlDatabase.fromDataSourceParams({
+        appDataSource: datasource,
+      });
       const content = await db.run(query);
       return {
         tool_call_id,
@@ -44,7 +49,12 @@ export async function App({}, { useResource }: AsyncHooks) {
     },
   );
 
-  const schema = await useResource(() => db.getTableInfo());
+  const schema = useResource(async () => {
+    const db = await SqlDatabase.fromDataSourceParams({
+      appDataSource: datasource,
+    });
+    return db.getTableInfo();
+  });
 
   return () => (
     <>
