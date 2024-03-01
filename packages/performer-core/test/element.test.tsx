@@ -51,14 +51,8 @@ test("should create element from JSX", () => {
   expect(app.props.children[1].props.children.type.name).toEqual("NoProps");
 });
 
-test("should concatenate multiple string children", () => {
-  const name = "world";
-  const app = <>Hello {name}, how are you?</>;
-  console.log(app);
-});
-
 test("should accept empty array", async () => {
-  function EmptyArray() {
+  function App() {
     return () => (
       <>
         <system>Before</system>
@@ -67,12 +61,15 @@ test("should accept empty array", async () => {
       </>
     );
   }
-  const app = <EmptyArray />;
-  // todo
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(performer.errors).toHaveLength(0);
+  await testHydration(performer);
 });
 
 test("should accept array of children", async () => {
-  function EmptyArray() {
+  function App() {
     return () => (
       <>
         <system>Before</system>
@@ -83,8 +80,13 @@ test("should accept array of children", async () => {
       </>
     );
   }
-  const app = <EmptyArray />;
-  // todo
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(performer.errors).toHaveLength(0);
+  const messages = performer.getCurrentMessages();
+  expect(messages).toHaveLength(5);
+  await testHydration(performer);
 });
 
 test("message element should resolve stream into message object", async () => {

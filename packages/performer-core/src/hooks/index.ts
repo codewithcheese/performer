@@ -1,4 +1,5 @@
 export * from "./use-after-children.js";
+export * from "./use-resource.js";
 export * from "./use-context.js";
 export * from "./use-dispatch-event.js";
 export * from "./use-messages.js";
@@ -7,7 +8,6 @@ export * from "./use-input.js";
 export * from "./use-route-data.js";
 export * from "./use-state.js";
 export * from "./use-tool-data.js";
-export * from "./use-resource.js";
 
 import { AfterChildrenHookRecord } from "./use-after-children.js";
 import { InputHookRecord } from "./use-input.js";

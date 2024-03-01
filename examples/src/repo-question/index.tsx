@@ -1,4 +1,4 @@
-import { Assistant, AsyncHooks } from "@performer/core";
+import { Assistant, useResource } from "@performer/core";
 
 export const name = "Repo question";
 
@@ -10,8 +10,8 @@ async function fetchRepos(controller: AbortController, user: string) {
   return response.json();
 }
 
-async function Repos({ user }: { user: string }, { useResource }: AsyncHooks) {
-  const repos = await useResource(fetchRepos, user);
+function Repos({ user }: { user: string }) {
+  const repos = useResource(fetchRepos, user);
 
   return () => (
     <system>

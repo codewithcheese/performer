@@ -1,9 +1,9 @@
-import { test, expect } from "vitest";
-import { Performer, PerformerMessageEvent, useInput } from "../../src/index.js";
+import { expect, test } from "vitest";
+import { Performer, useInput } from "../../src/index.js";
 
-test("should use input given before waiting", async () => {
-  async function App() {
-    const messages = await useInput();
+test("should accept input before waitUntilSettled()", async () => {
+  function App() {
+    const messages = useInput();
     return () => messages.map((message) => <raw message={message} />);
   }
   const performer = new Performer(<App />);
@@ -16,9 +16,9 @@ test("should use input given before waiting", async () => {
   expect(performer.root?.child?.type).toEqual("raw");
 });
 
-test("should use input given after waiting", async () => {
-  async function App() {
-    const messages = await useInput();
+test("should accept input after waitUntilSettled", async () => {
+  function App() {
+    const messages = useInput();
     return () => messages.map((message) => <raw message={message} />);
   }
   const performer = new Performer(<App />);

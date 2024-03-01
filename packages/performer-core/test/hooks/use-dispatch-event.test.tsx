@@ -15,7 +15,7 @@ declare module "../../src/index.js" {
 }
 
 test("should dispatch event from component", async () => {
-  async function App() {
+  function App() {
     const dispatchEvent = useDispatchEvent();
     dispatchEvent(new CustomEvent("test", { detail: { value: 42 } }));
     dispatchEvent(new MyEvent({ value: 1337 }));

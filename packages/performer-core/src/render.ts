@@ -16,7 +16,7 @@ import {
 } from "./message.js";
 import * as log from "loglevel";
 import * as _ from "lodash";
-import { View } from "./component.js";
+import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
 import {
   LogConfig,
@@ -24,16 +24,28 @@ import {
   logNode,
   logResolveMessages,
 } from "./util/log.js";
-import { createUseResourceHook } from "./hooks/index.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
+import { DeferInput, DeferResource } from "./util/defer.js";
+
+type NextElement = {
+  element: PerformerElement;
+  parent?: PerformerNode;
+  prevSibling?: PerformerNode;
+  nextSibling?: PerformerNode;
+  child?: PerformerNode;
+};
+
+type NextNode = {
+  node: PerformerNode;
+};
 
 export async function render(performer: Performer) {
   try {
     let next = findNextElementToRender(performer.app, performer.root);
     if (next === "SIDE_EFFECT") {
       performer.queueRender();
-    } else if (next === "VIEW_PENDING") {
+    } else if (next === "NODE_PAUSED") {
       // wait for next render
       return;
     } else if (next) {
@@ -46,20 +58,12 @@ export async function render(performer: Performer) {
   }
 }
 
-type NextElement = {
-  element: PerformerElement;
-  parent?: PerformerNode;
-  prevSibling?: PerformerNode;
-  nextSibling?: PerformerNode;
-  child?: PerformerNode;
-};
-
 export function findNextElementToRender(
   element: PerformerElement,
   node?: PerformerNode,
   parent?: PerformerNode,
   prevSibling?: PerformerNode,
-): NextElement | "SIDE_EFFECT" | null | "VIEW_PENDING" {
+): NextElement | NextNode | "SIDE_EFFECT" | "NODE_PAUSED" | null {
   if (!node || !nodeMatchesElement(node, element)) {
     const next = {
       element,
@@ -76,8 +80,12 @@ export function findNextElementToRender(
     return next;
   }
 
-  if (!node.viewResolved) {
-    return "VIEW_PENDING";
+  if (node.status === "PENDING") {
+    return { node };
+  }
+
+  if (node.status === "PAUSED") {
+    return "NODE_PAUSED";
   }
 
   let index = 0;
@@ -123,121 +131,147 @@ export function findNextElementToRender(
 
 export async function renderElement(
   performer: Performer,
-  { element, parent, prevSibling, nextSibling, child }: NextElement,
+  next: NextElement | NextNode,
   serialized?: SerializedNode,
 ): Promise<PerformerNode> {
-  const node = createNode({ element, parent, prevSibling, child, serialized });
-  log.debug(`Create node`, logNode(node), logContent(node));
-  if (!parent) {
-    performer.root = node;
-  }
-  // link node in place
-  if (prevSibling) {
-    prevSibling.nextSibling = node;
-  } else if (parent) {
-    // if no prevSibling then must be first child
-    parent.child = node;
-  }
-  if (nextSibling) {
-    node.nextSibling = nextSibling;
-    nextSibling.prevSibling = node;
-  }
-  if (node.type instanceof Function) {
-    // call component and get view function
-    let viewPromised: Promise<unknown>;
-    try {
-      const scope = setRenderScope({ performer, node, nonce: 0 });
-      const useResource = createUseResourceHook(scope, performer.controller);
-      const componentReturn = node.type(node.props, { useResource });
-      if (!(componentReturn instanceof Promise)) {
-        viewPromised = Promise.resolve(componentReturn);
-      } else {
-        viewPromised = componentReturn;
-      }
-    } finally {
-      clearRenderScope();
+  let node;
+  if ("element" in next) {
+    const { element, parent, prevSibling, nextSibling, child } = next;
+    node = createNode({
+      element,
+      parent,
+      prevSibling,
+      child,
+      serialized,
+    });
+    log.debug(`Create node`, logNode(node), logContent(node));
+    if (!parent) {
+      performer.root = node;
     }
-    const requiresInput =
-      node.hooks.input && node.hooks.input.state === "pending";
-    if (requiresInput) {
-      performer.setInputNode(node);
-      viewPromised
-        .then((view) => {
-          node.viewResolved = true;
-          registerView(performer, node, view);
-        })
-        .catch((e) => performer.onError(e));
-    } else {
-      const view = await viewPromised;
-      node.viewResolved = true;
-      registerView(performer, node, view);
+    // link node in place
+    if (prevSibling) {
+      prevSibling.nextSibling = node;
+    } else if (parent) {
+      // if no prevSibling then must be first child
+      parent.child = node;
+    }
+    if (nextSibling) {
+      node.nextSibling = nextSibling;
+      nextSibling.prevSibling = node;
     }
   } else {
-    // else intrinsic
-    if (isRawNode(node)) {
-      if (!node.props.stream && !node.props.message) {
-        throw Error("`raw` element requires `stream` OR `message` prop");
-      }
-      if (node.props.stream != null) {
-        // process stream
-        if (node.isHydrating) {
-          const message = await consumeDeltaStream(
-            performer,
-            node,
-            node.props.stream,
-          );
-          node.hooks.message = message;
-          if (node.props.onResolved) {
-            await node.props.onResolved(message);
-          }
-          node.viewResolved = true;
-        } else {
-          consumeDeltaStream(performer, node, node.props.stream)
-            .then(async (message) => {
-              node.hooks.message = message;
-              if (node.props.onResolved) {
-                await node.props.onResolved(message);
-              }
-              node.viewResolved = true;
-              dispatchMessageElement(performer, node, message);
-              performer.queueRender();
-            })
-            .catch((error) => performer.onError(error));
-        }
-      } else if (node.props.message != null) {
-        node.viewResolved = true;
-        if (!node.isHydrating) {
-          dispatchMessageElement(performer, node);
-          performer.queueRender();
-        }
-      }
-    } else {
-      node.viewResolved = true;
-      if (!node.isHydrating) {
-        dispatchMessageElement(performer, node);
-        performer.queueRender();
-      }
-    }
+    node = next.node;
+  }
+  if (node.type instanceof Function) {
+    await renderComponent(performer, node);
+  } else {
+    await renderIntrinsic(performer, node);
   }
   return node;
+}
+
+async function renderComponent(performer: Performer, node: PerformerNode) {
+  if (!(node.type instanceof Function)) {
+    throw new Error(
+      `Invalid node type: renderComponent() expects 'node.type' to be a function`,
+    );
+  }
+  // call component and get view function
+  let view: unknown;
+  setRenderScope({
+    performer,
+    node,
+    nonce: 0,
+    controller: performer.controller,
+  });
+  try {
+    view = node.type(node.props);
+    if (typeof view !== "function") {
+      const returnType = view instanceof Promise ? "Promise" : typeof view;
+      throw Error(
+        `Component "${logNode(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
+          `To make async calls in your component use the \`useResource\` hook`,
+      );
+    }
+    registerView(performer, node, view);
+    node.status = "RESOLVED";
+  } catch (e) {
+    if (e instanceof DeferResource) {
+      node.status = "PAUSED";
+      e.cause.promise.then(() => {
+        node.status = "PENDING";
+        performer.queueRender();
+      });
+    } else if (e instanceof DeferInput) {
+      performer.setInputNode(node);
+    } else {
+      throw e;
+    }
+  } finally {
+    clearRenderScope();
+  }
+}
+
+async function renderIntrinsic(performer: Performer, node: PerformerNode) {
+  if (typeof node.type !== "string") {
+    throw new Error(
+      `Invalid node type: renderIntrinsic() expects 'node.type' to be a string`,
+    );
+  }
+
+  if (!isRawNode(node)) {
+    node.status = "RESOLVED";
+    if (!node.isHydrating) {
+      dispatchMessageElement(performer, node);
+      performer.queueRender();
+    }
+    return;
+  }
+
+  if (!node.props.stream && !node.props.message) {
+    throw Error("`raw` element requires `stream` OR `message` prop");
+  }
+
+  if (node.props.message != null) {
+    node.status = "RESOLVED";
+    if (!node.isHydrating) {
+      dispatchMessageElement(performer, node);
+      performer.queueRender();
+    }
+    return;
+  }
+
+  if (node.props.stream != null) {
+    const messagePromised = consumeDeltaStream(
+      performer,
+      node,
+      node.props.stream,
+    )
+      .then(async (message) => {
+        node.hooks.message = message;
+        if (node.props.onResolved) {
+          await node.props.onResolved(message);
+        }
+        node.status = "RESOLVED";
+        if (!node.isHydrating) {
+          dispatchMessageElement(performer, node, message);
+          performer.queueRender();
+        }
+      })
+      .catch((error) => performer.onError(error));
+
+    // process stream
+    if (node.isHydrating) {
+      await messagePromised;
+    }
+  }
 }
 
 function registerView(
   performer: Performer,
   node: PerformerNode,
-  view: unknown,
+  view: Function,
 ) {
-  if (!view) {
-    if (!node.isHydrating) {
-      performer.queueRender();
-    }
-    return;
-  } else if (!(view instanceof Function)) {
-    throw Error(
-      `Component ${logNode(node)} did not return a function. Components must return a function when using JSX.`,
-    );
-  }
-  // register view as an effect
   node.disposeView = effect(() => {
     const viewUpdate = view();
     node.childElements = normalizeChildren(viewUpdate);
@@ -440,7 +474,9 @@ function childrenToContent(children: unknown): string {
   }
 }
 
-function normalizeChildren(children: ReturnType<View>): PerformerElement[] {
+function normalizeChildren(
+  children: ReturnType<ComponentReturn>,
+): PerformerElement[] {
   if (!children || typeof children === "string") {
     return [];
   } else if (Array.isArray(children)) {

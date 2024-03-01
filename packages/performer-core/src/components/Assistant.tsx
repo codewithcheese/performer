@@ -1,4 +1,4 @@
-import { useMessages, useState } from "../hooks/index.js";
+import { useResource, useMessages, useState } from "../hooks/index.js";
 import type { Component } from "../component.js";
 import {
   isAssistantMessage,
@@ -23,19 +23,16 @@ export type AssistantProps = {
   onMessage?: (message: PerformerMessage) => void;
 };
 
-export const Assistant: Component<AssistantProps> = async (
-  {
-    apiKey,
-    baseURL,
-    model = "gpt-3.5-turbo",
-    toolChoice = "auto",
-    tools = [],
-    onMessage = () => {},
-    dangerouslyAllowBrowser = true,
-    defaultHeaders,
-  },
-  { useResource },
-) => {
+export const Assistant: Component<AssistantProps> = function ({
+  apiKey,
+  baseURL,
+  model = "gpt-3.5-turbo",
+  toolChoice = "auto",
+  tools = [],
+  onMessage = () => {},
+  dangerouslyAllowBrowser = true,
+  defaultHeaders,
+}) {
   const toolMessages = useState<ToolMessage[]>([]);
   const messages = useMessages();
 
@@ -63,7 +60,7 @@ export const Assistant: Component<AssistantProps> = async (
     };
   }
 
-  const message = await useResource(async (controller) => {
+  const message = useResource(async (controller) => {
     const openai = new OpenAI({
       ...(apiKey ? { apiKey } : {}),
       ...(baseURL ? { baseURL } : {}),
@@ -94,24 +91,25 @@ export const Assistant: Component<AssistantProps> = async (
 
   async function callTools(message: PerformerMessage) {
     if (isAssistantMessage(message) && message.tool_calls) {
-      for (const toolCall of message.tool_calls) {
-        const tool = tools.find((tool) => tool.name === toolCall.function.name);
-        if (!tool) {
-          throw Error(`Tool not found for tool call: ${toolCall.id}`);
-        }
-        const message = await tool.callback(
-          JSON.parse(toolCall.function.arguments),
-          toolCall.id,
-        );
-        if (!message) {
-          toolMessages.value = [
-            ...toolMessages.value,
-            { role: "tool", tool_call_id: toolCall.id, content: "" },
-          ];
-        } else {
-          toolMessages.value = [...toolMessages.value, message];
-        }
-      }
+      toolMessages.value = await Promise.all(
+        message.tool_calls.map(async (toolCall) => {
+          const tool = tools.find(
+            (tool) => tool.name === toolCall.function.name,
+          );
+          if (!tool) {
+            throw Error(`Tool not found for tool call: ${toolCall.id}`);
+          }
+          const message = await tool.callback(
+            JSON.parse(toolCall.function.arguments),
+            toolCall.id,
+          );
+          if (message) {
+            return message;
+          } else {
+            return { role: "tool", tool_call_id: toolCall.id, content: "" };
+          }
+        }),
+      );
     }
   }
 

@@ -1,7 +1,5 @@
 import { assert, expect, test } from "vitest";
 import {
-  isTextContent,
-  PerformerMessageEvent,
   Performer,
   resolveMessages,
   User,

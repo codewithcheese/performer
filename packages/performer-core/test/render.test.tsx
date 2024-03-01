@@ -5,12 +5,13 @@ import {
   PerformerErrorEvent,
   PerformerMessage,
   resolveMessages,
+  useResource,
   useState,
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
 import { expectTree } from "./util/expect-tree.js";
 
-async function Container({ children }: any) {
+function Container({ children }: any) {
   return () => children;
 }
 
@@ -34,15 +35,15 @@ test("should render and resolve intrinsic element", async () => {
 });
 
 test("should render view", async () => {
-  async function AChild() {
+  function AChild() {
     return () => null;
   }
-  async function BChild() {
+  function BChild() {
     return () => null;
   }
-  async function AComponent() {
+  function AComponent() {
     console.log("hello");
-    await sleep(10);
+    useResource(() => sleep(10));
     console.log("world");
     return () => (
       <Container>
@@ -259,9 +260,9 @@ test("should unlink messages when removed by conditional", async () => {
 });
 
 test("should wait for async message actions", async () => {
-  async function AsyncMessage() {
+  function AsyncMessage() {
     const isReady = useState<boolean>(false);
-    await sleep(10);
+    useResource(async () => sleep(10));
     isReady.value = true;
     return () => isReady && <system>Your name is Bob</system>;
   }
@@ -362,21 +363,32 @@ test("should catch sync component that throws", async () => {
   expect(events).toHaveLength(1);
 });
 
-test("should catch async component that throws", async () => {
-  async function App() {
-    await sleep(10);
+test("should catch resumed component that throws", async () => {
+  function App() {
+    useResource(() => sleep(10));
     throw Error("Throwing!");
     return () => {};
   }
   const performer = new Performer(<App />, { throwOnError: false });
   performer.start();
-  const events: PerformerErrorEvent[] = [];
+  const errors: PerformerErrorEvent[] = [];
   performer.addEventListener("error", (event) => {
-    events.push(event);
+    errors.push(event);
   });
   await performer.waitUntilSettled();
   expect(performer.hasFinished).toEqual(true);
-  expect(events).toHaveLength(1);
+  expect(errors).toHaveLength(1);
+});
+
+test("should throw if component is async function", async () => {
+  async function App() {
+    return () => <user>Hello, world!</user>;
+  }
+  // @ts-ignore
+  const performer = new Performer(<App />, { throwOnError: false });
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(performer.errors).toHaveLength(1);
 });
 
 test("should cast non-string message children", async () => {

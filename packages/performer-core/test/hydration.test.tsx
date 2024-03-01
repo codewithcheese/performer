@@ -1,10 +1,10 @@
 import { assert, expect, test } from "vitest";
 import {
-  AsyncHooks,
   createContext,
   isTextContent,
   messagesToElements,
   Performer,
+  useResource,
   useContextProvider,
   useInput,
   UserMessage,
@@ -13,10 +13,10 @@ import {
 import { testHydration } from "./util/test-hydration.js";
 
 test("should serialize hooks", async () => {
-  async function App({}, { useResource }: AsyncHooks) {
+  function App() {
     const context = useContextProvider(createContext<string>("test"), "1337");
     const state = useState("42");
-    const resource = await useResource(() => Promise.resolve("420"));
+    const resource = useResource(() => Promise.resolve("420"));
     return () => (
       <>
         <system>{context.value}</system>
@@ -32,8 +32,8 @@ test("should serialize hooks", async () => {
 });
 
 test("should serialize when listening, for input and accept input when hydrated", async () => {
-  async function App() {
-    const messages = await useInput();
+  function App() {
+    const messages = useInput();
     return () => messagesToElements(messages);
   }
   const performer = new Performer(<App />);
@@ -62,8 +62,8 @@ test("should serialize when listening, for input and accept input when hydrated"
 });
 
 test("should use hydrated input instead of listening again", async () => {
-  async function App() {
-    const messages = await useInput();
+  function App() {
+    const messages = useInput();
     return () => messagesToElements(messages);
   }
   const performer = new Performer(<App />);

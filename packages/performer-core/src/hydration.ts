@@ -51,7 +51,7 @@ export async function hydrate(
   if (!parent) {
     // evaluate if finished
     let hasFinished = true;
-    walk(node, () => (hasFinished = node.viewResolved));
+    walk(node, () => (hasFinished = node.status === "RESOLVED"));
     if (hasFinished) {
       performer.finish();
     }
@@ -68,6 +68,8 @@ export function serialize(node: PerformerNode): SerializedNode {
     children: [],
   };
   // serialize hooks
+  // todo serialize any signal to object that self identifies as signal instead of key based serialization
+  // e.g. { type: 'signal', value }
   for (const [key, value] of Object.entries(node.hooks)) {
     if (key.startsWith("state-") || key.startsWith("context-")) {
       if (value instanceof Signal) {

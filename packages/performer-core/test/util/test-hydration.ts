@@ -69,7 +69,7 @@ function filterTransient(lhs: any, rhs: any) {
 
     // filter out signals with the same value
     if (lhsVal instanceof Signal && rhsVal instanceof Signal) {
-      if (lhsVal.peek() === rhsVal.peek()) {
+      if (_.isEqual(lhsVal.peek(), rhsVal.peek())) {
         return true;
       }
     }
