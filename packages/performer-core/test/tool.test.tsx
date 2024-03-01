@@ -11,7 +11,7 @@ import {
   isToolMessage,
 } from "../src/index.js";
 
-test("should use tool", async () => {
+test("should use tool with callback", async () => {
   let toolCall = undefined;
   const HelloSchema = z
     .object({
@@ -49,7 +49,33 @@ test("should use tool", async () => {
   expect(eventMessages[0]).toEqual(messages[1]);
 });
 
-// fixme: does not return multiple tool calls, and tool call response index not correct
+test("should use tool without callback", async () => {
+  const HelloSchema = z
+    .object({
+      name: z.string(),
+    })
+    .describe("Say hello");
+  const tool = createTool("sayHello", HelloSchema);
+  const app = (
+    <>
+      <system>Say hello to world</system>
+      <Assistant toolChoice={tool} tools={[tool]} />
+    </>
+  );
+  const performer = new Performer(app);
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(performer.hasFinished).toEqual(true);
+  const messages = resolveMessages(performer.root);
+  expect(messages).toHaveLength(3);
+  assert(isToolMessage(messages[2]));
+  const assistant = performer.root?.child?.nextSibling;
+  expect(
+    assistant!.hooks["state-0"].value[0].content,
+    "Expect Assistant tool messages state to equal tool message",
+  ).toEqual(messages[2].content);
+});
+
 test("should use multiple tools", async () => {
   const WidgetCountSchema = z
     .object({
