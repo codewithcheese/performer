@@ -16,7 +16,7 @@ import {
 } from "./message.js";
 import * as log from "loglevel";
 import * as _ from "lodash";
-import { View } from "./component.js";
+import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
 import {
   LogConfig,
@@ -474,7 +474,9 @@ function childrenToContent(children: unknown): string {
   }
 }
 
-function normalizeChildren(children: ReturnType<View>): PerformerElement[] {
+function normalizeChildren(
+  children: ReturnType<ComponentReturn>,
+): PerformerElement[] {
   if (!children || typeof children === "string") {
     return [];
   } else if (Array.isArray(children)) {

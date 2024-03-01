@@ -2,7 +2,7 @@ import type { PerformerElement } from "./element.js";
 
 export type Props = Record<string, any>;
 
-export type View = () =>
+export type ComponentReturn = () =>
   | PerformerElement[]
   | PerformerElement
   | void
@@ -17,5 +17,5 @@ export type Component<P extends Props> = {
     props: P & {
       children?: PerformerElement | PerformerElement[] | string;
     },
-  ): View;
+  ): ComponentReturn;
 };

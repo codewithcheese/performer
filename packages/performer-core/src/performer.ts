@@ -63,7 +63,6 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   }
 
   abort() {
-    // todo test action abort
     this.dispatchEvent(new PerformerLifecycleEvent({ state: "aborted" }));
     this.controller.abort();
     this.finish();
