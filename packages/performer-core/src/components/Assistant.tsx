@@ -1,4 +1,9 @@
-import { useMessages, useResource, useState } from "../hooks/index.js";
+import {
+  useMessages,
+  useResource,
+  useState,
+  useAbortController,
+} from "../hooks/index.js";
 import type { Component } from "../component.js";
 import {
   isAssistantMessage,
@@ -11,7 +16,6 @@ import OpenAI from "openai";
 import { isEmptyObject } from "../util/is-empty-object.js";
 import { Tool } from "../tool.js";
 import "../util/readable-stream-polyfill.js";
-import { useController } from "../hooks/use-controller.js";
 
 export type AssistantProps = {
   baseURL?: string;
@@ -61,7 +65,7 @@ export const Assistant: Component<AssistantProps> = function ({
     };
   }
 
-  const controller = useController();
+  const controller = useAbortController();
   const message = useResource(async () => {
     const openai = new OpenAI({
       ...(apiKey ? { apiKey } : {}),
