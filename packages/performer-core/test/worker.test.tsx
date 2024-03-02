@@ -27,7 +27,6 @@ test("should resolve different workers concurrently, same worker in serial", asy
   function App() {
     return () => (
       <>
-        <user>What is 1 + 1</user>
         <Worker>
           <Slow>A1</Slow>
           <Slow>B1</Slow>

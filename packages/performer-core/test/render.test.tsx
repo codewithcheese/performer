@@ -31,7 +31,7 @@ test("should render and resolve intrinsic element", async () => {
   expect(messages[0].role).toEqual("system");
   expect(messages[1].role).toEqual("assistant");
   expect(messages[2].role).toEqual("user");
-  // await testHydration(performer);
+  await testHydration(performer);
 });
 
 test("should render view", async () => {
@@ -57,7 +57,7 @@ test("should render view", async () => {
   const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  // await testHydration(performer);
+  await testHydration(performer);
 });
 
 test("should update prop when signal changes", async () => {
@@ -84,7 +84,7 @@ test("should update prop when signal changes", async () => {
   const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  // await testHydration(performer);
+  await testHydration(performer);
 });
 
 test("should update and run message actions when state changes", async () => {
@@ -113,7 +113,7 @@ test("should update and run message actions when state changes", async () => {
   await performer.waitUntilSettled();
   messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
-  // await testHydration(performer);
+  await testHydration(performer);
 });
 
 test("should update links when elements are reordered", async () => {
@@ -152,7 +152,7 @@ test("should update links when elements are reordered", async () => {
     showResolveMessages: true,
   });
   expect(messages).toHaveLength(3);
-  // await testHydration(performer);
+  await testHydration(performer);
 });
 
 test("should render new elements when dynamically added or removed", async () => {
@@ -256,7 +256,7 @@ test("should unlink messages when removed by conditional", async () => {
     messages.length,
     "Expect 0 messages after they are unlinked by `If`",
   ).toEqual(0);
-  // await testHydration(performer);
+  await testHydration(performer);
 });
 
 test("should wait for async message actions", async () => {
@@ -293,7 +293,7 @@ test("should wait for async message actions", async () => {
     role: "user",
     content: "Hold me close",
   });
-  // await testHydration(performer);
+  await testHydration(performer);
 });
 
 test("should render tree", async () => {
@@ -344,7 +344,7 @@ test("should render tree", async () => {
   };
   expectTree(performer.root!, expected);
   expect(root.child?.nextSibling?.nextSibling).toBeUndefined();
-  // await testHydration(performer);
+  await testHydration(performer);
 });
 
 test("should catch sync component that throws", async () => {

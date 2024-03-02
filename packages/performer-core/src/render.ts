@@ -56,9 +56,6 @@ type PausedOp = {
 
 type RenderOp = CreateOp | UpdateOp | EffectOp | PausedOp;
 
-// for debugging only
-let _renderNonce = 0;
-
 export async function render(performer: Performer) {
   try {
     const ops = evaluateRenderOps(
@@ -85,8 +82,6 @@ export async function render(performer: Performer) {
     }
   } catch (error) {
     performer.onError(error);
-  } finally {
-    _renderNonce += 1;
   }
 }
 
@@ -191,8 +186,6 @@ export async function performOp(
       child,
       serialized,
     });
-    // @ts-expect-error debugging value
-    node._renderNonce = _renderNonce;
     log.debug(`Create node`, logNode(node), logContent(node));
     if (!parent) {
       performer.root = node;

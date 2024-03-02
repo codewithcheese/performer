@@ -14,7 +14,7 @@ export async function hydrate(
 ): Promise<PerformerNode> {
   const node = await performOp(
     performer,
-    { element, parent, prevSibling },
+    { type: "CREATE", payload: { element, parent, prevSibling } },
     serialized,
   );
 
