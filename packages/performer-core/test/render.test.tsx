@@ -124,8 +124,8 @@ test("should update links when elements are reordered", async () => {
       return children.slice(_offset).concat(children.slice(0, _offset));
     };
   }
-  function Item({ content }: any) {
-    return () => <user content={[{ type: "text", text: content }]} />;
+  function Item({ children }: any) {
+    return () => <user content={[{ type: "text", text: children }]} />;
   }
   const app = (
     <Rotate>
