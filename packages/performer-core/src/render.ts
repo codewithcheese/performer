@@ -206,6 +206,9 @@ export async function performOp(
       node.nextSibling = nextSibling;
       nextSibling.prevSibling = node;
     }
+    if (child) {
+      child.parent = node;
+    }
   } else {
     node = op.payload.node;
   }
