@@ -4,6 +4,7 @@ import {
   PerformerNode,
   useMessages,
   useResource,
+  useState,
   Worker,
 } from "../src/index.js";
 import { sleep } from "../src/util/sleep.js";
@@ -95,4 +96,19 @@ test("should exclude messages from sub-workers", async () => {
     node.type === "user" ? !!users.push(node) : false,
   );
   users.forEach((user) => expect(user.props.children).toEqual(user.worker));
+});
+
+test("should call onSettled when worker children rendered", async () => {
+  function App() {
+    const hasSettled = useState(false);
+    return () => (
+      <Worker onSettled={() => (hasSettled.value = true)}>
+        <user>Hello world</user>
+      </Worker>
+    );
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(performer.root?.hooks["state-0"].value).toEqual(true);
 });
