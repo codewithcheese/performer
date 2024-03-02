@@ -11,6 +11,7 @@ import {
 import "dotenv/config";
 import { testHydration } from "../util/test-hydration.js";
 import { z } from "zod";
+import { createLookup } from "../util/lookup-node.js";
 
 test("should call model with messages", async () => {
   const app = (
@@ -22,30 +23,29 @@ test("should call model with messages", async () => {
   const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  expect(performer.root?.child?.type).toEqual("system");
-  expect(performer.root?.child?.props.children).toEqual(
+  const lookup = createLookup(performer.root!);
+
+  expect(lookup("system").type).toEqual("system");
+  expect(lookup("system").props.children).toEqual(
     "Hello world in Javascript. Code only.",
   );
-  assert(performer.root?.child?.nextSibling?.type instanceof Function);
-  expect(performer.root?.child?.nextSibling?.type.name).toEqual("Assistant");
-  assert(performer.root?.child?.nextSibling?.child?.type instanceof Function);
-  expect(performer.root?.child?.nextSibling?.child?.type.name).toEqual(
-    "Fragment",
-  );
-  expect(performer.root?.child?.nextSibling?.child?.child?.type).toEqual("raw");
+  const assistant = lookup("Assistant");
+  assert(assistant.type instanceof Function);
+  expect(assistant.type.name).toEqual("Assistant");
+
+  const fragment = lookup("Assistant->Fragment");
+  assert(fragment.type instanceof Function);
+  expect(fragment.type.name).toEqual("Fragment");
+
+  const raw = lookup("Assistant->Fragment->raw");
+  expect(raw.type).toEqual("raw");
   expect(
-    performer.root?.child?.nextSibling?.child?.child?.hooks.message,
+    raw.hooks.message,
     "Expect raw element message hook to be defined.",
   ).toBeDefined();
-  assert(
-    isMessage(performer.root?.child?.nextSibling?.child?.child?.hooks?.message),
-  );
-  expect(
-    performer.root?.child?.nextSibling?.child?.child?.hooks?.message.role,
-  ).toEqual("assistant");
-  expect(
-    performer.root?.child?.nextSibling?.child?.child?.hooks?.message.content,
-  ).not.toBeNull();
+  assert(isMessage(raw.hooks?.message));
+  expect(raw.hooks?.message.role).toEqual("assistant");
+  expect(raw.hooks?.message.content).not.toBeNull();
   testHydration(performer);
 }, 10_000);
 
