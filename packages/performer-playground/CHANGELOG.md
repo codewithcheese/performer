@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.20
+
+### Patch Changes
+
+- Updated dependencies [d1770c6]
+  - @performer/core@0.0.20
+
 ## 0.0.19
 
 ### Patch Changes

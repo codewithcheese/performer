@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.20
+
+### Patch Changes
+
+- d1770c6: Add useAboutController hook. Remove default controller argument to useResource fetcher.
+
 ## 0.0.19
 
 ### Patch Changes
