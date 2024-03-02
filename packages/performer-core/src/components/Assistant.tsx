@@ -1,4 +1,9 @@
-import { useMessages, useResource, useState } from "../hooks/index.js";
+import {
+  useMessages,
+  useResource,
+  useState,
+  useAbortController,
+} from "../hooks/index.js";
 import type { Component } from "../component.js";
 import {
   isAssistantMessage,
@@ -60,7 +65,8 @@ export const Assistant: Component<AssistantProps> = function ({
     };
   }
 
-  const message = useResource(async (controller) => {
+  const controller = useAbortController();
+  const message = useResource(async () => {
     const openai = new OpenAI({
       ...(apiKey ? { apiKey } : {}),
       ...(baseURL ? { baseURL } : {}),

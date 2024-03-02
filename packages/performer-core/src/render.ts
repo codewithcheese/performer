@@ -182,7 +182,7 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     performer,
     node,
     nonce: 0,
-    controller: performer.controller,
+    abortController: performer.controller,
   });
   try {
     view = node.type(node.props);

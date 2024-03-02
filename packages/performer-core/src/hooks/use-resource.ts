@@ -10,7 +10,7 @@ export type UseResourceHookRecord = {
 };
 
 export function useResource<
-  T extends (controller: AbortController, ...rest: Args) => any,
+  T extends (...rest: Args) => any,
   Args extends any[],
 >(fetcher: T, ...args: Args): Awaited<ReturnType<T>> {
   const scope = useRenderScope();
@@ -30,7 +30,7 @@ export function useResource<
     }
   }
   // call fetcher
-  const value = fetcher(scope.controller, ...args);
+  const value = fetcher(...args);
   const set = (newState: UseResourceState) => {
     scope.node.hooks[key] = newState;
   };

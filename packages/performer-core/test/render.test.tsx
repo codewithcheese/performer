@@ -43,7 +43,7 @@ test("should render view", async () => {
   }
   function AComponent() {
     console.log("hello");
-    useResource(() => sleep(10));
+    useResource(sleep, 10);
     console.log("world");
     return () => (
       <Container>
@@ -262,7 +262,7 @@ test("should unlink messages when removed by conditional", async () => {
 test("should wait for async message actions", async () => {
   function AsyncMessage() {
     const isReady = useState<boolean>(false);
-    useResource(async () => sleep(10));
+    useResource(sleep, 10);
     isReady.value = true;
     return () => isReady && <system>Your name is Bob</system>;
   }
@@ -365,7 +365,7 @@ test("should catch sync component that throws", async () => {
 
 test("should catch resumed component that throws", async () => {
   function App() {
-    useResource(() => sleep(10));
+    useResource(sleep, 10);
     throw Error("Throwing!");
     return () => {};
   }

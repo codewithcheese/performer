@@ -1,13 +1,7 @@
 /**
  * Based on https://js.langchain.com/docs/modules/chains/popular/sqlite
  */
-import {
-  Assistant,
-  createTool,
-  Tool,
-  User,
-  useResource,
-} from "@performer/core";
+import { Assistant, createTool, User, useResource } from "@performer/core";
 import { DataSource } from "typeorm";
 import { SqlDatabase } from "langchain/sql_db";
 import { z } from "zod";

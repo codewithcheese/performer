@@ -9,7 +9,7 @@ export type RenderScope = {
   node: PerformerNode;
   performer: Performer;
   nonce: number;
-  controller: AbortController;
+  abortController: AbortController;
 };
 
 let _scope: RenderScope | null = null;
