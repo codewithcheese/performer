@@ -1,4 +1,4 @@
-import { Assistant, useResource } from "@performer/core";
+import { Assistant, useController, useResource } from "@performer/core";
 
 export const name = "Repo question";
 
@@ -11,7 +11,8 @@ async function fetchRepos(controller: AbortController, user: string) {
 }
 
 function Repos({ user }: { user: string }) {
-  const repos = useResource(fetchRepos, user);
+  const controller = useController();
+  const repos = useResource(fetchRepos, controller, user);
 
   return () => (
     <system>

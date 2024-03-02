@@ -11,6 +11,7 @@ import OpenAI from "openai";
 import { isEmptyObject } from "../util/is-empty-object.js";
 import { Tool } from "../tool.js";
 import "../util/readable-stream-polyfill.js";
+import { useController } from "../hooks/use-controller.js";
 
 export type AssistantProps = {
   baseURL?: string;
@@ -60,7 +61,8 @@ export const Assistant: Component<AssistantProps> = function ({
     };
   }
 
-  const message = useResource(async (controller) => {
+  const controller = useController();
+  const message = useResource(async () => {
     const openai = new OpenAI({
       ...(apiKey ? { apiKey } : {}),
       ...(baseURL ? { baseURL } : {}),

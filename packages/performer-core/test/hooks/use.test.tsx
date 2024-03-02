@@ -74,7 +74,7 @@ test("should pass additional arguments", async () => {
   let args: any[] = [];
   function three() {}
   function App() {
-    useResource((_, ...rest) => args.push(...rest), 1, "2", three);
+    useResource((...rest) => args.push(...rest), 1, "2", three);
     return () => {};
   }
   const performer = new Performer(<App />);
