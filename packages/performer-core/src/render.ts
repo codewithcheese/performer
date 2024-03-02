@@ -27,7 +27,6 @@ import {
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
-import { walk } from "./util/walk.js";
 
 type CreateOp = {
   type: "CREATE";
@@ -48,15 +47,11 @@ type UpdateOp = {
   };
 };
 
-type EffectOp = {
-  type: "EFFECT";
-};
-
 type PausedOp = {
   type: "PAUSED";
 };
 
-type RenderOp = CreateOp | UpdateOp | EffectOp | PausedOp;
+type RenderOp = CreateOp | UpdateOp | PausedOp;
 
 export async function render(performer: Performer) {
   try {
@@ -69,9 +64,6 @@ export async function render(performer: Performer) {
     );
     for (const op of Object.values(ops)) {
       switch (op.type) {
-        case "EFFECT":
-          performer.queueRender();
-          continue;
         case "CREATE":
           await performOp(performer, op);
           continue;
@@ -168,7 +160,6 @@ export function evaluateRenderOps(
       node.hooks.afterChildren();
     }
     node.childRenderCount = 0;
-    ops[worker] = { type: "EFFECT" } satisfies EffectOp;
   }
 
   return ops;
