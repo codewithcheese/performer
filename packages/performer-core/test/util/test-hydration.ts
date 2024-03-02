@@ -18,7 +18,11 @@ export async function testHydration(performer: Performer) {
   const serialized = serialize(performer.root);
   const stringified = JSON.stringify(serialized);
   const hydratedPerformer = new Performer(performer.app);
-  const hydrated = await hydrate(hydratedPerformer, performer.app, serialized);
+  const hydrated = await hydrate({
+    performer: hydratedPerformer,
+    element: performer.app,
+    serialized,
+  });
   const hydratedMessages = resolveMessages(hydratedPerformer.root);
   expect(ogMessages).toEqual(hydratedMessages);
   // @ts-ignore

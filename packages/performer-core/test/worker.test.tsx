@@ -1,21 +1,13 @@
-import { assert, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import {
-  Assistant,
-  Component,
-  createTool,
   Performer,
+  PerformerNode,
+  useMessages,
   useResource,
-  useWorker,
+  Worker,
 } from "../src/index.js";
 import { sleep } from "../src/util/sleep.js";
-import { z } from "zod";
-import { transformerToNodeTree } from "./util/node-tree.js";
-import { createLookup } from "./util/lookup-node.js";
-
-const Worker: Component<{}> = function ({ children }) {
-  useWorker();
-  return () => children;
-};
+import { walk } from "../src/util/walk.js";
 
 test("should resolve different workers concurrently, same worker in serial", async () => {
   const order: string[] = [];
@@ -56,22 +48,51 @@ test("should resolve different workers concurrently, same worker in serial", asy
   expect(order).toEqual(["A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"]);
 });
 
-test("should run assistant concurrently", async () => {
-  const sumTool = createTool("sum", z.object({ sum: z.number() }));
-
+test("should exclude messages from sub-workers", async () => {
+  function Expect({ expected }: { expected: string[] }) {
+    const messages = useMessages();
+    expect(messages.map((m) => m.content)).toEqual(expected);
+    return () => {};
+  }
+  function Container({ children }: any) {
+    return () => <>{children}</>;
+  }
+  const root = "root";
+  const worker0 = "root/0";
+  const worker01 = "root/0/1";
+  const worker2 = "root/2";
   function App() {
     return () => (
       <>
-        <user>What is 1 + 1</user>
+        <user>{root}</user>
         <Worker>
-          <Assistant toolChoice={sumTool} tools={[sumTool]} />
+          <user>{worker0}</user>
+          <Expect expected={[root, worker0]} />
+          <Worker>
+            <user>{worker01}</user>
+            <Expect expected={[root, worker0, worker01]} />
+          </Worker>
+          <user>{worker0}</user>
+          <Expect expected={[root, worker0, worker0]} />
         </Worker>
-        <Assistant toolChoice={sumTool} tools={[sumTool]} />
+        <Container>
+          <user>{root}</user>
+        </Container>
+        <Worker>
+          <user>{worker2}</user>
+          <Expect expected={[root, root, worker2]} />
+        </Worker>
+        <Expect expected={[root, root]} />
       </>
     );
   }
-
   const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
+  // get users nodes and verify that their content matches their worker
+  const users: PerformerNode[] = [];
+  walk(performer.root!, (node) =>
+    node.type === "user" ? !!users.push(node) : false,
+  );
+  users.forEach((user) => expect(user.props.children).toEqual(user.worker));
 });

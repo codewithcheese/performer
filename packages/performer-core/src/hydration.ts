@@ -5,33 +5,45 @@ import { performOp } from "./render.js";
 import { Signal } from "@preact/signals-core";
 import { walk } from "./util/walk.js";
 
-export async function hydrate(
-  performer: Performer,
-  element: PerformerElement,
-  serialized: SerializedNode,
-  parent?: PerformerNode,
-  prevSibling?: PerformerNode,
-): Promise<PerformerNode> {
+export type HydrateProps = {
+  performer: Performer;
+  worker?: string;
+  element: PerformerElement;
+  serialized: SerializedNode;
+  parent?: PerformerNode;
+  prevSibling?: PerformerNode;
+};
+
+export async function hydrate({
+  performer,
+  worker = "root",
+  element,
+  serialized,
+  parent,
+  prevSibling,
+}: HydrateProps): Promise<PerformerNode> {
   const node = await performOp(
     performer,
-    { type: "CREATE", payload: { element, parent, prevSibling } },
+    { type: "CREATE", payload: { worker, element, parent, prevSibling } },
     serialized,
   );
 
   let index = 0;
+  let childWorker = node.hooks.worker ? node.hooks.worker : worker;
   let childPrevSibling: PerformerNode | undefined = undefined;
   const childElements = node.childElements || [];
   // todo validate length of child elements matches serialized children
   while (index < childElements.length) {
     const childElement = childElements[index];
     const childSerialized = serialized.children[index];
-    const childNode = await hydrate(
+    const childNode = await hydrate({
       performer,
-      childElement,
-      childSerialized,
-      node,
-      childPrevSibling,
-    );
+      worker: childWorker,
+      element: childElement,
+      serialized: childSerialized,
+      parent: node,
+      prevSibling: childPrevSibling,
+    });
 
     if (index === 0) {
       node.child = childNode;

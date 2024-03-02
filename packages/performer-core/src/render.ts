@@ -27,10 +27,12 @@ import {
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
+import { walk } from "./util/walk.js";
 
 type CreateOp = {
   type: "CREATE";
   payload: {
+    worker: string;
     element: PerformerElement;
     parent?: PerformerNode;
     prevSibling?: PerformerNode;
@@ -99,6 +101,7 @@ export function evaluateRenderOps(
     const op: CreateOp = {
       type: "CREATE",
       payload: {
+        worker,
         element,
         parent: parent,
         prevSibling: prevSibling,
@@ -178,8 +181,10 @@ export async function performOp(
 ): Promise<PerformerNode> {
   let node;
   if (op.type === "CREATE") {
-    const { element, parent, prevSibling, nextSibling, child } = op.payload;
+    const { worker, element, parent, prevSibling, nextSibling, child } =
+      op.payload;
     node = createNode({
+      worker,
       element,
       parent,
       prevSibling,
@@ -419,20 +424,41 @@ export function resolveMessages(
 ): PerformerMessage[] {
   const messages: PerformerMessage[] = [];
 
-  function traverse(node: PerformerNode | undefined): boolean {
-    if (node == null) return false;
-    logResolveMessages(node, logConfig);
-    // If target node is found, stop traversing
-    if (to && node === to) return true;
-    // Add messages from the current node
-    if (typeof node.type === "string") {
-      messages.push(nodeToMessage(node));
+  let cursor: PerformerNode | undefined = from;
+  while (cursor) {
+    logResolveMessages(cursor, logConfig);
+
+    if (typeof cursor.type === "string") {
+      messages.push(nodeToMessage(cursor));
     }
-    // Traverse child and siblings
-    return traverse(node.child) || traverse(node.nextSibling);
+
+    const exit = to && cursor === to;
+    if (exit) {
+      break;
+    }
+    // worker props is a hierarchical id
+    // parent workers are substring of the child workers
+    // e.g. root/0 is parent of root/0/1, root/0 is not a parent of root/2/3
+    // to.worker.includes(cursor.child.worker))
+    // checks if child has the same worker or parent of `to.worker`
+    if (cursor.child && (!to || to.worker.includes(cursor.child.worker))) {
+      cursor = cursor.child;
+      continue;
+    }
+
+    while (cursor) {
+      if (
+        cursor.nextSibling &&
+        (!to || to.worker.includes(cursor.nextSibling.worker))
+      ) {
+        cursor = cursor.nextSibling;
+        break;
+      }
+      cursor = cursor.parent;
+    }
   }
 
-  traverse(from);
+  // traverse(from);
   return messages;
 }
 

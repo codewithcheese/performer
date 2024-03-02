@@ -143,3 +143,5 @@ test("message element should accept message object without stream", async () => 
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual(userMessage);
 });
+
+test("intrinsic element should accept content as children or prop");
