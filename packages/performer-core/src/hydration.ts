@@ -1,7 +1,7 @@
 import { PerformerNode, SerializedNode } from "./node.js";
 import type { Performer } from "./performer.js";
 import type { PerformerElement } from "./element.js";
-import { renderElement } from "./render.js";
+import { performOp } from "./render.js";
 import { Signal } from "@preact/signals-core";
 import { walk } from "./util/walk.js";
 
@@ -12,7 +12,7 @@ export async function hydrate(
   parent?: PerformerNode,
   prevSibling?: PerformerNode,
 ): Promise<PerformerNode> {
-  const node = await renderElement(
+  const node = await performOp(
     performer,
     { element, parent, prevSibling },
     serialized,

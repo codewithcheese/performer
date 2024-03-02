@@ -28,81 +28,128 @@ import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
 
-type NextElement = {
-  element: PerformerElement;
-  parent?: PerformerNode;
-  prevSibling?: PerformerNode;
-  nextSibling?: PerformerNode;
-  child?: PerformerNode;
+type CreateOp = {
+  type: "CREATE";
+  payload: {
+    element: PerformerElement;
+    parent?: PerformerNode;
+    prevSibling?: PerformerNode;
+    nextSibling?: PerformerNode;
+    child?: PerformerNode;
+  };
 };
 
-type NextNode = {
-  node: PerformerNode;
+type UpdateOp = {
+  type: "UPDATE";
+  payload: {
+    node: PerformerNode;
+  };
 };
+
+type EffectOp = {
+  type: "EFFECT";
+};
+
+type PausedOp = {
+  type: "PAUSED";
+};
+
+type RenderOp = CreateOp | UpdateOp | EffectOp | PausedOp;
+
+// for debugging only
+let _renderNonce = 0;
 
 export async function render(performer: Performer) {
   try {
-    let next = findNextElementToRender(performer.app, performer.root);
-    if (next === "SIDE_EFFECT") {
-      performer.queueRender();
-    } else if (next === "NODE_PAUSED") {
-      // wait for next render
-      return;
-    } else if (next) {
-      await renderElement(performer, next);
-    } else {
+    const ops = evaluateRenderOps(
+      "root",
+      performer.app,
+      performer.root,
+      undefined,
+      undefined,
+    );
+    for (const op of Object.values(ops)) {
+      switch (op.type) {
+        case "EFFECT":
+          performer.queueRender();
+          continue;
+        case "CREATE":
+          await performOp(performer, op);
+          continue;
+        case "UPDATE":
+          await performOp(performer, op);
+      }
+    }
+    if (Object.keys(ops).length === 0) {
       performer.finish();
     }
   } catch (error) {
     performer.onError(error);
+  } finally {
+    _renderNonce += 1;
   }
 }
 
-export function findNextElementToRender(
+/**
+ *
+ */
+export function evaluateRenderOps(
+  worker: string,
   element: PerformerElement,
   node?: PerformerNode,
   parent?: PerformerNode,
   prevSibling?: PerformerNode,
-): NextElement | NextNode | "SIDE_EFFECT" | "NODE_PAUSED" | null {
+): Record<string, RenderOp> {
   if (!node || !nodeMatchesElement(node, element)) {
-    const next = {
-      element,
-      parent: parent,
-      prevSibling: prevSibling,
-      nextSibling: node?.nextSibling,
-      child: node?.child,
+    const op: CreateOp = {
+      type: "CREATE",
+      payload: {
+        element,
+        parent: parent,
+        prevSibling: prevSibling,
+        nextSibling: node?.nextSibling,
+        child: node?.child,
+      },
     };
     if (node) {
       // do not free children, the new node will be linked in place and then children
       // re-evaluated on next renders
       freeNode(node, parent, false);
     }
-    return next;
+    return { [worker]: op };
   }
 
   if (node.status === "PENDING") {
-    return { node };
+    return {
+      [worker]: {
+        type: "UPDATE",
+        payload: { node },
+      } satisfies UpdateOp,
+    };
   }
 
   if (node.status === "PAUSED") {
-    return "NODE_PAUSED";
+    return { [worker]: { type: "PAUSED" } satisfies PausedOp };
   }
-
+  let ops: Record<string, RenderOp> = {};
   let index = 0;
+  let childWorker = node.hooks.worker ? node.hooks.worker : worker;
   let childNode: PerformerNode | undefined = node.child;
   let childPrevSibling: PerformerNode | undefined = undefined;
   const childElements = node.childElements || [];
   while (index < childElements.length) {
     const childElement = childElements[index];
-    const nextElement = findNextElementToRender(
+    const childOps = evaluateRenderOps(
+      childWorker,
       childElement,
       childNode,
       node,
       childPrevSibling,
     );
-    if (nextElement) {
+    Object.assign(ops, childOps);
+    if (childWorker in childOps) {
       node.childRenderCount += 1;
-      return nextElement;
+      return ops;
     }
     if (childPrevSibling) {
       childPrevSibling.nextSibling = childNode;
@@ -123,20 +170,20 @@ export function findNextElementToRender(
       node.hooks.afterChildren();
     }
     node.childRenderCount = 0;
-    return "SIDE_EFFECT";
+    ops[worker] = { type: "EFFECT" } satisfies EffectOp;
   }
 
-  return null;
+  return ops;
 }
 
-export async function renderElement(
+export async function performOp(
   performer: Performer,
-  next: NextElement | NextNode,
+  op: CreateOp | UpdateOp,
   serialized?: SerializedNode,
 ): Promise<PerformerNode> {
   let node;
-  if ("element" in next) {
-    const { element, parent, prevSibling, nextSibling, child } = next;
+  if (op.type === "CREATE") {
+    const { element, parent, prevSibling, nextSibling, child } = op.payload;
     node = createNode({
       element,
       parent,
@@ -144,6 +191,8 @@ export async function renderElement(
       child,
       serialized,
     });
+    // @ts-expect-error debugging value
+    node._renderNonce = _renderNonce;
     log.debug(`Create node`, logNode(node), logContent(node));
     if (!parent) {
       performer.root = node;
@@ -160,7 +209,7 @@ export async function renderElement(
       nextSibling.prevSibling = node;
     }
   } else {
-    node = next.node;
+    node = op.payload.node;
   }
   if (node.type instanceof Function) {
     await renderComponent(performer, node);
