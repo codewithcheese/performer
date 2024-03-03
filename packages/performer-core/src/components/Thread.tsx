@@ -4,17 +4,14 @@ import { withResolvers } from "../util/with-resolvers.js";
 
 type ThreadProps = {
   isolated?: boolean;
-  // exposed?: boolean;
-  // exposedOnSettled?: boolean;
   onSettled?: () => any;
-  // onError
 };
 
 /**
  * Thread lets you create an independent execution thread.
  *
  * @param children
- * @param [isolated] - does not use parent messages
+ * @param [isolated] - calls to useMessages do not include messages from parent threads
  * @param [onSettled] - called when all children have settled
  */
 export const Thread: Component<ThreadProps> & { AwaitAll: Component<{}> } =

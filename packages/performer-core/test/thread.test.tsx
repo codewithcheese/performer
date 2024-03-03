@@ -167,3 +167,34 @@ test("should await all thread before continuing", async () => {
   ]);
   expect(settledOrder).toEqual([1, 2, 3]);
 });
+
+test("should isolate thread from parent thread messages", async () => {
+  function Expect({ expected }: { expected: string[] }) {
+    const messages = useMessages();
+    expect(messages.map((m) => m.content)).toEqual(expected);
+    return () => {};
+  }
+  function App() {
+    return () => (
+      <>
+        <user>1</user>
+        <Thread isolated={true}>
+          <user>2</user>
+          <Expect expected={["2"]} />
+        </Thread>
+        <Thread isolated={false}>
+          <user>3</user>
+          <Expect expected={["1", "3"]} />
+        </Thread>
+        <user>4</user>
+        <Expect expected={["1", "4"]} />
+      </>
+    );
+  }
+
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = performer.getAllMessages();
+  expect(messages.map((m) => m.content)).toEqual(["1", "2", "3", "4"]);
+});

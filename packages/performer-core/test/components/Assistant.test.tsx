@@ -63,11 +63,11 @@ test("should call onMessage event handler after assistant response", async () =>
   const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilSettled();
-  const messages = performer.getCurrentMessages();
+  const messages = performer.getAllMessages();
   expect(messages).toHaveLength(3);
   expect(messages[2]).toEqual({ role: "user", content: "Thank you" });
   const hydratedPerformer = await testHydration(performer);
-  const hydratedMessages = hydratedPerformer.getCurrentMessages();
+  const hydratedMessages = hydratedPerformer.getAllMessages();
   expect(hydratedMessages).toHaveLength(3);
 });
 
@@ -151,7 +151,7 @@ test.skipIf(!process.env.PERPLEXITY_API_KEY)(
     const performer = new Performer(<App />);
     performer.start();
     await performer.waitUntilSettled();
-    const messages = performer.getCurrentMessages();
+    const messages = performer.getAllMessages();
     expect(messages).toHaveLength(2);
     expect(messages[0].role).toEqual("user");
     expect(messages[1].role).toEqual("assistant");

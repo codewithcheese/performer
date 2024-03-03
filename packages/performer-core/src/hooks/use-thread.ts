@@ -1,7 +1,7 @@
 import { useHook } from "./use-hook.js";
 import { useRenderScope } from "./use-render-scope.js";
 
-type ThreadState = {
+export type ThreadState = {
   id: string;
   isolated: boolean;
 };

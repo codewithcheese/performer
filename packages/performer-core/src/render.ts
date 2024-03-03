@@ -27,6 +27,7 @@ import {
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
+import { ThreadState } from "./hooks/index.js";
 
 type CreateOp = {
   type: "CREATE";
@@ -416,11 +417,22 @@ export function resolveMessages(
   to?: PerformerNode,
   logConfig?: Partial<LogConfig>,
 ): PerformerMessage[] {
-  const messages: PerformerMessage[] = [];
+  let messages: PerformerMessage[] = [];
+  const threads: Record<string, ThreadState> = {};
 
   let cursor: PerformerNode | undefined = from;
   while (cursor) {
     logResolveMessages(cursor, logConfig);
+
+    // clear all messages if `to` belongs to cursor thread, and thread is isolated
+    if (
+      to &&
+      cursor.hooks.thread &&
+      to.threadId === cursor.hooks.thread.id &&
+      cursor.hooks.thread.isolated
+    ) {
+      messages = [];
+    }
 
     if (typeof cursor.type === "string") {
       messages.push(nodeToMessage(cursor));

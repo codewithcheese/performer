@@ -9,8 +9,8 @@ import {
 import type { PerformerMessage } from "./message.js";
 import * as log from "loglevel";
 import { LogConfig, logEvent, logNode } from "./util/log.js";
-import { PendingInputState } from "./hooks/index.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";
+import { ThreadState } from "./hooks/index.js";
 
 type PerformerOptions = { throwOnError?: boolean };
 
@@ -79,7 +79,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     return this.controller.signal.aborted;
   }
 
-  getCurrentMessages() {
+  getAllMessages() {
     return resolveMessages(this.root);
   }
 
