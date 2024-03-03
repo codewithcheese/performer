@@ -418,7 +418,6 @@ export function resolveMessages(
   logConfig?: Partial<LogConfig>,
 ): PerformerMessage[] {
   let messages: PerformerMessage[] = [];
-  const threads: Record<string, ThreadState> = {};
 
   let cursor: PerformerNode | undefined = from;
   while (cursor) {
