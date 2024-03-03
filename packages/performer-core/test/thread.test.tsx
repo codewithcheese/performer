@@ -95,7 +95,7 @@ test("should exclude messages from sub-threads", async () => {
   walk(performer.root!, (node) =>
     node.type === "user" ? !!users.push(node) : false,
   );
-  users.forEach((user) => expect(user.props.children).toEqual(user.thread));
+  users.forEach((user) => expect(user.props.children).toEqual(user.threadId));
 });
 
 test("should call onSettled when thread children rendered", async () => {

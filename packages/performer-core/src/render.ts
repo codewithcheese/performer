@@ -31,7 +31,7 @@ import { DeferInput, DeferResource } from "./util/defer.js";
 type CreateOp = {
   type: "CREATE";
   payload: {
-    thread: string;
+    threadId: string;
     element: PerformerElement;
     parent?: PerformerNode;
     prevSibling?: PerformerNode;
@@ -83,7 +83,7 @@ export async function render(performer: Performer) {
  *
  */
 export function evaluateRenderOps(
-  thread: string,
+  threadId: string,
   element: PerformerElement,
   node?: PerformerNode,
   parent?: PerformerNode,
@@ -93,7 +93,7 @@ export function evaluateRenderOps(
     const op: CreateOp = {
       type: "CREATE",
       payload: {
-        thread,
+        threadId,
         element,
         parent: parent,
         prevSibling: prevSibling,
@@ -106,12 +106,12 @@ export function evaluateRenderOps(
       // re-evaluated on next renders
       freeNode(node, parent, false);
     }
-    return { [thread]: op };
+    return { [threadId]: op };
   }
 
   if (node.status === "PENDING") {
     return {
-      [thread]: {
+      [threadId]: {
         type: "UPDATE",
         payload: { node },
       } satisfies UpdateOp,
@@ -119,25 +119,25 @@ export function evaluateRenderOps(
   }
 
   if (node.status === "PAUSED") {
-    return { [thread]: { type: "PAUSED" } satisfies PausedOp };
+    return { [threadId]: { type: "PAUSED" } satisfies PausedOp };
   }
   let ops: Record<string, RenderOp> = {};
   let index = 0;
-  let childWorker = node.hooks.thread ? node.hooks.thread : thread;
+  let childThreadId = node.hooks.thread?.id ? node.hooks.thread.id : threadId;
   let childNode: PerformerNode | undefined = node.child;
   let childPrevSibling: PerformerNode | undefined = undefined;
   const childElements = node.childElements || [];
   while (index < childElements.length) {
     const childElement = childElements[index];
     const childOps = evaluateRenderOps(
-      childWorker,
+      childThreadId,
       childElement,
       childNode,
       node,
       childPrevSibling,
     );
     Object.assign(ops, childOps);
-    if (childWorker in childOps) {
+    if (childThreadId in childOps) {
       node.childRenderCount += 1;
       return ops;
     }
@@ -172,10 +172,10 @@ export async function performOp(
 ): Promise<PerformerNode> {
   let node;
   if (op.type === "CREATE") {
-    const { thread, element, parent, prevSibling, nextSibling, child } =
+    const { threadId, element, parent, prevSibling, nextSibling, child } =
       op.payload;
     node = createNode({
-      thread: thread,
+      threadId,
       element,
       parent,
       prevSibling,
@@ -433,9 +433,9 @@ export function resolveMessages(
     // thread props is a hierarchical id
     // parent threads are substring of the child thread
     // e.g. root/0 is parent of root/0/1, root/0 is not a parent of root/2/3
-    // to.thread.includes(cursor.child.thread))
+    // to.threadId.includes(cursor.child.threadId))
     // checks if child belongs to `to` thread or its parent
-    if (cursor.child && (!to || to.thread.includes(cursor.child.thread))) {
+    if (cursor.child && (!to || to.threadId.includes(cursor.child.threadId))) {
       cursor = cursor.child;
       continue;
     }
@@ -443,7 +443,7 @@ export function resolveMessages(
     while (cursor) {
       if (
         cursor.nextSibling &&
-        (!to || to.thread.includes(cursor.nextSibling.thread))
+        (!to || to.threadId.includes(cursor.nextSibling.threadId))
       ) {
         cursor = cursor.nextSibling;
         break;

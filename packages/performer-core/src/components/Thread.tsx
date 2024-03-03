@@ -3,7 +3,7 @@ import { useAfterChildren, useResource, useThread } from "../hooks/index.js";
 import { withResolvers } from "../util/with-resolvers.js";
 
 type ThreadProps = {
-  // isolated?: boolean;
+  isolated?: boolean;
   // exposed?: boolean;
   // exposedOnSettled?: boolean;
   onSettled?: () => any;
@@ -14,11 +14,12 @@ type ThreadProps = {
  * Thread lets you create an independent execution thread.
  *
  * @param children
- * @param onSettled - called when all children have settled
+ * @param [isolated] - does not use parent messages
+ * @param [onSettled] - called when all children have settled
  */
 export const Thread: Component<ThreadProps> & { AwaitAll: Component<{}> } =
-  function ({ children, onSettled }) {
-    useThread();
+  function ({ children, onSettled, isolated = false }) {
+    useThread({ isolated });
     useAfterChildren(() => {
       onSettled && onSettled();
     });
