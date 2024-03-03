@@ -9,19 +9,19 @@ export * from "./use-input.js";
 export * from "./use-route-data.js";
 export * from "./use-state.js";
 export * from "./use-tool-data.js";
-export * from "./use-worker.js";
+export * from "./use-thread.js";
 
 import { AfterChildrenHookRecord } from "./use-after-children.js";
 import { InputHookRecord } from "./use-input.js";
 import { StateHookRecord } from "./use-state.js";
 import { ContextHookRecord, ProviderHookRecord } from "./use-context.js";
 import { UseResourceHookRecord } from "./use-resource.js";
-import { WorkerHookRecord } from "./use-worker.js";
+import { ThreadHookRecord } from "./use-thread.js";
 
 export type HookRecord = AfterChildrenHookRecord &
   InputHookRecord &
   StateHookRecord &
   ContextHookRecord &
   ProviderHookRecord &
-  WorkerHookRecord &
+  ThreadHookRecord &
   UseResourceHookRecord;

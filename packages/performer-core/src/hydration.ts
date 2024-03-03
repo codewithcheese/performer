@@ -7,7 +7,7 @@ import { walk } from "./util/walk.js";
 
 export type HydrateProps = {
   performer: Performer;
-  worker?: string;
+  thread?: string;
   element: PerformerElement;
   serialized: SerializedNode;
   parent?: PerformerNode;
@@ -16,7 +16,7 @@ export type HydrateProps = {
 
 export async function hydrate({
   performer,
-  worker = "root",
+  thread = "root",
   element,
   serialized,
   parent,
@@ -24,12 +24,12 @@ export async function hydrate({
 }: HydrateProps): Promise<PerformerNode> {
   const node = await performOp(
     performer,
-    { type: "CREATE", payload: { worker, element, parent, prevSibling } },
+    { type: "CREATE", payload: { thread, element, parent, prevSibling } },
     serialized,
   );
 
   let index = 0;
-  let childWorker = node.hooks.worker ? node.hooks.worker : worker;
+  let childWorker = node.hooks.thread ? node.hooks.thread : thread;
   let childPrevSibling: PerformerNode | undefined = undefined;
   const childElements = node.childElements || [];
   // todo validate length of child elements matches serialized children
@@ -38,7 +38,7 @@ export async function hydrate({
     const childSerialized = serialized.children[index];
     const childNode = await hydrate({
       performer,
-      worker: childWorker,
+      thread: childWorker,
       element: childElement,
       serialized: childSerialized,
       parent: node,

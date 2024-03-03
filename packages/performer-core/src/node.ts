@@ -8,7 +8,7 @@ import { logNode } from "./util/log.js";
 import { Fragment } from "./jsx/index.js";
 
 export type PerformerNode = {
-  worker: string;
+  thread: string;
   uid: string;
   type: Component<any> | PerformerMessage["role"] | "raw";
   _typeName: string;
@@ -57,14 +57,14 @@ function validateElement(element: unknown, parent?: PerformerNode) {
 }
 
 export function createNode({
-  worker,
+  thread,
   element,
   parent,
   prevSibling,
   child,
   serialized,
 }: {
-  worker: string;
+  thread: string;
   element: PerformerElement;
   parent?: PerformerNode;
   prevSibling?: PerformerNode;
@@ -76,7 +76,7 @@ export function createNode({
   const type = typeof element.type === "symbol" ? Fragment : element.type;
   return {
     _typeName: typeof type === "string" ? type : type.name,
-    worker,
+    thread,
     uid: serialized ? serialized.uid : nanoid(),
     type,
     props: element.props,

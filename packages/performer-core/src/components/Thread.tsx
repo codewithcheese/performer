@@ -1,8 +1,8 @@
 import { Component } from "../component.js";
-import { useAfterChildren, useResource, useWorker } from "../hooks/index.js";
+import { useAfterChildren, useResource, useThread } from "../hooks/index.js";
 import { withResolvers } from "../util/with-resolvers.js";
 
-type WorkerProps = {
+type ThreadProps = {
   // isolated?: boolean;
   // exposed?: boolean;
   // exposedOnSettled?: boolean;
@@ -11,14 +11,14 @@ type WorkerProps = {
 };
 
 /**
- * Worker lets you create an independent execution thread.
+ * Thread lets you create an independent execution thread.
  *
  * @param children
  * @param onSettled - called when all children have settled
  */
-export const Worker: Component<WorkerProps> & { AwaitAll: Component<{}> } =
+export const Thread: Component<ThreadProps> & { AwaitAll: Component<{}> } =
   function ({ children, onSettled }) {
-    useWorker();
+    useThread();
     useAfterChildren(() => {
       onSettled && onSettled();
     });
@@ -26,16 +26,16 @@ export const Worker: Component<WorkerProps> & { AwaitAll: Component<{}> } =
   };
 
 /**
- * Worker.AwaitAll lets you wait for multiple Worker's to be settled.
+ * Thread.AwaitAll lets you wait for multiple Thread's to be settled.
  */
-Worker.AwaitAll = function AwaitAll({ children }) {
+Thread.AwaitAll = function AwaitAll({ children }) {
   const promises: Promise<any>[] = [];
   const attached = [children].flat().map((child) => {
     if (
       child !== null &&
       typeof child === "object" &&
       "type" in child &&
-      child.type === Worker
+      child.type === Thread
     ) {
       const existingOnSettled = child.props.onSettled;
       const { promise, resolve } = withResolvers<void>();

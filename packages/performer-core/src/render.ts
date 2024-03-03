@@ -31,7 +31,7 @@ import { DeferInput, DeferResource } from "./util/defer.js";
 type CreateOp = {
   type: "CREATE";
   payload: {
-    worker: string;
+    thread: string;
     element: PerformerElement;
     parent?: PerformerNode;
     prevSibling?: PerformerNode;
@@ -83,7 +83,7 @@ export async function render(performer: Performer) {
  *
  */
 export function evaluateRenderOps(
-  worker: string,
+  thread: string,
   element: PerformerElement,
   node?: PerformerNode,
   parent?: PerformerNode,
@@ -93,7 +93,7 @@ export function evaluateRenderOps(
     const op: CreateOp = {
       type: "CREATE",
       payload: {
-        worker,
+        thread,
         element,
         parent: parent,
         prevSibling: prevSibling,
@@ -106,12 +106,12 @@ export function evaluateRenderOps(
       // re-evaluated on next renders
       freeNode(node, parent, false);
     }
-    return { [worker]: op };
+    return { [thread]: op };
   }
 
   if (node.status === "PENDING") {
     return {
-      [worker]: {
+      [thread]: {
         type: "UPDATE",
         payload: { node },
       } satisfies UpdateOp,
@@ -119,11 +119,11 @@ export function evaluateRenderOps(
   }
 
   if (node.status === "PAUSED") {
-    return { [worker]: { type: "PAUSED" } satisfies PausedOp };
+    return { [thread]: { type: "PAUSED" } satisfies PausedOp };
   }
   let ops: Record<string, RenderOp> = {};
   let index = 0;
-  let childWorker = node.hooks.worker ? node.hooks.worker : worker;
+  let childWorker = node.hooks.thread ? node.hooks.thread : thread;
   let childNode: PerformerNode | undefined = node.child;
   let childPrevSibling: PerformerNode | undefined = undefined;
   const childElements = node.childElements || [];
@@ -172,10 +172,10 @@ export async function performOp(
 ): Promise<PerformerNode> {
   let node;
   if (op.type === "CREATE") {
-    const { worker, element, parent, prevSibling, nextSibling, child } =
+    const { thread, element, parent, prevSibling, nextSibling, child } =
       op.payload;
     node = createNode({
-      worker,
+      thread: thread,
       element,
       parent,
       prevSibling,
@@ -430,12 +430,12 @@ export function resolveMessages(
     if (exit) {
       break;
     }
-    // worker props is a hierarchical id
-    // parent workers are substring of the child workers
+    // thread props is a hierarchical id
+    // parent threads are substring of the child thread
     // e.g. root/0 is parent of root/0/1, root/0 is not a parent of root/2/3
-    // to.worker.includes(cursor.child.worker))
-    // checks if child has the same worker or parent of `to.worker`
-    if (cursor.child && (!to || to.worker.includes(cursor.child.worker))) {
+    // to.thread.includes(cursor.child.thread))
+    // checks if child belongs to `to` thread or its parent
+    if (cursor.child && (!to || to.thread.includes(cursor.child.thread))) {
       cursor = cursor.child;
       continue;
     }
@@ -443,7 +443,7 @@ export function resolveMessages(
     while (cursor) {
       if (
         cursor.nextSibling &&
-        (!to || to.worker.includes(cursor.nextSibling.worker))
+        (!to || to.thread.includes(cursor.nextSibling.thread))
       ) {
         cursor = cursor.nextSibling;
         break;

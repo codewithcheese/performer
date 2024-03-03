@@ -38,7 +38,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     showResolveMessages: false,
   };
 
-  workerNonce = 0;
+  threadNonce = 0;
 
   constructor(app: PerformerElement, options: PerformerOptions = {}) {
     super();
