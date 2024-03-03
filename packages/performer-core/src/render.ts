@@ -71,7 +71,7 @@ export async function render(performer: Performer) {
           await performOp(performer, op);
       }
     }
-    if (Object.keys(ops).length === 0) {
+    if (Object.keys(ops).length === 0 && !performer.renderQueued) {
       performer.finish();
     }
   } catch (error) {

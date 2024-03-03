@@ -43,8 +43,8 @@ test("should re-run if callback causes child rerender", async () => {
   function App() {
     return () => (
       <>
-        <AfterChildren id="1" />
-        <AfterChildren id="2" />
+        <AfterChildren />
+        <AfterChildren />
       </>
     );
   }
