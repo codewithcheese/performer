@@ -1,15 +1,22 @@
 import { useHook } from "./use-hook.js";
 import { useRenderScope } from "./use-render-scope.js";
 
-export function useThread() {
+export type ThreadState = {
+  id: string;
+  isolated: boolean;
+};
+
+type UseThreadProps = { isolated: boolean };
+
+export function useThread({ isolated }: UseThreadProps) {
   const scope = useRenderScope();
-  const thread = `${scope.node.thread}/${scope.performer.threadNonce++}`;
-  useHook<string>("thread", thread);
+  const threadId = `${scope.node.threadId}/${scope.performer.threadNonce++}`;
+  useHook<ThreadState>("thread", { id: threadId, isolated });
 }
 
 type ThreadHookKey = `thread`;
 
 export type ThreadHookRecord = {
   // more relaxed than unknown
-  [key in ThreadHookKey]?: string;
+  [key in ThreadHookKey]?: ThreadState;
 };
