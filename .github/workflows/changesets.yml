@@ -38,6 +38,7 @@ jobs:
 
       - name: Create and publish versions
         uses: changesets/action@v1
+        id: changesets
         with:
           version: pnpm changeset version
           title: "CI: Release v${{env.NEW_VERSION}}"
@@ -48,6 +49,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create job summary from published packages
+        if: steps.changesets.outputs.published == 'true'
         run: |
           echo "## Published Packages :package:" >> $GITHUB_STEP_SUMMARY          
           
