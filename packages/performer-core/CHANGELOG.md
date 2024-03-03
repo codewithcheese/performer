@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.22
+
+### Patch Changes
+
+- 8289425: Add isolated threads
+
 ## 0.0.21
 
 ### Patch Changes
