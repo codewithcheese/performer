@@ -10,6 +10,12 @@ type WorkerProps = {
   // onError
 };
 
+/**
+ * Worker lets you create an independent execution thread.
+ *
+ * @param children
+ * @param onSettled - called when all children have settled
+ */
 export const Worker: Component<WorkerProps> & { AwaitAll: Component<{}> } =
   function ({ children, onSettled }) {
     useWorker();
@@ -19,6 +25,9 @@ export const Worker: Component<WorkerProps> & { AwaitAll: Component<{}> } =
     return () => children;
   };
 
+/**
+ * Worker.AwaitAll lets you wait for multiple Worker's to be settled.
+ */
 Worker.AwaitAll = function AwaitAll({ children }) {
   const promises: Promise<any>[] = [];
   const attached = [children].flat().map((child) => {
