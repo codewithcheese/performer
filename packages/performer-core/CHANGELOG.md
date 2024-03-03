@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.21
+
+### Patch Changes
+
+- b6f7426: Add threads for concurrency
+
 ## 0.0.20
 
 ### Patch Changes
