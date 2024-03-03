@@ -8,6 +8,7 @@ import { logNode } from "./util/log.js";
 import { Fragment } from "./jsx/index.js";
 
 export type PerformerNode = {
+  thread: string;
   uid: string;
   type: Component<any> | PerformerMessage["role"] | "raw";
   _typeName: string;
@@ -56,12 +57,14 @@ function validateElement(element: unknown, parent?: PerformerNode) {
 }
 
 export function createNode({
+  thread,
   element,
   parent,
   prevSibling,
   child,
   serialized,
 }: {
+  thread: string;
   element: PerformerElement;
   parent?: PerformerNode;
   prevSibling?: PerformerNode;
@@ -72,9 +75,10 @@ export function createNode({
   // React compat Fragment type is Symbol(react.fragment)
   const type = typeof element.type === "symbol" ? Fragment : element.type;
   return {
+    _typeName: typeof type === "string" ? type : type.name,
+    thread,
     uid: serialized ? serialized.uid : nanoid(),
     type,
-    _typeName: typeof type === "string" ? type : type.name,
     props: element.props,
     element,
     hooks: serialized ? hydrateHooks(serialized.hooks) : {},

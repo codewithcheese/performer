@@ -28,29 +28,50 @@ import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
 
-type NextElement = {
-  element: PerformerElement;
-  parent?: PerformerNode;
-  prevSibling?: PerformerNode;
-  nextSibling?: PerformerNode;
-  child?: PerformerNode;
+type CreateOp = {
+  type: "CREATE";
+  payload: {
+    thread: string;
+    element: PerformerElement;
+    parent?: PerformerNode;
+    prevSibling?: PerformerNode;
+    nextSibling?: PerformerNode;
+    child?: PerformerNode;
+  };
 };
 
-type NextNode = {
-  node: PerformerNode;
+type UpdateOp = {
+  type: "UPDATE";
+  payload: {
+    node: PerformerNode;
+  };
 };
+
+type PausedOp = {
+  type: "PAUSED";
+};
+
+type RenderOp = CreateOp | UpdateOp | PausedOp;
 
 export async function render(performer: Performer) {
   try {
-    let next = findNextElementToRender(performer.app, performer.root);
-    if (next === "SIDE_EFFECT") {
-      performer.queueRender();
-    } else if (next === "NODE_PAUSED") {
-      // wait for next render
-      return;
-    } else if (next) {
-      await renderElement(performer, next);
-    } else {
+    const ops = evaluateRenderOps(
+      "root",
+      performer.app,
+      performer.root,
+      undefined,
+      undefined,
+    );
+    for (const op of Object.values(ops)) {
+      switch (op.type) {
+        case "CREATE":
+          await performOp(performer, op);
+          continue;
+        case "UPDATE":
+          await performOp(performer, op);
+      }
+    }
+    if (Object.keys(ops).length === 0 && !performer.renderQueued) {
       performer.finish();
     }
   } catch (error) {
@@ -58,51 +79,67 @@ export async function render(performer: Performer) {
   }
 }
 
-export function findNextElementToRender(
+/**
+ *
+ */
+export function evaluateRenderOps(
+  thread: string,
   element: PerformerElement,
   node?: PerformerNode,
   parent?: PerformerNode,
   prevSibling?: PerformerNode,
-): NextElement | NextNode | "SIDE_EFFECT" | "NODE_PAUSED" | null {
+): Record<string, RenderOp> {
   if (!node || !nodeMatchesElement(node, element)) {
-    const next = {
-      element,
-      parent: parent,
-      prevSibling: prevSibling,
-      nextSibling: node?.nextSibling,
-      child: node?.child,
+    const op: CreateOp = {
+      type: "CREATE",
+      payload: {
+        thread,
+        element,
+        parent: parent,
+        prevSibling: prevSibling,
+        nextSibling: node?.nextSibling,
+        child: node?.child,
+      },
     };
     if (node) {
       // do not free children, the new node will be linked in place and then children
       // re-evaluated on next renders
       freeNode(node, parent, false);
     }
-    return next;
+    return { [thread]: op };
   }
 
   if (node.status === "PENDING") {
-    return { node };
+    return {
+      [thread]: {
+        type: "UPDATE",
+        payload: { node },
+      } satisfies UpdateOp,
+    };
   }
 
   if (node.status === "PAUSED") {
-    return "NODE_PAUSED";
+    return { [thread]: { type: "PAUSED" } satisfies PausedOp };
   }
-
+  let ops: Record<string, RenderOp> = {};
   let index = 0;
+  let childWorker = node.hooks.thread ? node.hooks.thread : thread;
   let childNode: PerformerNode | undefined = node.child;
   let childPrevSibling: PerformerNode | undefined = undefined;
   const childElements = node.childElements || [];
   while (index < childElements.length) {
     const childElement = childElements[index];
-    const nextElement = findNextElementToRender(
+    const childOps = evaluateRenderOps(
+      childWorker,
       childElement,
       childNode,
       node,
       childPrevSibling,
     );
-    if (nextElement) {
+    Object.assign(ops, childOps);
+    if (childWorker in childOps) {
       node.childRenderCount += 1;
-      return nextElement;
+      return ops;
     }
     if (childPrevSibling) {
       childPrevSibling.nextSibling = childNode;
@@ -123,21 +160,22 @@ export function findNextElementToRender(
       node.hooks.afterChildren();
     }
     node.childRenderCount = 0;
-    return "SIDE_EFFECT";
   }
 
-  return null;
+  return ops;
 }
 
-export async function renderElement(
+export async function performOp(
   performer: Performer,
-  next: NextElement | NextNode,
+  op: CreateOp | UpdateOp,
   serialized?: SerializedNode,
 ): Promise<PerformerNode> {
   let node;
-  if ("element" in next) {
-    const { element, parent, prevSibling, nextSibling, child } = next;
+  if (op.type === "CREATE") {
+    const { thread, element, parent, prevSibling, nextSibling, child } =
+      op.payload;
     node = createNode({
+      thread: thread,
       element,
       parent,
       prevSibling,
@@ -159,8 +197,11 @@ export async function renderElement(
       node.nextSibling = nextSibling;
       nextSibling.prevSibling = node;
     }
+    if (child) {
+      child.parent = node;
+    }
   } else {
-    node = next.node;
+    node = op.payload.node;
   }
   if (node.type instanceof Function) {
     await renderComponent(performer, node);
@@ -377,20 +418,40 @@ export function resolveMessages(
 ): PerformerMessage[] {
   const messages: PerformerMessage[] = [];
 
-  function traverse(node: PerformerNode | undefined): boolean {
-    if (node == null) return false;
-    logResolveMessages(node, logConfig);
-    // If target node is found, stop traversing
-    if (to && node === to) return true;
-    // Add messages from the current node
-    if (typeof node.type === "string") {
-      messages.push(nodeToMessage(node));
+  let cursor: PerformerNode | undefined = from;
+  while (cursor) {
+    logResolveMessages(cursor, logConfig);
+
+    if (typeof cursor.type === "string") {
+      messages.push(nodeToMessage(cursor));
     }
-    // Traverse child and siblings
-    return traverse(node.child) || traverse(node.nextSibling);
+
+    const exit = to && cursor === to;
+    if (exit) {
+      break;
+    }
+    // thread props is a hierarchical id
+    // parent threads are substring of the child thread
+    // e.g. root/0 is parent of root/0/1, root/0 is not a parent of root/2/3
+    // to.thread.includes(cursor.child.thread))
+    // checks if child belongs to `to` thread or its parent
+    if (cursor.child && (!to || to.thread.includes(cursor.child.thread))) {
+      cursor = cursor.child;
+      continue;
+    }
+
+    while (cursor) {
+      if (
+        cursor.nextSibling &&
+        (!to || to.thread.includes(cursor.nextSibling.thread))
+      ) {
+        cursor = cursor.nextSibling;
+        break;
+      }
+      cursor = cursor.parent;
+    }
   }
 
-  traverse(from);
   return messages;
 }
 

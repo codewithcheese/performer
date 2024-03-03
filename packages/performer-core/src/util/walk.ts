@@ -6,7 +6,7 @@ export function walk(
 ) {
   let cursor: PerformerNode | undefined = node;
   while (cursor) {
-    const result = cb(node);
+    const result = cb(cursor);
     if (!result) {
       break;
     }

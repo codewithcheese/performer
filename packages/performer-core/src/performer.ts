@@ -38,6 +38,8 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     showResolveMessages: false,
   };
 
+  threadNonce = 0;
+
   constructor(app: PerformerElement, options: PerformerOptions = {}) {
     super();
     this.#uid = crypto.randomUUID();
