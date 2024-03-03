@@ -452,7 +452,6 @@ export function resolveMessages(
     }
   }
 
-  // traverse(from);
   return messages;
 }
 

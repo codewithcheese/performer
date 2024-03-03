@@ -21,5 +21,3 @@ export type Component<
     },
   ): ComponentReturn;
 } & C;
-
-type x = Record<any, any>;
