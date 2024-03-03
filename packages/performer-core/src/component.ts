@@ -11,11 +11,15 @@ export type ComponentReturn = () =>
   | false
   | string;
 
-export type Component<P extends Props> = {
-  // The main action function
+export type Component<
+  P extends Props,
+  C extends Record<string, Component<any>> = {},
+> = {
   (
     props: P & {
       children?: PerformerElement | PerformerElement[] | string;
     },
   ): ComponentReturn;
-};
+} & C;
+
+type x = Record<any, any>;

@@ -112,3 +112,58 @@ test("should call onSettled when worker children rendered", async () => {
   await performer.waitUntilSettled();
   expect(performer.root?.hooks["state-0"].value).toEqual(true);
 });
+
+test("should await all workers before continuing", async () => {
+  const order: string[] = [];
+  const settledOrder: number[] = [];
+  function Fast({ children }: any) {
+    order.push(children);
+    return () => {};
+  }
+  function Slow({ children }: any) {
+    useResource(() => sleep(10));
+    order.push(children);
+    return () => {};
+  }
+  function Container({ children }: any) {
+    return () => <>{children}</>;
+  }
+  function App() {
+    return () => (
+      <>
+        <Slow>first</Slow>
+        <Worker.AwaitAll>
+          <Worker onSettled={() => settledOrder.push(3)}>
+            <Slow>3</Slow>
+            <Slow>6</Slow>
+          </Worker>
+          <Worker onSettled={() => settledOrder.push(1)}>
+            <Slow>4</Slow>
+          </Worker>
+          <Worker onSettled={() => settledOrder.push(2)}>
+            <Slow>5</Slow>
+          </Worker>
+          <Container>
+            <Fast>2</Fast>
+          </Container>
+        </Worker.AwaitAll>
+        <Slow>second last</Slow>
+        <Fast>last</Fast>
+      </>
+    );
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(order).toEqual([
+    "first",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "second last",
+    "last",
+  ]);
+  expect(settledOrder).toEqual([1, 2, 3]);
+});
