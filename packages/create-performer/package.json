@@ -1,6 +1,6 @@
 {
   "name": "create-performer",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "description": "A CLI for creating new Performer projects",
   "type": "module",
   "bin": "./dist/esm/bin.js",
