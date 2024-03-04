@@ -18,16 +18,10 @@ import * as log from "loglevel";
 import * as _ from "lodash";
 import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
-import {
-  LogConfig,
-  logContent,
-  logNode,
-  logResolveMessages,
-} from "./util/log.js";
+import { logNode, logOp, toLogFmt } from "./util/log.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
-import { ThreadState } from "./hooks/index.js";
 
 type CreateOp = {
   type: "CREATE";
@@ -52,9 +46,10 @@ type PausedOp = {
   type: "PAUSED";
 };
 
-type RenderOp = CreateOp | UpdateOp | PausedOp;
+export type RenderOp = CreateOp | UpdateOp | PausedOp;
 
 export async function render(performer: Performer) {
+  log.debug("call=render");
   try {
     const ops = evaluateRenderOps(
       "root",
@@ -63,7 +58,8 @@ export async function render(performer: Performer) {
       undefined,
       undefined,
     );
-    for (const op of Object.values(ops)) {
+    for (const [threadId, op] of Object.entries(ops)) {
+      logOp(threadId, op);
       switch (op.type) {
         case "CREATE":
           await performOp(performer, op);
@@ -76,7 +72,7 @@ export async function render(performer: Performer) {
       performer.finish();
     }
   } catch (error) {
-    performer.onError(error);
+    performer.onError("root", error);
   }
 }
 
@@ -183,7 +179,6 @@ export async function performOp(
       child,
       serialized,
     });
-    log.debug(`Create node`, logNode(node), logContent(node));
     if (!parent) {
       performer.root = node;
     }
@@ -242,9 +237,10 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
       node.status = "PAUSED";
       e.cause.promise.then(() => {
         node.status = "PENDING";
-        performer.queueRender();
+        performer.queueRender("deferred resolved");
       });
     } else if (e instanceof DeferInput) {
+      node.status = "PAUSED";
       performer.setInputNode(node);
     } else {
       throw e;
@@ -265,7 +261,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
     node.status = "RESOLVED";
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
-      performer.queueRender();
+      performer.queueRender("message resolved");
     }
     return;
   }
@@ -278,7 +274,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
     node.status = "RESOLVED";
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
-      performer.queueRender();
+      performer.queueRender("raw resolved");
     }
     return;
   }
@@ -298,10 +294,10 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
         node.status = "RESOLVED";
         if (!node.isHydrating) {
           dispatchMessageElement(performer, node, message);
-          performer.queueRender();
+          performer.queueRender("raw stream resolved");
         }
       })
-      .catch((error) => performer.onError(error));
+      .catch((error) => performer.onError(node.threadId, error));
 
     // process stream
     if (node.isHydrating) {
@@ -319,7 +315,7 @@ function registerView(
     const viewUpdate = view();
     node.childElements = normalizeChildren(viewUpdate);
     if (!node.isHydrating) {
-      performer.queueRender();
+      performer.queueRender("view updated");
     }
   });
 }
@@ -333,7 +329,9 @@ function dispatchMessageElement(
     message = nodeToMessage(node);
   }
   performer.dispatchEvent(
-    new PerformerMessageEvent({ message: structuredClone(message) }),
+    new PerformerMessageEvent(node.threadId, {
+      message: structuredClone(message),
+    }),
   );
   if (node.props.onMessage && node.props.onMessage instanceof Function) {
     node.props.onMessage(message);
@@ -354,7 +352,10 @@ async function consumeDeltaStream(
     }
     performer.dispatchEvent(
       // clone chunk so event consumers mutations don't modify this chunk
-      new PerformerDeltaEvent({ uid: node.uid, delta: structuredClone(chunk) }),
+      new PerformerDeltaEvent(node.threadId, {
+        uid: node.uid,
+        delta: structuredClone(chunk),
+      }),
     );
     chunks.push(chunk);
   }
@@ -416,13 +417,21 @@ function freeNode(
 export function resolveMessages(
   from: PerformerNode | undefined,
   to?: PerformerNode,
-  logConfig?: Partial<LogConfig>,
 ): PerformerMessage[] {
   let messages: PerformerMessage[] = [];
 
   let cursor: PerformerNode | undefined = from;
   while (cursor) {
-    logResolveMessages(cursor, logConfig);
+    // trace resolve
+    const pairs: [string, any][] = [
+      ["call", "resolveMessage"],
+      ["threadId", cursor.threadId],
+      ["node", logNode(cursor)],
+    ];
+    if (typeof cursor.props.children === "string") {
+      pairs.push(["content", cursor.props.children]);
+    }
+    log.trace(toLogFmt(pairs));
 
     // clear all messages if `to` belongs to cursor thread, and thread is isolated
     if (

@@ -134,13 +134,11 @@ test("should update links when elements are reordered", async () => {
       <Item>Three</Item>
     </Rotate>
   );
-  const performer = new Performer(app);
+  const performer = new Performer(app, { logLevel: "trace" });
   performer.start();
   await performer.waitUntilSettled();
 
-  let messages = resolveMessages(performer.root, undefined, {
-    showResolveMessages: true,
-  });
+  let messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(3);
 
   performer.hasFinished = false;
@@ -148,9 +146,7 @@ test("should update links when elements are reordered", async () => {
   offset!.value += 1;
 
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.root, undefined, {
-    showResolveMessages: true,
-  });
+  messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(3);
   await testHydration(performer);
 });
@@ -165,12 +161,10 @@ test("should render new elements when dynamically added or removed", async () =>
       <user>Greet the user</user>
     </Repeat>
   );
-  let performer = new Performer(app);
+  let performer = new Performer(app, { logLevel: "trace" });
   performer.start();
   await performer.waitUntilSettled();
-  let messages = resolveMessages(performer.root, undefined, {
-    showResolveMessages: true,
-  });
+  let messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(1);
   expect(performer.hasFinished).toEqual(true);
 
@@ -182,9 +176,7 @@ test("should render new elements when dynamically added or removed", async () =>
   times.value += 4;
   // second run
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.root, undefined, {
-    showResolveMessages: true,
-  });
+  messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(5);
 
   // rehydrate for third run
@@ -195,9 +187,7 @@ test("should render new elements when dynamically added or removed", async () =>
   times.value -= 2;
   // third run
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.root, undefined, {
-    showResolveMessages: true,
-  });
+  messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(3);
 
   // rehydrate for fourth run
@@ -208,9 +198,7 @@ test("should render new elements when dynamically added or removed", async () =>
   times.value -= 1;
   // fourth run
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.root, undefined, {
-    showResolveMessages: true,
-  });
+  messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(2);
   // final hydration test
   performer = await testHydration(performer);
@@ -236,9 +224,7 @@ test("should unlink messages when removed by conditional", async () => {
   const performer = new Performer(app);
   performer.start();
   await performer.waitUntilSettled();
-  let messages = resolveMessages(performer.root, undefined, {
-    showResolveMessages: true,
-  });
+  let messages = resolveMessages(performer.root, undefined);
   expect(
     messages.length,
     "Expect 4 messages before they are unlinked by `If`",
@@ -249,9 +235,7 @@ test("should unlink messages when removed by conditional", async () => {
   predicate.value = false;
 
   await performer.waitUntilSettled();
-  messages = resolveMessages(performer.root, undefined, {
-    showResolveMessages: true,
-  });
+  messages = resolveMessages(performer.root, undefined);
   expect(
     messages.length,
     "Expect 0 messages after they are unlinked by `If`",

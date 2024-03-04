@@ -1,8 +1,3 @@
-import * as log from "loglevel";
-
-// fixme log level controls
-log.enableAll();
-
 export * from "./component.js";
 export * from "./element.js";
 export * from "./event.js";

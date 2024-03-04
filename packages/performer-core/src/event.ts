@@ -3,8 +3,10 @@ import { nanoid } from "nanoid";
 
 class TypedCustomEvent<D> extends CustomEvent<D> {
   static type: keyof PerformerEventMap;
-  constructor(detail: D) {
+  threadId: string;
+  constructor(threadId: string, detail: D) {
     super(new.target.type, { detail });
+    this.threadId = threadId;
   }
   toJSON() {
     return {
@@ -16,7 +18,7 @@ class TypedCustomEvent<D> extends CustomEvent<D> {
 
 export class PerformerErrorEvent extends TypedCustomEvent<{ message: string }> {
   static type = "error" as const;
-  constructor(error: unknown) {
+  constructor(threadId: string, error: unknown) {
     let message;
     if (typeof error === "string") {
       message = error;
@@ -25,7 +27,7 @@ export class PerformerErrorEvent extends TypedCustomEvent<{ message: string }> {
     } else {
       message = error.message;
     }
-    super({ message });
+    super(threadId, { message });
   }
 }
 
@@ -36,11 +38,11 @@ type MessageEventDetail = { uid: string; message: PerformerMessage };
 export class PerformerMessageEvent extends TypedCustomEvent<MessageEventDetail> {
   static type = "message" as const;
 
-  constructor(detail: PartialBy<MessageEventDetail, "uid">) {
+  constructor(threadId: string, detail: PartialBy<MessageEventDetail, "uid">) {
     if (detail.uid === undefined) {
       detail.uid = nanoid();
     }
-    super(detail as MessageEventDetail);
+    super(threadId, detail as MessageEventDetail);
   }
 }
 
@@ -49,11 +51,11 @@ type DeltaEventDetail = { uid: string; delta: MessageDelta };
 export class PerformerDeltaEvent extends TypedCustomEvent<DeltaEventDetail> {
   static type = "delta" as const;
 
-  constructor(detail: PartialBy<DeltaEventDetail, "uid">) {
+  constructor(threadId: string, detail: PartialBy<DeltaEventDetail, "uid">) {
     if (detail.uid === undefined) {
       detail.uid = nanoid();
     }
-    super(detail as DeltaEventDetail);
+    super(threadId, detail as DeltaEventDetail);
   }
 }
 
