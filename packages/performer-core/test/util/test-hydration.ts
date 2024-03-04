@@ -8,11 +8,13 @@ import { diff } from "deep-diff";
 import * as _ from "lodash";
 import { Signal } from "@preact/signals-core";
 import { expect } from "vitest";
+import * as log from "loglevel";
 
 export async function testHydration(performer: Performer) {
   if (!performer.root) {
     throw Error("Cannot test hydration Performer.node undefined");
   }
+  log.info("Testing hydration...");
   const original = performer.root;
   const ogMessages = structuredClone(resolveMessages(performer.root));
   const serialized = serialize(performer.root);

@@ -1,4 +1,6 @@
 import {
+  isAssistantMessage,
+  nodeToMessage,
   PerformerDeltaEvent,
   PerformerErrorEvent,
   PerformerEvent,
@@ -10,10 +12,8 @@ import {
 import * as log from "loglevel";
 import { isImageContent, isTextContent } from "../message.js";
 
-export function logMessageResolved(
-  node: PerformerNode,
-  message: PerformerMessage,
-) {
+export function logMessageResolved(node: PerformerNode) {
+  const message = nodeToMessage(node);
   const pairs: [string, any][] = [];
   pairs.push(["message", "resolved"]);
   pairs.push(["role", message.role]);
@@ -25,15 +25,25 @@ export function logMessageResolved(
     } else if (message.content) {
       for (const content of message.content) {
         if (isTextContent(content)) {
-          pairs.push(["text", message.content]);
+          pairs.push(["text", content.text]);
         } else if (isImageContent(content)) {
           pairs.push(["image_url", content.image_url.url]);
         }
       }
     }
   }
+  if (isAssistantMessage(message) && message.tool_calls) {
+    for (const toolCall of message.tool_calls) {
+      pairs.push(["tool_call.name", toolCall.function.name]);
+      pairs.push(["tool_call.arguments", toolCall.function.arguments]);
+    }
+  }
+  if (isAssistantMessage(message) && message.function_call) {
+    pairs.push(["function_call.name", message.function_call.name]);
+    pairs.push(["function_call.arguments", message.function_call.arguments]);
+  }
   pairs.push(["node", nodeToStr(node)]);
-  log.debug(toLogFmt(pairs));
+  log.info(toLogFmt(pairs));
 }
 
 export function logEvent(event: PerformerEvent) {
@@ -57,7 +67,7 @@ export function logEvent(event: PerformerEvent) {
       } else {
         for (const content of message.content) {
           if (isTextContent(content)) {
-            pairs.push(["text", message.content]);
+            pairs.push(["text", content.text]);
           } else if (isImageContent(content)) {
             pairs.push(["image_url", content.image_url.url]);
           }
@@ -81,7 +91,7 @@ export function logEvent(event: PerformerEvent) {
   if (event instanceof PerformerDeltaEvent) {
     log.debug(toLogFmt(pairs));
   } else {
-    log.debug(toLogFmt(pairs));
+    log.info(toLogFmt(pairs));
   }
 }
 
@@ -95,20 +105,24 @@ export function logOp(threadId: string, op: RenderOp) {
         : op.payload.element.type,
     ]);
     if (op.payload.parent) {
-      pairs.push(["parent", getHierarchy(op.payload.parent).join("->")]);
+      pairs.push(["parent", nodeToStr(op.payload.parent)]);
     }
     if (typeof op.payload.element.props.children === "string") {
       pairs.push(["content", op.payload.element.props.children]);
     }
-  } else if (op.type === "UPDATE") {
-    pairs.push(["node", nodeToStr(op.payload.node)]);
+  } else if (op.type === "RESUME") {
+    pairs.push(["node", op.payload.node._typeName]);
     if (op.payload.node.parent) {
-      pairs.push(["parent", getHierarchy(op.payload.node).join("->")]);
+      pairs.push(["parent", nodeToStr(op.payload.node.parent)]);
     }
   }
 
   pairs.push(["threadId", threadId]);
-  log.debug(toLogFmt(pairs));
+  if (op.type === "PAUSED") {
+    log.debug(toLogFmt(pairs));
+  } else {
+    log.info(toLogFmt(pairs));
+  }
 }
 
 export function nodeToStr(node: PerformerNode) {
@@ -135,4 +149,15 @@ function escapeValue(value: any): string {
 
 export function toLogFmt(pairs: [string, any][]): string {
   return pairs.map(([key, value]) => `${key}=${escapeValue(value)}`).join(" ");
+}
+
+export function logPaused(node: PerformerNode, pending: string) {
+  log.info(
+    toLogFmt([
+      ["node", "paused"],
+      ["pending", pending],
+      ["node", nodeToStr(node)],
+      ["threadId", node.threadId],
+    ]),
+  );
 }

@@ -18,7 +18,13 @@ import * as log from "loglevel";
 import * as _ from "lodash";
 import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
-import { nodeToStr, logOp, toLogFmt, logMessageResolved } from "./util/log.js";
+import {
+  nodeToStr,
+  logOp,
+  toLogFmt,
+  logMessageResolved,
+  logPaused,
+} from "./util/log.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
@@ -35,8 +41,8 @@ type CreateOp = {
   };
 };
 
-type UpdateOp = {
-  type: "UPDATE";
+type ResumeOp = {
+  type: "RESUME";
   payload: {
     node: PerformerNode;
   };
@@ -46,7 +52,7 @@ type PausedOp = {
   type: "PAUSED";
 };
 
-export type RenderOp = CreateOp | UpdateOp | PausedOp;
+export type RenderOp = CreateOp | ResumeOp | PausedOp;
 
 export async function render(performer: Performer) {
   log.debug("call=render");
@@ -64,7 +70,7 @@ export async function render(performer: Performer) {
         case "CREATE":
           await performOp(performer, op);
           continue;
-        case "UPDATE":
+        case "RESUME":
           await performOp(performer, op);
       }
     }
@@ -109,9 +115,9 @@ export function evaluateRenderOps(
   if (node.status === "PENDING") {
     return {
       [threadId]: {
-        type: "UPDATE",
+        type: "RESUME",
         payload: { node },
-      } satisfies UpdateOp,
+      } satisfies ResumeOp,
     };
   }
 
@@ -164,7 +170,7 @@ export function evaluateRenderOps(
 
 export async function performOp(
   performer: Performer,
-  op: CreateOp | UpdateOp,
+  op: CreateOp | ResumeOp,
   serialized?: SerializedNode,
 ): Promise<PerformerNode> {
   let node;
@@ -235,12 +241,14 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   } catch (e) {
     if (e instanceof DeferResource) {
       node.status = "PAUSED";
+      logPaused(node, "resource");
       e.cause.promise.then(() => {
         node.status = "PENDING";
         performer.queueRender("deferred resolved");
       });
     } else if (e instanceof DeferInput) {
       node.status = "PAUSED";
+      logPaused(node, "resource");
       performer.setInputNode(node);
     } else {
       throw e;
@@ -259,6 +267,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
 
   if (!isRawNode(node)) {
     node.status = "RESOLVED";
+    logMessageResolved(node);
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
       performer.queueRender("message resolved");
@@ -271,8 +280,8 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
   }
 
   if (node.props.message != null) {
-    logMessageResolved(node, node.props.message);
     node.status = "RESOLVED";
+    logMessageResolved(node);
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
       performer.queueRender("raw resolved");
@@ -288,12 +297,12 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
       node.props.stream,
     )
       .then(async (message) => {
-        logMessageResolved(node, message);
         node.hooks.message = message;
         if (node.props.onResolved) {
           await node.props.onResolved(message);
         }
         node.status = "RESOLVED";
+        logMessageResolved(node);
         if (!node.isHydrating) {
           dispatchMessageElement(performer, node, message);
           performer.queueRender("raw stream resolved");
@@ -430,16 +439,16 @@ export function resolveMessages(
 
   let cursor: PerformerNode | undefined = from;
   while (cursor) {
-    // trace resolve
-    const pairs: [string, any][] = [
-      ["call", "resolveMessage"],
-      ["threadId", cursor.threadId],
-      ["node", nodeToStr(cursor)],
-    ];
-    if (typeof cursor.props.children === "string") {
-      pairs.push(["content", cursor.props.children]);
-    }
-    log.debug(toLogFmt(pairs));
+    // too noisy for now
+    // const pairs: [string, any][] = [
+    //   ["resolve", "cursor"],
+    //   ["threadId", cursor.threadId],
+    //   ["node", nodeToStr(cursor)],
+    // ];
+    // if (typeof cursor.props.children === "string") {
+    //   pairs.push(["content", cursor.props.children]);
+    // }
+    // log.debug(toLogFmt(pairs));
 
     // clear all messages if `to` belongs to cursor thread, and thread is isolated
     if (
