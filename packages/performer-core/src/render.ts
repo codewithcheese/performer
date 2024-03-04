@@ -234,12 +234,24 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     node.status = "RESOLVED";
   } catch (e) {
     if (e instanceof DeferResource) {
+      log.info(
+        toLogFmt([
+          ["node", "paused"],
+          ["pending", "resource"],
+        ]),
+      );
       node.status = "PAUSED";
       e.cause.promise.then(() => {
         node.status = "PENDING";
         performer.queueRender("deferred resolved");
       });
     } else if (e instanceof DeferInput) {
+      log.info(
+        toLogFmt([
+          ["node", "paused"],
+          ["pending", "input"],
+        ]),
+      );
       node.status = "PAUSED";
       performer.setInputNode(node);
     } else {
