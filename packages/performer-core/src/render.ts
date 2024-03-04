@@ -284,6 +284,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
   }
 
   if (node.props.stream != null) {
+    node.status = "PAUSED";
     const messagePromised = consumeDeltaStream(
       performer,
       node,
