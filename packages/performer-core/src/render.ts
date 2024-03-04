@@ -35,8 +35,8 @@ type CreateOp = {
   };
 };
 
-type UpdateOp = {
-  type: "UPDATE";
+type ResumeOp = {
+  type: "RESUME";
   payload: {
     node: PerformerNode;
   };
@@ -46,7 +46,7 @@ type PausedOp = {
   type: "PAUSED";
 };
 
-export type RenderOp = CreateOp | UpdateOp | PausedOp;
+export type RenderOp = CreateOp | ResumeOp | PausedOp;
 
 export async function render(performer: Performer) {
   log.debug("call=render");
@@ -64,7 +64,7 @@ export async function render(performer: Performer) {
         case "CREATE":
           await performOp(performer, op);
           continue;
-        case "UPDATE":
+        case "RESUME":
           await performOp(performer, op);
       }
     }
@@ -109,9 +109,9 @@ export function evaluateRenderOps(
   if (node.status === "PENDING") {
     return {
       [threadId]: {
-        type: "UPDATE",
+        type: "RESUME",
         payload: { node },
-      } satisfies UpdateOp,
+      } satisfies ResumeOp,
     };
   }
 
@@ -164,7 +164,7 @@ export function evaluateRenderOps(
 
 export async function performOp(
   performer: Performer,
-  op: CreateOp | UpdateOp,
+  op: CreateOp | ResumeOp,
   serialized?: SerializedNode,
 ): Promise<PerformerNode> {
   let node;
@@ -258,7 +258,6 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
   }
 
   if (!isRawNode(node)) {
-    logMessageResolved(node);
     node.status = "RESOLVED";
     logMessageResolved(node);
     if (!node.isHydrating) {

@@ -25,7 +25,7 @@ export function logMessageResolved(node: PerformerNode) {
     } else if (message.content) {
       for (const content of message.content) {
         if (isTextContent(content)) {
-          pairs.push(["text", message.content]);
+          pairs.push(["text", content.text]);
         } else if (isImageContent(content)) {
           pairs.push(["image_url", content.image_url.url]);
         }
@@ -67,7 +67,7 @@ export function logEvent(event: PerformerEvent) {
       } else {
         for (const content of message.content) {
           if (isTextContent(content)) {
-            pairs.push(["text", message.content]);
+            pairs.push(["text", content.text]);
           } else if (isImageContent(content)) {
             pairs.push(["image_url", content.image_url.url]);
           }
@@ -110,7 +110,7 @@ export function logOp(threadId: string, op: RenderOp) {
     if (typeof op.payload.element.props.children === "string") {
       pairs.push(["content", op.payload.element.props.children]);
     }
-  } else if (op.type === "UPDATE") {
+  } else if (op.type === "RESUME") {
     pairs.push(["node", nodeToStr(op.payload.node)]);
     if (op.payload.node.parent) {
       pairs.push(["parent", getHierarchy(op.payload.node).join("->")]);
@@ -118,7 +118,11 @@ export function logOp(threadId: string, op: RenderOp) {
   }
 
   pairs.push(["threadId", threadId]);
-  log.info(toLogFmt(pairs));
+  if (op.type === "PAUSED") {
+    log.debug(toLogFmt(pairs));
+  } else {
+    log.info(toLogFmt(pairs));
+  }
 }
 
 export function nodeToStr(node: PerformerNode) {
