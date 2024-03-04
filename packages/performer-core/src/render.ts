@@ -260,6 +260,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
   if (!isRawNode(node)) {
     logMessageResolved(node);
     node.status = "RESOLVED";
+    logMessageResolved(node);
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
       performer.queueRender("message resolved");
@@ -272,8 +273,8 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
   }
 
   if (node.props.message != null) {
-    logMessageResolved(node);
     node.status = "RESOLVED";
+    logMessageResolved(node);
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
       performer.queueRender("raw resolved");
@@ -289,12 +290,12 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
       node.props.stream,
     )
       .then(async (message) => {
-        logMessageResolved(node);
         node.hooks.message = message;
         if (node.props.onResolved) {
           await node.props.onResolved(message);
         }
         node.status = "RESOLVED";
+        logMessageResolved(node);
         if (!node.isHydrating) {
           dispatchMessageElement(performer, node, message);
           performer.queueRender("raw stream resolved");

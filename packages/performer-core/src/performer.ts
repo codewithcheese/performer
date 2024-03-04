@@ -10,6 +10,7 @@ import type { PerformerMessage } from "./message.js";
 import * as log from "loglevel";
 import { logEvent, nodeToStr, toLogFmt } from "./util/log.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";
+import { LogLevelDesc } from "loglevel";
 
 type PerformerOptions = {
   throwOnError?: boolean;
@@ -42,7 +43,13 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     this.#uid = crypto.randomUUID();
     this.app = app;
     this.options = options;
-    log.setLevel(options.logLevel || "info");
+    log.setLevel(
+      (globalThis.process &&
+        process.env["LOGLEVEL"] != null &&
+        (process.env["LOGLEVEL"] as LogLevelDesc)) ||
+        options.logLevel ||
+        "info",
+    );
     if (
       this.options.throwOnError === undefined &&
       globalThis.process &&
