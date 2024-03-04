@@ -1,4 +1,6 @@
 import {
+  isAssistantMessage,
+  nodeToMessage,
   PerformerDeltaEvent,
   PerformerErrorEvent,
   PerformerEvent,
@@ -10,10 +12,8 @@ import {
 import * as log from "loglevel";
 import { isImageContent, isTextContent } from "../message.js";
 
-export function logMessageResolved(
-  node: PerformerNode,
-  message: PerformerMessage,
-) {
+export function logMessageResolved(node: PerformerNode) {
+  const message = nodeToMessage(node);
   const pairs: [string, any][] = [];
   pairs.push(["message", "resolved"]);
   pairs.push(["role", message.role]);
@@ -32,8 +32,18 @@ export function logMessageResolved(
       }
     }
   }
+  if (isAssistantMessage(message) && message.tool_calls) {
+    for (const toolCall of message.tool_calls) {
+      pairs.push(["tool_call.name", toolCall.function.name]);
+      pairs.push(["tool_call.arguments", toolCall.function.arguments]);
+    }
+  }
+  if (isAssistantMessage(message) && message.function_call) {
+    pairs.push(["function_call.name", message.function_call.name]);
+    pairs.push(["function_call.arguments", message.function_call.arguments]);
+  }
   pairs.push(["node", nodeToStr(node)]);
-  log.debug(toLogFmt(pairs));
+  log.info(toLogFmt(pairs));
 }
 
 export function logEvent(event: PerformerEvent) {
@@ -81,7 +91,7 @@ export function logEvent(event: PerformerEvent) {
   if (event instanceof PerformerDeltaEvent) {
     log.debug(toLogFmt(pairs));
   } else {
-    log.debug(toLogFmt(pairs));
+    log.info(toLogFmt(pairs));
   }
 }
 
@@ -108,7 +118,7 @@ export function logOp(threadId: string, op: RenderOp) {
   }
 
   pairs.push(["threadId", threadId]);
-  log.debug(toLogFmt(pairs));
+  log.info(toLogFmt(pairs));
 }
 
 export function nodeToStr(node: PerformerNode) {

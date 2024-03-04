@@ -42,7 +42,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     this.#uid = crypto.randomUUID();
     this.app = app;
     this.options = options;
-    log.setLevel(options.logLevel || "debug");
+    log.setLevel(options.logLevel || "info");
     if (
       this.options.throwOnError === undefined &&
       globalThis.process &&

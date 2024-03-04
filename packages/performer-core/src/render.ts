@@ -258,6 +258,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
   }
 
   if (!isRawNode(node)) {
+    logMessageResolved(node);
     node.status = "RESOLVED";
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
@@ -271,7 +272,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
   }
 
   if (node.props.message != null) {
-    logMessageResolved(node, node.props.message);
+    logMessageResolved(node);
     node.status = "RESOLVED";
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
@@ -288,7 +289,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
       node.props.stream,
     )
       .then(async (message) => {
-        logMessageResolved(node, message);
+        logMessageResolved(node);
         node.hooks.message = message;
         if (node.props.onResolved) {
           await node.props.onResolved(message);
@@ -430,16 +431,16 @@ export function resolveMessages(
 
   let cursor: PerformerNode | undefined = from;
   while (cursor) {
-    // trace resolve
-    const pairs: [string, any][] = [
-      ["call", "resolveMessage"],
-      ["threadId", cursor.threadId],
-      ["node", nodeToStr(cursor)],
-    ];
-    if (typeof cursor.props.children === "string") {
-      pairs.push(["content", cursor.props.children]);
-    }
-    log.debug(toLogFmt(pairs));
+    // too noisy for now
+    // const pairs: [string, any][] = [
+    //   ["resolve", "cursor"],
+    //   ["threadId", cursor.threadId],
+    //   ["node", nodeToStr(cursor)],
+    // ];
+    // if (typeof cursor.props.children === "string") {
+    //   pairs.push(["content", cursor.props.children]);
+    // }
+    // log.debug(toLogFmt(pairs));
 
     // clear all messages if `to` belongs to cursor thread, and thread is isolated
     if (

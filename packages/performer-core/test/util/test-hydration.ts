@@ -13,6 +13,7 @@ export async function testHydration(performer: Performer) {
   if (!performer.root) {
     throw Error("Cannot test hydration Performer.node undefined");
   }
+  console.log("Testing hydration...");
   const original = performer.root;
   const ogMessages = structuredClone(resolveMessages(performer.root));
   const serialized = serialize(performer.root);
