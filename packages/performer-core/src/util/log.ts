@@ -2,12 +2,39 @@ import {
   PerformerDeltaEvent,
   PerformerErrorEvent,
   PerformerEvent,
+  PerformerMessage,
   PerformerMessageEvent,
   PerformerNode,
   RenderOp,
 } from "../index.js";
 import * as log from "loglevel";
 import { isImageContent, isTextContent } from "../message.js";
+
+export function logMessageResolved(
+  node: PerformerNode,
+  message: PerformerMessage,
+) {
+  const pairs: [string, any][] = [];
+  pairs.push(["message", "resolved"]);
+  pairs.push(["role", message.role]);
+  if (typeof message.content === "string") {
+    pairs.push(["content", message.content]);
+  } else {
+    if (typeof message.content === "string") {
+      pairs.push(["content", message.content]);
+    } else if (message.content) {
+      for (const content of message.content) {
+        if (isTextContent(content)) {
+          pairs.push(["text", message.content]);
+        } else if (isImageContent(content)) {
+          pairs.push(["image_url", content.image_url.url]);
+        }
+      }
+    }
+  }
+  pairs.push(["node", nodeToStr(node)]);
+  log.debug(toLogFmt(pairs));
+}
 
 export function logEvent(event: PerformerEvent) {
   const pairs: [string, any][] = [["event", event.type]];
@@ -51,7 +78,11 @@ export function logEvent(event: PerformerEvent) {
     pairs.push(["message", event.detail.message]);
   }
 
-  log.debug(toLogFmt(pairs));
+  if (event instanceof PerformerDeltaEvent) {
+    log.trace(toLogFmt(pairs));
+  } else {
+    log.debug(toLogFmt(pairs));
+  }
 }
 
 export function logOp(threadId: string, op: RenderOp) {
@@ -70,7 +101,7 @@ export function logOp(threadId: string, op: RenderOp) {
       pairs.push(["content", op.payload.element.props.children]);
     }
   } else if (op.type === "UPDATE") {
-    pairs.push(["node", logNode(op.payload.node)]);
+    pairs.push(["node", nodeToStr(op.payload.node)]);
     if (op.payload.node.parent) {
       pairs.push(["parent", getHierarchy(op.payload.node).join("->")]);
     }
@@ -80,7 +111,7 @@ export function logOp(threadId: string, op: RenderOp) {
   log.debug(toLogFmt(pairs));
 }
 
-export function logNode(node: PerformerNode) {
+export function nodeToStr(node: PerformerNode) {
   return getHierarchy(node).join("->");
 }
 

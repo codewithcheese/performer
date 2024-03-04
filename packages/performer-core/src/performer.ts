@@ -8,7 +8,7 @@ import {
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
 import * as log from "loglevel";
-import { logEvent, logNode, toLogFmt } from "./util/log.js";
+import { logEvent, nodeToStr, toLogFmt } from "./util/log.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";
 
 type PerformerOptions = {
@@ -87,7 +87,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   }
 
   queueRender(reason: string) {
-    log.debug(
+    log.trace(
       toLogFmt([
         ["call", "queueRender"],
         ["reason", reason],
@@ -119,7 +119,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     log.debug(
       toLogFmt([
         ["input", "pending"],
-        ["node", logNode(node)],
+        ["node", nodeToStr(node)],
       ]),
     );
     // if input already queue then deliver to node immediately

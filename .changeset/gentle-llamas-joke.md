@@ -2,4 +2,4 @@
 "@performer/core": patch
 ---
 
-Update loglevels and use logfmt
+Improve logging, add loglevels config, use logfmt

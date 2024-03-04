@@ -18,7 +18,7 @@ import * as log from "loglevel";
 import * as _ from "lodash";
 import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
-import { logNode, logOp, toLogFmt } from "./util/log.js";
+import { nodeToStr, logOp, toLogFmt, logMessageResolved } from "./util/log.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
@@ -49,7 +49,7 @@ type PausedOp = {
 export type RenderOp = CreateOp | UpdateOp | PausedOp;
 
 export async function render(performer: Performer) {
-  log.debug("call=render");
+  log.trace("call=render");
   try {
     const ops = evaluateRenderOps(
       "root",
@@ -226,7 +226,7 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     if (typeof view !== "function") {
       const returnType = view instanceof Promise ? "Promise" : typeof view;
       throw Error(
-        `Component "${logNode(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
+        `Component "${nodeToStr(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
           `To make async calls in your component use the \`useResource\` hook`,
       );
     }
@@ -271,6 +271,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
   }
 
   if (node.props.message != null) {
+    logMessageResolved(node, node.props.message);
     node.status = "RESOLVED";
     if (!node.isHydrating) {
       dispatchMessageElement(performer, node);
@@ -287,6 +288,7 @@ async function renderIntrinsic(performer: Performer, node: PerformerNode) {
       node.props.stream,
     )
       .then(async (message) => {
+        logMessageResolved(node, message);
         node.hooks.message = message;
         if (node.props.onResolved) {
           await node.props.onResolved(message);
@@ -381,7 +383,13 @@ function freeNode(
   freeRemaining: boolean = false,
 ) {
   try {
-    log.debug(`Free node`, logNode(node));
+    log.trace(
+      toLogFmt([
+        ["free", "node"],
+        ["threadId", node.threadId],
+        ["node", nodeToStr(node)],
+      ]),
+    );
     // dispose view so that its no longer reactive
     if (node.disposeView) {
       node.disposeView();
@@ -426,7 +434,7 @@ export function resolveMessages(
     const pairs: [string, any][] = [
       ["call", "resolveMessage"],
       ["threadId", cursor.threadId],
-      ["node", logNode(cursor)],
+      ["node", nodeToStr(cursor)],
     ];
     if (typeof cursor.props.children === "string") {
       pairs.push(["content", cursor.props.children]);
