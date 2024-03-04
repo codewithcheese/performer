@@ -49,7 +49,7 @@ type PausedOp = {
 export type RenderOp = CreateOp | UpdateOp | PausedOp;
 
 export async function render(performer: Performer) {
-  log.trace("call=render");
+  log.debug("call=render");
   try {
     const ops = evaluateRenderOps(
       "root",
@@ -383,7 +383,7 @@ function freeNode(
   freeRemaining: boolean = false,
 ) {
   try {
-    log.trace(
+    log.debug(
       toLogFmt([
         ["free", "node"],
         ["threadId", node.threadId],
@@ -439,7 +439,7 @@ export function resolveMessages(
     if (typeof cursor.props.children === "string") {
       pairs.push(["content", cursor.props.children]);
     }
-    log.trace(toLogFmt(pairs));
+    log.debug(toLogFmt(pairs));
 
     // clear all messages if `to` belongs to cursor thread, and thread is isolated
     if (

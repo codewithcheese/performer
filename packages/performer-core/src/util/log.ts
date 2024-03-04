@@ -79,7 +79,7 @@ export function logEvent(event: PerformerEvent) {
   }
 
   if (event instanceof PerformerDeltaEvent) {
-    log.trace(toLogFmt(pairs));
+    log.debug(toLogFmt(pairs));
   } else {
     log.debug(toLogFmt(pairs));
   }

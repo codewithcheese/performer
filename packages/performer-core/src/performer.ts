@@ -87,7 +87,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   }
 
   queueRender(reason: string) {
-    log.trace(
+    log.debug(
       toLogFmt([
         ["call", "queueRender"],
         ["reason", reason],
