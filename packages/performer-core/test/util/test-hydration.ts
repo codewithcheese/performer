@@ -92,7 +92,8 @@ function filterTransient(lhs: any, rhs: any) {
       key === "renderPromised" ||
       key === "listen" ||
       key === "finish" ||
-      key === "hasFinished"
+      key === "hasFinished" ||
+      key === "options"
     ) {
       return true;
     }

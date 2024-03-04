@@ -4,7 +4,6 @@ import { App } from "../src/juice-machine/index.js";
 
 test("juice machine should dispense the users selected juice after payment", async () => {
   const performer = new Performer(<App />);
-  performer.logConfig.showDeltaEvents = false;
   performer.start();
   await performer.waitUntilSettled();
   performer.input({

@@ -8,11 +8,13 @@ import {
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
 import * as log from "loglevel";
-import { LogConfig, logEvent, logNode } from "./util/log.js";
+import { logEvent, nodeToStr, toLogFmt } from "./util/log.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";
-import { ThreadState } from "./hooks/index.js";
 
-type PerformerOptions = { throwOnError?: boolean };
+type PerformerOptions = {
+  throwOnError?: boolean;
+  logLevel?: "trace" | "debug" | "info" | "warn" | "error";
+};
 
 export class Performer extends TypedEventTarget<PerformerEventMap> {
   #uid: string;
@@ -33,11 +35,6 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   renderQueued = false;
   renderPromised: ReturnType<typeof render> | null = null;
 
-  logConfig: LogConfig = {
-    showDeltaEvents: true,
-    showResolveMessages: false,
-  };
-
   threadNonce = 0;
 
   constructor(app: PerformerElement, options: PerformerOptions = {}) {
@@ -45,6 +42,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     this.#uid = crypto.randomUUID();
     this.app = app;
     this.options = options;
+    log.setLevel(options.logLevel || "debug");
     if (
       this.options.throwOnError === undefined &&
       globalThis.process &&
@@ -53,9 +51,10 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
       this.options.throwOnError = true;
     }
     this.addEventListener("delta", (delta) => {
-      logEvent(delta, this.logConfig);
+      logEvent(delta);
     });
     this.addEventListener("error", (error) => {
+      log.error(error.detail.message);
       this.errors.push(error);
     });
   }
@@ -65,14 +64,18 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   }
 
   abort() {
-    this.dispatchEvent(new PerformerLifecycleEvent({ state: "aborted" }));
+    this.dispatchEvent(
+      new PerformerLifecycleEvent("root", { state: "aborted" }),
+    );
     this.controller.abort();
     this.finish();
   }
 
   finish() {
     this.hasFinished = true;
-    this.dispatchEvent(new PerformerLifecycleEvent({ state: "finished" }));
+    this.dispatchEvent(
+      new PerformerLifecycleEvent("root", { state: "finished" }),
+    );
   }
 
   get aborted() {
@@ -83,7 +86,13 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     return resolveMessages(this.root);
   }
 
-  queueRender() {
+  queueRender(reason: string) {
+    log.debug(
+      toLogFmt([
+        ["call", "queueRender"],
+        ["reason", reason],
+      ]),
+    );
     if (this.renderQueued) {
       return;
     }
@@ -107,7 +116,12 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
    */
 
   setInputNode(node: PerformerNode) {
-    log.debug("Input node", logNode(node));
+    log.debug(
+      toLogFmt([
+        ["input", "pending"],
+        ["node", nodeToStr(node)],
+      ]),
+    );
     // if input already queue then deliver to node immediately
     const inputNode = node;
     if (!inputNode.hooks.input) {
@@ -121,10 +135,13 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
         state: "fulfilled",
         value: [...this.inputQueue],
       };
-      this.queueRender();
+      inputNode.status = "PENDING";
+      this.queueRender("input fulfilled");
     } else {
       this.inputNode = inputNode;
-      this.dispatchEvent(new PerformerLifecycleEvent({ state: "listening" }));
+      this.dispatchEvent(
+        new PerformerLifecycleEvent(node.threadId, { state: "listening" }),
+      );
     }
   }
 
@@ -134,8 +151,9 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
         state: "fulfilled",
         value: [message],
       };
+      this.inputNode.status = "PENDING";
       this.inputNode = undefined;
-      this.queueRender();
+      this.queueRender("input fulfilled");
     } else {
       this.inputQueue.push(message);
     }
@@ -160,12 +178,12 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     });
   }
 
-  onError(error: unknown) {
+  onError(threadId: string, error: unknown) {
     this.finish();
     if (this.options.throwOnError) {
       throw error;
     } else {
-      this.dispatchEvent(new PerformerErrorEvent(error));
+      this.dispatchEvent(new PerformerErrorEvent(threadId, error));
     }
   }
 }
