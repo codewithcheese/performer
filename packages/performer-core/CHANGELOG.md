@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.24
+
+### Patch Changes
+
+- bfef70f: Default log level to info
+
 ## 0.0.23
 
 ### Patch Changes
