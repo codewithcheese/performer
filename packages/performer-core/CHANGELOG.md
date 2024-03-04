@@ -1,5 +1,12 @@
 # @performer/core
 
+## 0.0.23
+
+### Patch Changes
+
+- 96ded89: Improve logging, add loglevels config, use logfmt
+- 779af60: Set raw node to paused when consuming stream
+
 ## 0.0.22
 
 ### Patch Changes
