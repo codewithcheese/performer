@@ -1,5 +1,15 @@
 # performer-examples
 
+## 0.0.22
+
+### Patch Changes
+
+- 779af60: Set raw node to paused when consuming stream
+- Updated dependencies [96ded89]
+- Updated dependencies [779af60]
+  - @performer/core@0.0.23
+  - @performer/playground@0.0.23
+
 ## 0.0.21
 
 ### Patch Changes
