@@ -18,7 +18,13 @@ import * as log from "loglevel";
 import * as _ from "lodash";
 import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
-import { nodeToStr, logOp, toLogFmt, logMessageResolved } from "./util/log.js";
+import {
+  nodeToStr,
+  logOp,
+  toLogFmt,
+  logMessageResolved,
+  logPaused,
+} from "./util/log.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
@@ -234,25 +240,15 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     node.status = "RESOLVED";
   } catch (e) {
     if (e instanceof DeferResource) {
-      log.info(
-        toLogFmt([
-          ["node", "paused"],
-          ["pending", "resource"],
-        ]),
-      );
       node.status = "PAUSED";
+      logPaused(node, "resource");
       e.cause.promise.then(() => {
         node.status = "PENDING";
         performer.queueRender("deferred resolved");
       });
     } else if (e instanceof DeferInput) {
-      log.info(
-        toLogFmt([
-          ["node", "paused"],
-          ["pending", "input"],
-        ]),
-      );
       node.status = "PAUSED";
+      logPaused(node, "resource");
       performer.setInputNode(node);
     } else {
       throw e;

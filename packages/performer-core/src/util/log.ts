@@ -105,15 +105,15 @@ export function logOp(threadId: string, op: RenderOp) {
         : op.payload.element.type,
     ]);
     if (op.payload.parent) {
-      pairs.push(["parent", getHierarchy(op.payload.parent).join("->")]);
+      pairs.push(["parent", nodeToStr(op.payload.parent)]);
     }
     if (typeof op.payload.element.props.children === "string") {
       pairs.push(["content", op.payload.element.props.children]);
     }
   } else if (op.type === "RESUME") {
-    pairs.push(["node", nodeToStr(op.payload.node)]);
+    pairs.push(["node", op.payload.node._typeName]);
     if (op.payload.node.parent) {
-      pairs.push(["parent", getHierarchy(op.payload.node).join("->")]);
+      pairs.push(["parent", nodeToStr(op.payload.node.parent)]);
     }
   }
 
@@ -149,4 +149,15 @@ function escapeValue(value: any): string {
 
 export function toLogFmt(pairs: [string, any][]): string {
   return pairs.map(([key, value]) => `${key}=${escapeValue(value)}`).join(" ");
+}
+
+export function logPaused(node: PerformerNode, pending: string) {
+  log.info(
+    toLogFmt([
+      ["node", "paused"],
+      ["pending", pending],
+      ["node", nodeToStr(node)],
+      ["threadId", node.threadId],
+    ]),
+  );
 }
