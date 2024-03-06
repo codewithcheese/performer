@@ -1,13 +1,15 @@
-import { assert, expect, test } from "vitest";
+import { expect, test } from "vitest";
 import {
   Assistant,
+  Performer,
   Repeat,
   resolveMessages,
-  Performer,
   useState,
 } from "../../src/index.js";
 import { testHydration } from "../util/test-hydration.js";
-import { ExpectNode, expectTree } from "../util/expect-tree.js";
+import { expectTree } from "../util/expect-tree.js";
+
+test("should repeat", async () => {});
 
 test("should repeat multiple times", async () => {
   const app = (

@@ -6,6 +6,7 @@ export * from "./use-dispatch-event.js";
 export * from "./use-messages.js";
 export * from "./use-hook.js";
 export * from "./use-input.js";
+export * from "./use-logger.js";
 export * from "./use-route-data.js";
 export * from "./use-state.js";
 export * from "./use-tool-data.js";
