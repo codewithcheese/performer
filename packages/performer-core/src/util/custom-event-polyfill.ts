@@ -14,7 +14,7 @@ class CustomEvent extends Event {
   }
 }
 
-if (typeof global.CustomEvent !== "function") {
+if (typeof globalThis.CustomEvent !== "function") {
   // @ts-ignore
-  global.CustomEvent = CustomEvent;
+  globalThis.CustomEvent = CustomEvent;
 }
