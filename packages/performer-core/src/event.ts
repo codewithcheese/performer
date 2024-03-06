@@ -1,5 +1,6 @@
 import type { MessageDelta, PerformerMessage } from "./message.js";
 import { nanoid } from "nanoid";
+import "./util/custom-event-polyfill.js";
 
 class TypedCustomEvent<D> extends CustomEvent<D> {
   static type: keyof PerformerEventMap;

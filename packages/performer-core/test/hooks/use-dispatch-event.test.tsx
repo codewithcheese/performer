@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { Performer, useDispatchEvent } from "../../src/index.js";
+import "../../src/util/custom-event-polyfill.js";
 
 class MyEvent extends CustomEvent<{ value: number }> {
   constructor(detail: { value: number }) {
