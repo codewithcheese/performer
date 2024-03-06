@@ -6,6 +6,7 @@ on:
 
 jobs:
   test:
+    if: github.head_ref != 'changeset-release/master'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:

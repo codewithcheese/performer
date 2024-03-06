@@ -32,8 +32,7 @@ jobs:
         id: version
         run: |
           # Get the current git SHA
-          git_sha=$(git rev-parse --short HEAD)
-          echo "::set-output name=git_sha::$git_sha"
+          git_sha=$(git rev-parse --short HEAD)        
 
           # Get the list of packages in the workspace
           packages=$(pnpm m ls --json --depth=-1)
@@ -57,7 +56,9 @@ jobs:
           done
 
       - name: Publish Prerelease
-        run: pnpm publish -r --report-summary --no-git-checks --access public --tag rc.${{ steps.version.outputs.git_sha }}
+        run: |
+          git_sha=$(git rev-parse --short HEAD)
+          pnpm publish -r --report-summary --no-git-checks --access public --tag "rc.$git_sha"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -74,5 +75,56 @@ jobs:
             jq -r '.publishedPackages[] | "- [\(.name)@\(.version)](https://www.npmjs.com/package/\(.name)/v/\(.version))"' pnpm-publish-summary.json >> $GITHUB_STEP_SUMMARY
           fi
 
-#  test-create-app:
-#    needs: prerelease
+  test-create-performer:
+    needs: prerelease
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        include:
+          - node-version: 20
+            os: ubuntu-latest
+          - node-version: 20
+            os: windows-latest
+          - node-version: 20
+            os: macOS-latest
+      fail-fast: false
+    steps:
+
+      - name: setup node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: install pnpm
+        run: npm i pnpm@latest -g
+
+      - name: setup pnpm config
+        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
+
+      - name: Extract commit SHA
+        id: extract_sha
+        shell: bash
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Create project
+        if: runner.os != 'Windows'
+        run: |
+          git_sha=$(echo $GITHUB_SHA | cut -c1-7)          
+          pnpm create "performer@rc.$git_sha" my-project
+
+      - name: Create project (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $git_sha = $env:GITHUB_SHA.Substring(0, 7)
+          npm create "performer@rc.$($git_sha)" my-project      
+
+      - name: Install performer app dependencies
+        run: pnpm install
+        working-directory: ./my-project
+
+      - name: Run tests
+        run: pnpm test
+        working-directory: ./my-project
+
