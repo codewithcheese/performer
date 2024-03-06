@@ -1,14 +1,38 @@
 # Performer
 
-A declarative component framework for building AI assistants.
-
-<p align="center">
-    <img src="./assets/logo.webp" alt="Image description" height="300" width="300" >
-</p>
+[![Twitter Follow](https://img.shields.io/twitter/follow/codewithcheese?style=social)](https://twitter.com/codewithcheese)
 
 ---
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/codewithcheese?style=social)](https://twitter.com/codewithcheese)
+A declarative component framework for building AI assistants.
+
+<p align="center">
+<img src="./assets/logo.webp" alt="Image description" height="300" width="300" >
+</p>
+
+Performer is a Javascript component framework for building programmable and modular AI assistants like chatbots and agents. Performer is inspired by frameworks like React and uses JSX and components. However, Performer is for building conversational AI backends not user interfaces.
+
+## Why?
+
+Performer was created as a result of two important insights:
+
+### Language require context not input values.
+
+To maximise the quality of a language model response we must optimize the context it receives. A context may be 1000s of characters, with a mix of messages, source text, code or structured data. This makes language models significantly different from functions or pipeline operators. 
+
+To efficiently develop applications for language models we need abstractions that make handling context data easy.
+
+Fortunately, humans also need context in the form of user interfaces.
+
+To do
+
+### AI enables a new kind of high-level programming.
+
+To do
+
+## How Performer works
+
+To do
 
 ## Quickstart
 
@@ -47,9 +71,34 @@ const performer = new Performer(<App />);
 performer.start();
 ```
 
-## The basics
+Start the playground to chat with your app.
 
-#### Elements
+```sh
+pnpm run playground
+```
+
+## Table of Contents
+- [Performer class](#performer-class)
+- [Elements](#elements) 
+- [Components](#components)
+- [Built-in components](#built-in-components)
+
+### Performer class
+
+Use `Performer` class to run and interact with performer apps.   
+
+```jsx
+import { Performer } from '@performer/core'
+
+function App () {
+  // ...
+}
+
+const performer = new Performer(<App />);
+performer.start();
+```
+
+### Elements
 
 Performer uses JSX, but instead of HTML tags like `body` and `div`, tags are based on OpenAI chat message roles: `system`, `assistant`, `user`, `tool`.
 
@@ -61,7 +110,9 @@ Performer uses JSX, but instead of HTML tags like `body` and `div`, tags are bas
 
 Message elements don't have any functionality, they simply represent a list of messages. 
 
-#### Components
+[Back to Table of Contents](#table-of-contents)
+
+### Components
 
 Components give your app functionality. Components are the building blocks that make it easy to build complex conversational AI.
 
@@ -100,7 +151,9 @@ Some key differences from React here to take notice of:
 1) The component returns a function that wraps JSX instead of returning JSX directly. In Performer a component only runs **once**, if changes only the return function is re-executed to update the JSX. This means you don't have to worry about memoization, no need for hooks like `useMemo` or `useCallback`   
 2) Asynchronous data is loaded in the component body using `useResource` without the need for `async/await`. Performer pauses the component when `useResource` is running and resumes when the data is available.
 
-#### Built-in components
+[Back to Table of Contents](#table-of-contents)
+
+### Built-in components
 
 Performer comes with a few built-in components that you can use in your JSX.
 
@@ -170,3 +223,4 @@ function App () {
 
 The initial system message sets the tone, then the chat alternates between user input and assistant response.
 
+[Back to Table of Contents](#table-of-contents)
