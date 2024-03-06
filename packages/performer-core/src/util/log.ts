@@ -9,7 +9,7 @@ import {
   PerformerNode,
   RenderOp,
 } from "../index.js";
-import * as log from "loglevel";
+import log from "loglevel";
 import { isImageContent, isTextContent } from "../message.js";
 
 export function logMessageResolved(node: PerformerNode) {
