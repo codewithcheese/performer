@@ -1,4 +1,3 @@
-import { IconCheck, IconCopy, IconDownload } from "@tabler/icons-react";
 import { FC, memo } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -6,6 +5,9 @@ import {
   oneDark,
 } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { useCopyToClipboard } from "../hooks/use-copy-to-clipboard.js";
+import { DownloadIcon } from "./icons/DownloadIcon.js";
+import { CheckIcon } from "./icons/CheckIcon.js";
+import { ClipboardIcon } from "./icons/ClipboardIcon.js";
 
 interface MessageCodeBlockProps {
   language: string;
@@ -97,13 +99,13 @@ export const MessageCodeBlock: FC<MessageCodeBlockProps> = memo(
           <div className="flex items-center space-x-1">
             <button className="btn relative" onClick={downloadAsFile}>
               <div className="flex w-full gap-2 items-center justify-center">
-                <IconDownload size={16} />
+                <DownloadIcon />
               </div>
             </button>
 
             <button className="btn relative" onClick={onCopy}>
               <div className="flex w-full gap-2 items-center justify-center">
-                {isCopied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                {isCopied ? <CheckIcon /> : <ClipboardIcon />}
               </div>
             </button>
           </div>

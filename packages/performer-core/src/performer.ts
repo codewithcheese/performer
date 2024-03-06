@@ -7,7 +7,7 @@ import {
   PerformerLifecycleEvent,
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
-import * as log from "loglevel";
+import log from "loglevel";
 import { logEvent, nodeToStr, toLogFmt } from "./util/log.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";
 import { LogLevelDesc } from "loglevel";

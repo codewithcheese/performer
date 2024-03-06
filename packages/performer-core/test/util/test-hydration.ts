@@ -8,7 +8,7 @@ import { diff } from "deep-diff";
 import * as _ from "lodash";
 import { Signal } from "@preact/signals-core";
 import { expect } from "vitest";
-import * as log from "loglevel";
+import log from "loglevel";
 
 export async function testHydration(performer: Performer) {
   if (!performer.root) {

@@ -14,7 +14,7 @@ import {
   MessageDelta,
   PerformerMessage,
 } from "./message.js";
-import * as log from "loglevel";
+import log from "loglevel";
 import * as _ from "lodash";
 import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";

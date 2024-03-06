@@ -31,7 +31,11 @@ export function ChatWindow({ App }: { App: Component<any> }) {
               } else if (event instanceof PerformerErrorEvent) {
                 return (
                   <div className="group mx-auto flex flex-1 gap-3 text-base md:max-w-3xl md:px-5 lg:max-w-[40rem] lg:px-1 xl:max-w-[48rem] xl:px-5">
-                    <Alert title="Error" message={event.detail.message} />
+                    <Alert
+                      key={index}
+                      title="Error"
+                      message={event.detail.message}
+                    />
                   </div>
                 );
               }
