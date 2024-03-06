@@ -1,6 +1,7 @@
 import type { Component } from "../component.js";
 import { useAfterChildren, useState } from "../hooks/index.js";
 import { Signal } from "@preact/signals-core";
+import { useLogger } from "../hooks/index.js";
 
 /**
  *	Repeat the children indefinitely unless limited using times prop or stopped with a signal.
@@ -13,8 +14,15 @@ export const Repeat: Component<{ times?: number; stop?: Signal<boolean> }> = ({
   times = Infinity,
   stop = new Signal(false),
 }) => {
+  const logger = useLogger();
   const n = useState(1);
   useAfterChildren(() => {
+    logger.debug([
+      ["stopped", stop.peek()],
+      ["n", n.peek()],
+      ["times", times],
+      ["continue", !stop.peek() && n.peek() < times],
+    ]);
     if (!stop.peek() && n.peek() < times) {
       n.value += 1;
     }
