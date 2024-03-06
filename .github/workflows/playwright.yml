@@ -1,8 +1,6 @@
 name: Playwright Tests
 
 on:
-  push:
-    branches: [ master ]  # Customize trigger branches as needed
   pull_request:
     branches: [ master ]
 

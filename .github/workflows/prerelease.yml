@@ -1,0 +1,78 @@
+name: Prerelease
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  prerelease:
+    if: github.head_ref == 'changeset-release/master'
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout code repository
+        uses: actions/checkout@v3
+
+      - name: setup node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: install pnpm
+        run: npm i pnpm@latest -g
+
+      - name: setup pnpm config
+        run: pnpm config set store-dir $PNPM_CACHE_FOLDER
+
+      - name: install dependencies
+        run: pnpm install
+
+      - name: Add prerelease tag with git SHA to public packages
+        id: version
+        run: |
+          # Get the current git SHA
+          git_sha=$(git rev-parse --short HEAD)
+          echo "::set-output name=git_sha::$git_sha"
+
+          # Get the list of packages in the workspace
+          packages=$(pnpm m ls --json --depth=-1)
+
+          # Iterate over each package
+          for package in $(echo "$packages" | jq -c '.[]'); do
+            private=$(echo "$package" | jq -r '.private')
+            version=$(echo "$package" | jq -r '.version')
+            name=$(echo "$package" | jq -r '.name')
+            path=$(echo "$package" | jq -r '.path')
+
+            # Check if the package is public and has a version
+            if [ "$private" = "false" ] && [ "$version" != "null" ]; then
+              # Add prerelease tag with git SHA to the version
+              new_version="${version}-rc.${git_sha}"
+
+              # Update the package version in package.json using jq
+              jq --arg version "$new_version" '.version = $version' "$path/package.json" > tmp.json && mv tmp.json "$path/package.json"
+              cat "$path/package.json"
+            fi
+          done
+
+      - name: Publish Prerelease
+        run: pnpm publish -r --report-summary --no-git-checks --access public --tag rc.${{ steps.version.outputs.git_sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create job summary from published packages
+        run: |
+          echo "## Published Packages :package:" >> $GITHUB_STEP_SUMMARY
+          echo "Snapshot Name: **${{ github.event.pull_request.head.ref }}**" >> $GITHUB_STEP_SUMMARY
+
+          PACKAGES_COUNT=$(jq '.publishedPackages | length' pnpm-publish-summary.json)
+          if [ "$PACKAGES_COUNT" -eq 0 ]; then
+            echo "No packages were published." >> $GITHUB_STEP_SUMMARY
+          else
+            jq -r '.publishedPackages[] | "- [\(.name)@\(.version)](https://www.npmjs.com/package/\(.name)/v/\(.version))"' pnpm-publish-summary.json >> $GITHUB_STEP_SUMMARY
+          fi
+
+#  test-create-app:
+#    needs: prerelease
