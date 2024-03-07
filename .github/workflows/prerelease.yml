@@ -127,4 +127,7 @@ jobs:
       - name: Run tests
         run: pnpm test
         working-directory: ./my-project
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LOGLEVEL: silent
 

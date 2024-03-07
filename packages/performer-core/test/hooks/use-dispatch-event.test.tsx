@@ -1,16 +1,21 @@
 import { expect, test } from "vitest";
-import { Performer, useDispatchEvent } from "../../src/index.js";
-import "../../src/util/custom-event-polyfill.js";
+import {
+  Performer,
+  PerformerEvent,
+  useDispatchEvent,
+} from "../../src/index.js";
 
-class MyEvent extends CustomEvent<{ value: number }> {
+class MyEvent implements PerformerEvent {
+  type = "my-event";
+  threadId = "root";
+  detail: { value: number };
   constructor(detail: { value: number }) {
-    super("my-event", { detail });
+    this.detail = detail;
   }
 }
 
 declare module "../../src/index.js" {
   interface PerformerEventMap {
-    test: CustomEvent<{ value: number }>;
     "my-event": MyEvent;
   }
 }
@@ -18,7 +23,6 @@ declare module "../../src/index.js" {
 test("should dispatch event from component", async () => {
   function App() {
     const dispatchEvent = useDispatchEvent();
-    dispatchEvent(new CustomEvent("test", { detail: { value: 42 } }));
     dispatchEvent(new MyEvent({ value: 1337 }));
     return () => <assistant>How may I serve the?</assistant>;
   }
@@ -29,5 +33,5 @@ test("should dispatch event from component", async () => {
   });
   performer.start();
   await performer.waitUntilSettled();
-  expect(eventValues).toEqual([42, 1337]);
+  expect(eventValues).toEqual([1337]);
 });
