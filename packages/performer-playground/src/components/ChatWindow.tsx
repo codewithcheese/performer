@@ -12,7 +12,6 @@ import { Alert } from "./Alert.js";
 
 export function ChatWindow({ App }: { App: Component<any> }) {
   const { events, sendMessage } = usePerformerClient(App);
-  console.log("events", events);
 
   return (
     <div role="presentation" className="flex h-full flex-col">
