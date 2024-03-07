@@ -1,5 +1,14 @@
 # @performer/playground
 
+## 0.0.29
+
+### Patch Changes
+
+- 7390ded: Fix playground delta updates
+- 7390ded: Fix reload imports when new app added
+- Updated dependencies [0345e7b]
+  - @performer/core@0.0.29
+
 ## 0.0.28
 
 ### Patch Changes

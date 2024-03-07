@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.29
+
+### Patch Changes
+
+- 0345e7b: Replace EventTarget with Emittery
+
 ## 0.0.28
 
 ## 0.0.27

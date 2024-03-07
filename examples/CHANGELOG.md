@@ -1,5 +1,16 @@
 # performer-examples
 
+## 0.0.28
+
+### Patch Changes
+
+- 7390ded: Fix reload imports when new app added
+- Updated dependencies [7390ded]
+- Updated dependencies [7390ded]
+- Updated dependencies [0345e7b]
+  - @performer/playground@0.0.29
+  - @performer/core@0.0.29
+
 ## 0.0.27
 
 ### Patch Changes
