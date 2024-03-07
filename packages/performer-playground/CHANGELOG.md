@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.28
+
+### Patch Changes
+
+- 4b746e9: Fix playground delta event updates
+  - @performer/core@0.0.28
+
 ## 0.0.27
 
 ### Patch Changes
