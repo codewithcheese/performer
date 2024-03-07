@@ -29,15 +29,14 @@ export function usePerformerClient(app: Component<any> | null) {
       setPerformer(performer);
 
       performer.addEventListener("*", (event) => {
-        console.log("Received event", event);
         if (!(event instanceof PerformerDeltaEvent)) {
           return setEvents((prevEvents) => [...prevEvents, event]);
         }
         setEvents((prevEvents) => {
           const previous = prevEvents.findLast(
-            (event): event is PerformerDeltaEvent =>
-              event instanceof PerformerDeltaEvent &&
-              event.detail.uid === event.detail.uid,
+            (prev): prev is PerformerDeltaEvent =>
+              prev instanceof PerformerDeltaEvent &&
+              prev.detail.uid === event.detail.uid,
           );
           if (!previous) {
             return [...prevEvents, event];
