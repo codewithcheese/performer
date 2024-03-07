@@ -1,5 +1,13 @@
 # @performer/core
 
+## 0.0.25
+
+### Patch Changes
+
+- 32529cf: Change logger to consola from loglevel
+- 12221df: Add useLogger hook
+- 5958c7a: Add CustomEvent polyfill for <node19
+
 ## 0.0.24
 
 ### Patch Changes
