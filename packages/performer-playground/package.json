@@ -18,6 +18,7 @@
     "@codesandbox/sandpack-react": "^2.12.1",
     "@performer/core": "workspace:*",
     "@vitejs/plugin-react": "^4.2.1",
+    "consola": "^3.2.3",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "react": "^18.2.0",

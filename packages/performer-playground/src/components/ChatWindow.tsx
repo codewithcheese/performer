@@ -12,6 +12,7 @@ import { Alert } from "./Alert.js";
 
 export function ChatWindow({ App }: { App: Component<any> }) {
   const { events, sendMessage } = usePerformerClient(App);
+  console.log("events", events);
 
   return (
     <div role="presentation" className="flex h-full flex-col">
@@ -20,14 +21,12 @@ export function ChatWindow({ App }: { App: Component<any> }) {
           <div className="absolute left-0 right-0">
             <ModelSelect />
             {events.map((event, index) => {
-              if (
-                event instanceof PerformerMessageEvent &&
-                event.detail.message.role !== "assistant"
-              ) {
+              if (event instanceof PerformerMessageEvent) {
                 return <Message key={index} message={event.detail.message} />;
               } else if (event instanceof PerformerDeltaEvent) {
                 return (
                   <Message
+                    key={index}
                     message={
                       event.detail.delta as {
                         role: "assistant";
