@@ -5,7 +5,7 @@ import {
   serialize,
 } from "../../src/index.js";
 import { diff } from "deep-diff";
-import * as _ from "lodash";
+import * as _ from "lodash-es";
 import { Signal } from "@preact/signals-core";
 import { expect } from "vitest";
 import { logger } from "../../src/util/log.js";
