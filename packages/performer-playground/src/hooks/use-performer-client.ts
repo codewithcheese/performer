@@ -42,12 +42,7 @@ export function usePerformerClient(app: Component<any> | null) {
             return [...prevEvents, event];
           }
           concatDelta(previous.detail.delta, event.detail.delta);
-          const spliced = prevEvents.toSpliced(
-            prevEvents.length - 1,
-            1,
-            previous,
-          );
-          return spliced;
+          return prevEvents.toSpliced(prevEvents.length - 1, 1, previous);
         });
       });
       performer.start();
