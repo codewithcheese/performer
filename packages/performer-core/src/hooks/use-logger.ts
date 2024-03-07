@@ -1,6 +1,5 @@
 import { useRenderScope } from "./use-render-scope.js";
-import log from "loglevel";
-import { toLogFmt } from "../util/log.js";
+import { logger, toLogFmt } from "../util/log.js";
 
 type Pairs = [string, any][];
 
@@ -18,19 +17,19 @@ export function useLogger() {
   };
   return {
     trace(message: string | Pairs) {
-      log.trace(format(message));
+      logger.trace(format(message));
     },
     debug(message: string | Pairs) {
-      log.debug(format(message));
+      logger.debug(format(message));
     },
     info(message: string | Pairs) {
-      log.info(format(message));
+      logger.info(format(message));
     },
     error(message: string | Pairs) {
-      log.error(format(message));
+      logger.error(format(message));
     },
     warn(message: string | Pairs) {
-      log.warn(format(message));
+      logger.warn(format(message));
     },
   };
 }
