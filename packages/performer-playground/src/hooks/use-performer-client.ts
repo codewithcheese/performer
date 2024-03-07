@@ -40,19 +40,19 @@ export function usePerformerClient(app: Component<any> | null) {
             );
 
             if (previous) {
-              consola.debug(
-                `usePerformerClient event=${event.type} message="Found delta, discarding message." role="${event.detail.message.role}"`,
+              consola.info(
+                `usePerformerClient event=${event.type} message="Found delta, discarding message." role=${event.detail.message.role} uid=${event.detail.uid}`,
               );
               return prevEvents;
             } else {
-              consola.debug(
-                `usePerformerClient event=${event.type} message="Adding message." content="${event.detail.message.content}"`,
+              consola.info(
+                `usePerformerClient event=${event.type} message="Adding message." content="${event.detail.message.content}" role=${event.detail.message.role} uid=${event.detail.uid}`,
               );
               return [...prevEvents, event];
             }
           });
         } else if (!(event instanceof PerformerDeltaEvent)) {
-          consola.debug(`usePerformerClient event=${event.type}`);
+          consola.info(`usePerformerClient event=${event.type}`);
           return setEvents((prevEvents) => [...prevEvents, event]);
         } else {
           setEvents((prevEvents) => {
@@ -62,13 +62,13 @@ export function usePerformerClient(app: Component<any> | null) {
                 prev.detail.uid === event.detail.uid,
             );
             if (!previous) {
-              consola.debug(
-                `usePerformerClient event=${event.type} message="No previous delta, adding new."`,
+              consola.info(
+                `usePerformerClient event=${event.type} message="No previous delta, adding new." uid=${event.detail.uid}`,
               );
               return [...prevEvents, event];
             }
-            consola.debug(
-              `usePerformerClient event=${event.type} message="Previous delta found, concatenating"`,
+            consola.info(
+              `usePerformerClient event=${event.type} message="Previous delta found, concatenating" uid=${event.detail.uid}`,
             );
             concatDelta(previous.detail.delta, event.detail.delta);
             return prevEvents.toSpliced(prevEvents.length - 1, 1, previous);
