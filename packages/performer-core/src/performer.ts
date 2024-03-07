@@ -3,21 +3,22 @@ import type { PerformerNode } from "./node.js";
 import { render, resolveMessages } from "./render.js";
 import {
   PerformerErrorEvent,
+  PerformerEvent,
   PerformerEventMap,
   PerformerLifecycleEvent,
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
-import { logger, logEvent, nodeToStr, toLogFmt } from "./util/log.js";
-import { TypedEventTarget } from "./util/typed-event-target.js";
+import { logEvent, logger, nodeToStr, toLogFmt } from "./util/log.js";
 import { getEnv } from "./util/env.js";
-import { type LogType, LogLevels } from "consola";
+import { LogLevels, type LogType } from "consola";
+import Emittery from "emittery";
 
 type PerformerOptions = {
   throwOnError?: boolean;
   logLevel?: LogType;
 };
 
-export class Performer extends TypedEventTarget<PerformerEventMap> {
+export class Performer {
   #uid: string;
 
   app: PerformerElement;
@@ -38,8 +39,9 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
 
   threadNonce = 0;
 
+  emitter = new Emittery<PerformerEventMap>();
+
   constructor(app: PerformerElement, options: PerformerOptions = {}) {
-    super();
     this.#uid = crypto.randomUUID();
     this.app = app;
     this.options = options;
@@ -184,5 +186,24 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     } else {
       this.dispatchEvent(new PerformerErrorEvent(threadId, error));
     }
+  }
+
+  /* Events */
+
+  addEventListener<Type extends keyof PerformerEventMap>(
+    type: Type,
+    listener: (data: PerformerEventMap[Type]) => void,
+  ) {
+    if (type === "*") {
+      this.emitter.onAny((_, data) =>
+        listener(data as PerformerEventMap[Type]),
+      );
+    } else {
+      this.emitter.on(type, listener);
+    }
+  }
+
+  dispatchEvent(event: PerformerEventMap[keyof PerformerEventMap]) {
+    this.emitter.emit(event.type as keyof PerformerEventMap, event);
   }
 }
