@@ -35,15 +35,24 @@ export function usePerformerClient(app: Component<any> | null) {
         }
         setEvents((prevEvents) => {
           const previous = prevEvents.findLast(
-            (event): event is PerformerDeltaEvent =>
-              event instanceof PerformerDeltaEvent &&
-              event.detail.uid === event.detail.uid,
+            (prev): prev is PerformerDeltaEvent =>
+              prev instanceof PerformerDeltaEvent &&
+              prev.detail.uid === event.detail.uid,
           );
+          console.log("Previous event", previous);
           if (!previous) {
+            console.log("Appending delta event");
             return [...prevEvents, event];
           }
           concatDelta(previous.detail.delta, event.detail.delta);
-          return prevEvents.toSpliced(prevEvents.length - 1, 1, previous);
+          console.log("concat delta", previous, event);
+          const spliced = prevEvents.toSpliced(
+            prevEvents.length - 1,
+            1,
+            previous,
+          );
+          console.log("spliced", spliced);
+          return spliced;
         });
       });
       performer.start();
