@@ -14,7 +14,6 @@ import {
   MessageDelta,
   PerformerMessage,
 } from "./message.js";
-import log from "loglevel";
 import * as _ from "lodash";
 import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
@@ -24,6 +23,7 @@ import {
   toLogFmt,
   logMessageResolved,
   logPaused,
+  logger,
 } from "./util/log.js";
 import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
@@ -55,7 +55,7 @@ type PausedOp = {
 export type RenderOp = CreateOp | ResumeOp | PausedOp;
 
 export async function render(performer: Performer) {
-  log.debug("call=render");
+  logger.debug("call=render");
   try {
     const ops = evaluateRenderOps(
       "root",
@@ -392,7 +392,7 @@ function freeNode(
   freeRemaining: boolean = false,
 ) {
   try {
-    log.debug(
+    logger.debug(
       toLogFmt([
         ["free", "node"],
         ["threadId", node.threadId],

@@ -116,15 +116,15 @@ importers:
       chai:
         specifier: ^5.0.3
         version: 5.0.3
+      consola:
+        specifier: ^3.2.3
+        version: 3.2.3
       deep-diff:
         specifier: ^1.0.2
         version: 1.0.2
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      loglevel:
-        specifier: ^1.8.1
-        version: 1.8.1
       nanoid:
         specifier: ^3.3.7
         version: 3.3.7
@@ -134,6 +134,9 @@ importers:
       tslib:
         specifier: ^2.6.2
         version: 2.6.2
+      tslog:
+        specifier: ^4.9.2
+        version: 4.9.2
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -2646,6 +2649,11 @@ packages:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
     requiresBuild: true
 
+  /consola@3.2.3:
+    resolution: {integrity: sha512-I5qxpzLv+sJhTVEoLYNcTW+bThDCPsit0vLNKShZx6rLtpilNpmmeTPaeqJb9ZE9dV3DGaeby6Vuhrw38WjeyQ==}
+    engines: {node: ^14.18.0 || >=16.10.0}
+    dev: false
+
   /console-control-strings@1.1.0:
     resolution: {integrity: sha512-ty/fTekppD2fIwRvnZAVdeOiGd1c7YXEixbgJTNzqcxJWKQnjJ/V1bNEEE6hygpM3WjwHFUVK6HTjWSzV4a8sQ==}
     requiresBuild: true
@@ -4738,11 +4746,6 @@ packages:
 
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
-    dev: false
-
-  /loglevel@1.8.1:
-    resolution: {integrity: sha512-tCRIJM51SHjAayKwC+QAg8hT8vg6z7GSgLJKGvzuPb1Wc+hLzqtuVLxp6/HzSPOozuK+8ErAhy7U/sVzw8Dgfg==}
-    engines: {node: '>= 0.6.0'}
     dev: false
 
   /longest-streak@3.1.0:
@@ -7193,6 +7196,11 @@ packages:
 
   /tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
+    dev: false
+
+  /tslog@4.9.2:
+    resolution: {integrity: sha512-wBM+LRJoNl34Bdu8mYEFxpvmOUedpNUwMNQB/NcuPIZKwdDde6xLHUev3bBjXQU7gdurX++X/YE7gLH8eXYsiQ==}
+    engines: {node: '>=16'}
     dev: false
 
   /tsx@4.7.0:

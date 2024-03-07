@@ -7,14 +7,14 @@ import {
   PerformerLifecycleEvent,
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
-import log from "loglevel";
-import { logEvent, nodeToStr, toLogFmt } from "./util/log.js";
+import { logger, logEvent, nodeToStr, toLogFmt } from "./util/log.js";
 import { TypedEventTarget } from "./util/typed-event-target.js";
-import { LogLevelDesc } from "loglevel";
+import { getEnv } from "./util/env.js";
+import { type LogType, LogLevels } from "consola";
 
 type PerformerOptions = {
   throwOnError?: boolean;
-  logLevel?: "trace" | "debug" | "info" | "warn" | "error";
+  logLevel?: LogType;
 };
 
 export class Performer extends TypedEventTarget<PerformerEventMap> {
@@ -43,25 +43,17 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
     this.#uid = crypto.randomUUID();
     this.app = app;
     this.options = options;
-    log.setLevel(
-      (globalThis.process &&
-        process.env["LOGLEVEL"] != null &&
-        (process.env["LOGLEVEL"] as LogLevelDesc)) ||
-        options.logLevel ||
-        "info",
-    );
-    if (
-      this.options.throwOnError === undefined &&
-      globalThis.process &&
-      process.env["VITEST"] != null
-    ) {
+    const logLevel: LogType =
+      (getEnv("LOGLEVEL") as LogType) || options.logLevel || "info";
+    logger.level = LogLevels[logLevel];
+    if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
     }
     this.addEventListener("delta", (delta) => {
       logEvent(delta);
     });
     this.addEventListener("error", (error) => {
-      log.error(error.detail.message);
+      logger.error(error.detail.message);
       this.errors.push(error);
     });
   }
@@ -94,7 +86,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
   }
 
   queueRender(reason: string) {
-    log.debug(
+    logger.debug(
       toLogFmt([
         ["call", "queueRender"],
         ["reason", reason],
@@ -123,7 +115,7 @@ export class Performer extends TypedEventTarget<PerformerEventMap> {
    */
 
   setInputNode(node: PerformerNode) {
-    log.debug(
+    logger.debug(
       toLogFmt([
         ["input", "pending"],
         ["node", nodeToStr(node)],

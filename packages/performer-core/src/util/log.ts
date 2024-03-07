@@ -9,8 +9,10 @@ import {
   PerformerNode,
   RenderOp,
 } from "../index.js";
-import log from "loglevel";
+import { consola, createConsola } from "consola";
 import { isImageContent, isTextContent } from "../message.js";
+
+export const logger = createConsola({});
 
 export function logMessageResolved(node: PerformerNode) {
   const message = nodeToMessage(node);
@@ -43,7 +45,7 @@ export function logMessageResolved(node: PerformerNode) {
     pairs.push(["function_call.arguments", message.function_call.arguments]);
   }
   pairs.push(["node", nodeToStr(node)]);
-  log.info(toLogFmt(pairs));
+  logger.info(toLogFmt(pairs));
 }
 
 export function logEvent(event: PerformerEvent) {
@@ -89,9 +91,9 @@ export function logEvent(event: PerformerEvent) {
   }
 
   if (event instanceof PerformerDeltaEvent) {
-    log.debug(toLogFmt(pairs));
+    logger.debug(toLogFmt(pairs));
   } else {
-    log.info(toLogFmt(pairs));
+    logger.info(toLogFmt(pairs));
   }
 }
 
@@ -119,9 +121,9 @@ export function logOp(threadId: string, op: RenderOp) {
 
   pairs.push(["threadId", threadId]);
   if (op.type === "PAUSED") {
-    log.debug(toLogFmt(pairs));
+    logger.debug(toLogFmt(pairs));
   } else {
-    log.info(toLogFmt(pairs));
+    logger.info(toLogFmt(pairs));
   }
 }
 
@@ -152,7 +154,7 @@ export function toLogFmt(pairs: [string, any][]): string {
 }
 
 export function logPaused(node: PerformerNode, pending: string) {
-  log.info(
+  logger.info(
     toLogFmt([
       ["node", "paused"],
       ["pending", pending],

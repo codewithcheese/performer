@@ -34,16 +34,20 @@
     "@preact/signals-core": "^1.5.1",
     "@types/deep-diff": "^1.0.5",
     "chai": "^5.0.3",
+    "consola": "^3.2.3",
     "deep-diff": "^1.0.2",
     "lodash": "^4.17.21",
-    "loglevel": "^1.8.1",
     "nanoid": "^3.3.7",
     "openai": "^4.24.7",
     "tslib": "^2.6.2",
+    "tslog": "^4.9.2",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.21.4"
   },
   "tshy": {
+    "dialects": [
+      "esm"
+    ],
     "exports": {
       ".": "./src/index.ts",
       "./jsx-runtime": "./src/jsx/index.ts",
@@ -55,33 +59,19 @@
       "import": {
         "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/index.d.ts",
-        "default": "./dist/commonjs/index.js"
       }
     },
     "./jsx-runtime": {
       "import": {
         "types": "./dist/esm/jsx/index.d.ts",
         "default": "./dist/esm/jsx/index.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/jsx/index.d.ts",
-        "default": "./dist/commonjs/jsx/index.js"
       }
     },
     "./jsx-dev-runtime": {
       "import": {
         "types": "./dist/esm/jsx/index.d.ts",
         "default": "./dist/esm/jsx/index.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/jsx/index.d.ts",
-        "default": "./dist/commonjs/jsx/index.js"
       }
     }
-  },
-  "main": "./dist/commonjs/index.js",
-  "types": "./dist/commonjs/index.d.ts"
+  }
 }
