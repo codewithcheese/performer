@@ -27,7 +27,7 @@ const server = await createServer({
   root: rootPath,
   optimizeDeps: {
     // when root is in node_modules vite does not detect dependencies that need to be pre-bundled
-    include: ['react-dom', 'react-dom/client', 'loglevel'],
+    include: ['react-dom', 'react-dom/client', 'react-syntax-highlighter', 'style-to-object', 'micromark', 'unified'],
     // it seems vite also ignore entries when the root is in node modules
     // entries: ['./src/main.tsx']
   },
