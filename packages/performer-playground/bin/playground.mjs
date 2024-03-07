@@ -7,6 +7,7 @@ import { createServer } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import { transform } from "esbuild";
+import { watch } from "chokidar";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,6 +36,22 @@ const server = await createServer({
     port: 3011,
   },
   plugins: [
+    /**
+     * Apps are imported using import.meta.glob however this import is not invalidated when adding a file.
+     * This plugin watches the app directory and reloads the import module.
+     * fixme: method to load new apps with full page reload
+     */
+    {
+      name: "watch-apps",
+      configureServer(server) {
+        function reloadGlobModule() {
+          const importModule = server.moduleGraph.getModuleById(path.join(rootPath, './src/lib/import.ts'))
+          importModule && server.reloadModule(importModule)
+        }
+        const watcher = watch(appPath);
+        watcher.on("add", reloadGlobModule);
+      },
+    },
     {
       /**
        * Support JSX transpiling for .sandpack files.
