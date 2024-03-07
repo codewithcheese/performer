@@ -122,6 +122,9 @@ importers:
       deep-diff:
         specifier: ^1.0.2
         version: 1.0.2
+      emittery:
+        specifier: ^1.0.3
+        version: 1.0.3
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
@@ -2977,6 +2980,11 @@ packages:
 
   /electron-to-chromium@1.4.633:
     resolution: {integrity: sha512-7BvxzXrHFliyQ1oZc6NRMjyEaKOO1Ma1NY98sFZofogWlm+klLWSgrDw7EhatiMgi4R4NV+iWxDdxuIKXtPbOw==}
+    dev: false
+
+  /emittery@1.0.3:
+    resolution: {integrity: sha512-tJdCJitoy2lrC2ldJcqN4vkqJ00lT+tOWNT1hBJjO/3FDMJa5TTIiYGCKGkn/WfCyOzUMObeohbVTj00fhiLiA==}
+    engines: {node: '>=14.16'}
     dev: false
 
   /emoji-regex@8.0.0:
