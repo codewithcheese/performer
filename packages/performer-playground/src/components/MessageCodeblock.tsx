@@ -3,7 +3,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
   oneLight,
   oneDark,
-} from "react-syntax-highlighter/dist/cjs/styles/prism";
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useCopyToClipboard } from "../hooks/use-copy-to-clipboard.js";
 import { DownloadIcon } from "./icons/DownloadIcon.js";
 import { CheckIcon } from "./icons/CheckIcon.js";
