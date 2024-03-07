@@ -341,6 +341,7 @@ function dispatchMessageElement(
   }
   performer.dispatchEvent(
     new PerformerMessageEvent(node.threadId, {
+      uid: node.uid,
       message: structuredClone(message),
     }),
   );

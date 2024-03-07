@@ -1,6 +1,7 @@
 import { Divider, Message, ModelSelect, Splash } from "./index.js";
 import {
   Component,
+  PerformerDeltaEvent,
   PerformerErrorEvent,
   PerformerLifecycleEvent,
   PerformerMessageEvent,
@@ -21,6 +22,18 @@ export function ChatWindow({ App }: { App: Component<any> }) {
             {events.map((event, index) => {
               if (event instanceof PerformerMessageEvent) {
                 return <Message key={index} message={event.detail.message} />;
+              } else if (event instanceof PerformerDeltaEvent) {
+                return (
+                  <Message
+                    key={index}
+                    message={
+                      event.detail.delta as {
+                        role: "assistant";
+                        content: string;
+                      }
+                    }
+                  />
+                );
               } else if (event instanceof PerformerLifecycleEvent) {
                 return (
                   <Divider

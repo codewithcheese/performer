@@ -4,6 +4,8 @@ import { Thread } from "@performer/core";
 import { createTool } from "@performer/core";
 import { z } from "zod";
 
+export const name = "Follow-up questions";
+
 const followUpQuestions = createTool(
   "followUpQuestions",
   z.object({
