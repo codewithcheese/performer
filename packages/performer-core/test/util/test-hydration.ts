@@ -89,13 +89,12 @@ function filterTransient(lhs: any, rhs: any) {
       return true;
     }
 
-    // filter out Performer promises
+    // filter out Performer props
     if (
       key === "renderPromised" ||
-      key === "listen" ||
-      key === "finish" ||
       key === "hasFinished" ||
-      key === "options"
+      key === "options" ||
+      key === "emitter"
     ) {
       return true;
     }

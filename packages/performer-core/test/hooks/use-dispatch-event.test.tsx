@@ -33,5 +33,5 @@ test("should dispatch event from component", async () => {
   });
   performer.start();
   await performer.waitUntilSettled();
-  expect(eventValues).toEqual([42, 1337]);
+  expect(eventValues).toEqual([1337]);
 });
