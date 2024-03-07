@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.27
+
+### Patch Changes
+
+- 72e4c47: Fix playground cjs dependencies
+  - @performer/core@0.0.27
+
 ## 0.0.26
 
 ### Patch Changes
