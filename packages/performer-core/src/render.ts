@@ -14,7 +14,7 @@ import {
   MessageDelta,
   PerformerMessage,
 } from "./message.js";
-import * as _ from "lodash";
+import { isEqualWith } from "lodash-es";
 import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
 import {
@@ -559,7 +559,7 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
   return (
     (node.element.type === element.type ||
       (typeof element.type === "symbol" && node.type === Fragment)) &&
-    _.isEqualWith(node.element.props, element.props, functionComparison)
+    isEqualWith(node.element.props, element.props, functionComparison)
   );
 }
 
