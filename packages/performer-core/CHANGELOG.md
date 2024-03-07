@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.26
+
+### Patch Changes
+
+- 1630c13: Switch to lodash-es
+
 ## 0.0.25
 
 ### Patch Changes

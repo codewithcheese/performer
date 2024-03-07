@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.26
+
+### Patch Changes
+
+- Updated dependencies [1630c13]
+  - @performer/core@0.0.26
+
 ## 0.0.25
 
 ### Patch Changes
