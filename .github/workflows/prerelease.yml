@@ -173,9 +173,11 @@ jobs:
           LOGLEVEL: silent
 
       - run: pnpm playwright install chromium
+        working-directory: ./my-project
 
       - name: Run Playwright tests
         run: pnpm run e2e
+        working-directory: ./my-project
         env:
           DEBUG: "pw:webserver"
 
