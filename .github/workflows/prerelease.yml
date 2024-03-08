@@ -109,11 +109,6 @@ jobs:
       - name: setup pnpm config
         run: pnpm config set store-dir $PNPM_CACHE_FOLDER
 
-      - name: Extract commit SHA
-        id: extract_sha
-        shell: bash
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Create project
         if: runner.os != 'Windows'
         run: |
@@ -132,6 +127,7 @@ jobs:
           git_sha=$(echo $GITHUB_SHA | cut -c1-7)             
           pkgVersion="${{ needs.prerelease.outputs.coreVersion }}-rc.$git_sha"          
           sed -i.bak "s|\"@performer/core\": \"latest\"|\"@performer/core\": \"$pkgVersion\"|" package.json && rm -f package.json.bak
+          sed -i.bak "s|\"@performer/playground\": \"latest\"|\"@performer/playground\": \"$pkgVersion\"|" package.json && rm -f package.json.bak
           cat package.json
         working-directory: ./my-project
 
@@ -145,11 +141,11 @@ jobs:
           $path = "package.json"
           $content = Get-Content $path -Raw
           $newContent = $content -replace '"@performer/core":\s*"latest"', "`"@performer/core`": `"$pkgVersion`""
+          $newContent = $newContent -replace '"@performer/playground":\s*"latest"', "`"@performer/playground`": `"$pkgVersion`""
           Set-Content $path -Value $newContent
           Get-Content $path
         shell: pwsh
         working-directory: ./my-project
-
 
       - name: Install performer app dependencies
         run: pnpm install
