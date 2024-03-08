@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.30
+
+### Patch Changes
+
+- 6576943: Improve render error handling
+
 ## 0.0.29
 
 ### Patch Changes
