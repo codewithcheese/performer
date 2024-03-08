@@ -85,7 +85,7 @@ jobs:
         run: |
           git_sha=$(git rev-parse --short HEAD)
           PACKAGE_NAME="@performer/core"
-          VERSION="${{ steps.version.outputs.version }}-rc.$git_sha"
+          VERSION="${{ steps.version.outputs.coreVersion }}-rc.$git_sha"
           RETRY_INTERVAL=5 # Time in seconds to wait before retrying
       
           until npm view $PACKAGE_NAME@$VERSION version &>/dev/null; do
