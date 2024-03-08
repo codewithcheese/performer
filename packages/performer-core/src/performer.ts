@@ -51,9 +51,7 @@ export class Performer {
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
     }
-    this.addEventListener("delta", (delta) => {
-      logEvent(delta);
-    });
+    this.addEventListener("*", logEvent);
     this.addEventListener("error", (error) => {
       logger.error(error.detail.message);
       this.errors.push(error);
