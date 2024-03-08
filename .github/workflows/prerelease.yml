@@ -135,6 +135,22 @@ jobs:
           cat package.json
         working-directory: ./my-project
 
+      - name: Update performer dependency to prerelease (Windows)
+        if: runner.os == 'Windows'
+        env:
+          CORE_VERSION: ${{ needs.prerelease.outputs.coreVersion }}
+        run: |
+          $git_sha = "${{ github.sha }}".Substring(0, 7)
+          $pkgVersion = "$env:CORE_VERSION-rc.$git_sha"
+          $path = "package.json"
+          $content = Get-Content $path -Raw
+          $newContent = $content -replace '"@performer/core":\s*"latest"', "`"@performer/core`": `"$pkgVersion`""
+          Set-Content $path -Value $newContent
+          Get-Content $path
+        shell: pwsh
+        working-directory: ./my-project
+
+
       - name: Install performer app dependencies
         run: pnpm install
         working-directory: ./my-project
