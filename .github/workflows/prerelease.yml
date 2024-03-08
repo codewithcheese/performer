@@ -172,3 +172,10 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LOGLEVEL: silent
 
+      - run: pnpm playwright install chromium
+
+      - name: Run Playwright tests
+        run: pnpm run e2e
+        env:
+          DEBUG: "pw:webserver"
+

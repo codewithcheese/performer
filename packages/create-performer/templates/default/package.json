@@ -3,10 +3,12 @@
     "private": true,
     "version": null,
     "scripts": {
+        "playground": "playground ./src",
         "test": "vitest",
-        "playground": "playground ./src"
+        "e2e": "playwright test"
     },
     "devDependencies": {
+        "@playwright/test": "^1.42.1",
         "dotenv": "^16.4.4",
         "vitest": "^0.34.6"
     },
