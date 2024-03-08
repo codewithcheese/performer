@@ -1,5 +1,12 @@
 # performer-examples
 
+## 0.0.30
+
+### Patch Changes
+
+- @performer/core@0.0.31
+- @performer/playground@0.0.31
+
 ## 0.0.29
 
 ### Patch Changes

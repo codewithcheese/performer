@@ -1,5 +1,12 @@
 # create-performer
 
+## 0.0.31
+
+### Patch Changes
+
+- aec1902: Add e2e test to create-performer default template
+- d272c67: Fix playwright webserver command
+
 ## 0.0.30
 
 ## 0.0.29

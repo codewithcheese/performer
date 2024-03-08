@@ -4,7 +4,7 @@
   "bin": {
     "playground": "./bin/playground.mjs"
   },
-  "version": "0.0.30",
+  "version": "0.0.31",
   "type": "module",
   "scripts": {
     "prepare": "tshy",
