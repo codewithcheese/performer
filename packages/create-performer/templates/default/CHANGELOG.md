@@ -4,6 +4,13 @@
 
 ### Patch Changes
 
+- @performer/core@0.0.31
+- @performer/playground@0.0.31
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [6576943]
   - @performer/playground@0.0.30
   - @performer/core@0.0.30
