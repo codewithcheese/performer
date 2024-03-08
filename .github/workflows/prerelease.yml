@@ -8,7 +8,7 @@ jobs:
   prerelease:
     if: github.head_ref == 'changeset-release/master'
     outputs:
-      packages: ${{ steps.version.outputs.packages }}
+      coreVersion: ${{ steps.version.outputs.coreVersion }}
     runs-on: ubuntu-latest
     steps:
 
@@ -38,7 +38,6 @@ jobs:
 
           # Get the list of packages in the workspace
           packages=$(pnpm m ls --json --depth=-1)          
-          echo "packages=$packages" >> $GITHUB_ENV
 
           # Iterate over each package
           for package in $(echo "$packages" | jq -c '.[]'); do
@@ -55,6 +54,10 @@ jobs:
               # Update the package version in package.json using jq
               jq --arg version "$new_version" '.version = $version' "$path/package.json" > tmp.json && mv tmp.json "$path/package.json"
               cat "$path/package.json"
+          
+              if [ "$name" = "@performer/core" ]; then
+                echo "coreVersion=$version" >> $GITHUB_OUTPUT
+              fi
             fi
           done
 
@@ -77,6 +80,20 @@ jobs:
           else
             jq -r '.publishedPackages[] | "- [\(.name)@\(.version)](https://www.npmjs.com/package/\(.name)/v/\(.version))"' pnpm-publish-summary.json >> $GITHUB_STEP_SUMMARY
           fi
+
+      - name: Wait for package
+        run: |
+          git_sha=$(git rev-parse --short HEAD)
+          PACKAGE_NAME="@performer/core"
+          VERSION="${{ steps.version.outputs.coreVersion }}-rc.$git_sha"
+          RETRY_INTERVAL=5 # Time in seconds to wait before retrying
+      
+          until npm view $PACKAGE_NAME@$VERSION version &>/dev/null; do
+          echo "Waiting for version $VERSION of package $PACKAGE_NAME to become available..."
+          sleep $RETRY_INTERVAL
+          done
+      
+          echo "Version $VERSION of package $PACKAGE_NAME is now available. Proceeding with the workflow..."
 
   test-create-performer:
     needs: prerelease
@@ -106,11 +123,6 @@ jobs:
       - name: setup pnpm config
         run: pnpm config set store-dir $PNPM_CACHE_FOLDER
 
-      - name: Extract commit SHA
-        id: extract_sha
-        shell: bash
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
       - name: Create project
         if: runner.os != 'Windows'
         run: |
@@ -126,8 +138,28 @@ jobs:
       - name: Update performer dependency to prerelease
         if: runner.os != 'Windows'
         run: |
-          git_sha=$(echo $GITHUB_SHA | cut -c1-7)   
-          sed -i 's/"@performer/core": "latest"/"@performer/core": "0.0.23"/' package.json
+          git_sha=$(echo $GITHUB_SHA | cut -c1-7)             
+          pkgVersion="${{ needs.prerelease.outputs.coreVersion }}-rc.$git_sha"          
+          sed -i.bak "s|\"@performer/core\": \"latest\"|\"@performer/core\": \"$pkgVersion\"|" package.json && rm -f package.json.bak
+          sed -i.bak "s|\"@performer/playground\": \"latest\"|\"@performer/playground\": \"$pkgVersion\"|" package.json && rm -f package.json.bak
+          cat package.json
+        working-directory: ./my-project
+
+      - name: Update performer dependency to prerelease (Windows)
+        if: runner.os == 'Windows'
+        env:
+          CORE_VERSION: ${{ needs.prerelease.outputs.coreVersion }}
+        run: |
+          $git_sha = "${{ github.sha }}".Substring(0, 7)
+          $pkgVersion = "$env:CORE_VERSION-rc.$git_sha"
+          $path = "package.json"
+          $content = Get-Content $path -Raw
+          $newContent = $content -replace '"@performer/core":\s*"latest"', "`"@performer/core`": `"$pkgVersion`""
+          $newContent = $newContent -replace '"@performer/playground":\s*"latest"', "`"@performer/playground`": `"$pkgVersion`""
+          Set-Content $path -Value $newContent
+          Get-Content $path
+        shell: pwsh
+        working-directory: ./my-project
 
       - name: Install performer app dependencies
         run: pnpm install
