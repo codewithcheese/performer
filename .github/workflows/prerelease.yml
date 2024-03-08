@@ -131,6 +131,8 @@ jobs:
         run: |
           git_sha=$(echo $GITHUB_SHA | cut -c1-7)   
           echo coreVersion ${{ needs.prerelease.outputs.coreVersion }}
+          pkg="${{ needs.prerelease.outputs.coreVersion }}@rc.$git_sha"
+          echo pkg $pkg
           sed -i 's/"@performer/core": "latest"/"@performer/core": "${{ needs.prerelease.outputs.coreVersion }}@rc.$git_sha"/' package.json
           cat package.json
         working-directory: ./my-project
