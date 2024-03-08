@@ -32,7 +32,7 @@ export class Performer {
   inputQueue: PerformerMessage[] = [];
   inputNode: PerformerNode | undefined;
 
-  controller = new AbortController();
+  abortController = new AbortController();
 
   renderQueued = false;
   renderPromised: ReturnType<typeof render> | null = null;
@@ -51,9 +51,7 @@ export class Performer {
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
     }
-    this.addEventListener("delta", (delta) => {
-      logEvent(delta);
-    });
+    this.addEventListener("*", logEvent);
     this.addEventListener("error", (error) => {
       logger.error(error.detail.message);
       this.errors.push(error);
@@ -68,8 +66,8 @@ export class Performer {
     this.dispatchEvent(
       new PerformerLifecycleEvent("root", { state: "aborted" }),
     );
-    this.controller.abort();
-    this.finish();
+    this.abortController.abort();
+    // this.finish();
   }
 
   finish() {
@@ -80,7 +78,7 @@ export class Performer {
   }
 
   get aborted() {
-    return this.controller.signal.aborted;
+    return this.abortController.signal.aborted;
   }
 
   getAllMessages() {
@@ -180,12 +178,12 @@ export class Performer {
   }
 
   onError(threadId: string, error: unknown) {
+    this.dispatchEvent(new PerformerErrorEvent(threadId, error));
     this.finish();
     if (this.options.throwOnError) {
       throw error;
-    } else {
-      this.dispatchEvent(new PerformerErrorEvent(threadId, error));
     }
+    return Promise.resolve();
   }
 
   /* Events */

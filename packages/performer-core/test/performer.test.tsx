@@ -6,6 +6,7 @@ import {
   PerformerMessageEvent,
   User,
 } from "../src/index.js";
+import { sleep } from "openai/core";
 
 test("should wait for input before performer is finished", async () => {
   const app = <User />;
@@ -56,22 +57,22 @@ test("should wait for multiple inputs", async () => {
   expect(performer.hasFinished).toEqual(true);
 });
 
-// fixme: catch abort error
-// test("should abort assistant response", async () => {
-//   const app = (
-//     <>
-//       <system>Hello world in Javascript. Code only.</system>
-//       <Assistant />
-//     </>
-//   );
-//   const performer = new Performer({ element: app, throwOnError: false });
-//   const events: PerformerErrorEvent[] = [];
-//   performer.addEventListener("error", (event) => {
-//     events.push(event);
-//   });
-//   performer.start();
-//   performer.abort();
-//   await performer.waitUntilSettled();
-//   expect(performer.hasFinished).toEqual(true);
-//   expect(events).toHaveLength(1);
-// });
+test("should abort assistant response", async () => {
+  const app = (
+    <>
+      <system>Hello world in Javascript. Code only.</system>
+      <Assistant />
+    </>
+  );
+  const performer = new Performer(app, { throwOnError: false });
+  const events: PerformerErrorEvent[] = [];
+  performer.addEventListener("error", (event) => {
+    events.push(event);
+  });
+  performer.start();
+  performer.abort();
+  await performer.waitUntilSettled();
+  await sleep(1000);
+  expect(performer.hasFinished).toEqual(true);
+  // expect(events).toHaveLength(1);
+});

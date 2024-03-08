@@ -12,6 +12,7 @@ import "dotenv/config";
 import { testHydration } from "../util/test-hydration.js";
 import { z } from "zod";
 import { createLookup } from "../util/lookup-node.js";
+import { sleep } from "openai/core";
 
 test("should call model with messages", async () => {
   const app = (
@@ -95,6 +96,36 @@ test("should include tool message before resolving", async () => {
   await performer.waitUntilSettled();
   testHydration(performer);
 });
+
+test("should emit error event when apiKey is incorrect", async () => {
+  function App() {
+    return () => (
+      <>
+        <system>The answer is 42. Be concise.</system>
+        <user>What is the answer?</user>
+        <Assistant apiKey="deadbeef" />
+      </>
+    );
+  }
+  const performer = new Performer(<App />, { throwOnError: false });
+  let hasErrorEvent = false;
+  performer.addEventListener("error", () => {
+    hasErrorEvent = true;
+  });
+
+  process.on("unhandledRejection", (reason, promise) => {
+    console.error("Unhandled Rejection at:", promise, "reason:", reason);
+    // Handle the error appropriately
+  });
+
+  process.setUncaughtExceptionCaptureCallback((err) => {
+    console.error(err);
+  });
+
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(hasErrorEvent, "Expected error").toEqual(true);
+}, 10_000);
 
 test.skipIf(!process.env.OPENROUTER_API_KEY)(
   "should use open router",

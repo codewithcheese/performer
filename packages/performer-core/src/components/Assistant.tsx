@@ -73,15 +73,15 @@ export const Assistant: Component<AssistantProps> = function ({
       ...(defaultHeaders ? { defaultHeaders } : {}),
       ...(dangerouslyAllowBrowser ? { dangerouslyAllowBrowser } : {}),
     });
-    const stream = await openai.chat.completions.create({
-      model,
-      messages,
-      stream: true,
-      ...(options ? options : {}),
-    });
-    controller.signal.addEventListener("abort", () => {
-      stream.controller.abort();
-    });
+    const stream = await openai.chat.completions.create(
+      {
+        model,
+        messages,
+        stream: true,
+        ...(options ? options : {}),
+      },
+      { signal: controller.signal },
+    );
     return new ReadableStream<MessageDelta>({
       async start(controller) {
         for await (const chunk of stream) {

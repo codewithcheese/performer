@@ -7,6 +7,8 @@ on:
 jobs:
   prerelease:
     if: github.head_ref == 'changeset-release/master'
+    outputs:
+      packages: ${{ steps.version.outputs.packages }}
     runs-on: ubuntu-latest
     steps:
 
@@ -35,7 +37,8 @@ jobs:
           git_sha=$(git rev-parse --short HEAD)        
 
           # Get the list of packages in the workspace
-          packages=$(pnpm m ls --json --depth=-1)
+          packages=$(pnpm m ls --json --depth=-1)          
+          echo "packages=$packages" >> $GITHUB_ENV
 
           # Iterate over each package
           for package in $(echo "$packages" | jq -c '.[]'); do
@@ -119,6 +122,12 @@ jobs:
         run: |
           $git_sha = $env:GITHUB_SHA.Substring(0, 7)
           npm create "performer@rc.$($git_sha)" my-project      
+
+      - name: Update performer dependency to prerelease
+        if: runner.os != 'Windows'
+        run: |
+          git_sha=$(echo $GITHUB_SHA | cut -c1-7)   
+          sed -i 's/"@performer/core": "latest"/"@performer/core": "0.0.23"/' package.json
 
       - name: Install performer app dependencies
         run: pnpm install
