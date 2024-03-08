@@ -133,7 +133,7 @@ jobs:
           echo coreVersion ${{ needs.prerelease.outputs.coreVersion }}
           pkgVersion="${{ needs.prerelease.outputs.coreVersion }}@rc.$git_sha"
           echo pkgVersion $pkgVersion
-          sed -i 's|"@performer/core": "latest"|"@performer/core": "$pkg"|' package.json
+          sed -i "s|\"@performer/core\": \"latest\"|\"@performer/core\": \"$pkgVersion\"|" package.json
           cat package.json
         working-directory: ./my-project
 
