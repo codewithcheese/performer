@@ -45,7 +45,7 @@ jobs:
           commit: "CI: Release v${{env.NEW_VERSION}}"
           publish: pnpm run ci:publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_PR_PAT }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create job summary from published packages
