@@ -8,7 +8,7 @@ jobs:
   prerelease:
     if: github.head_ref == 'changeset-release/master'
     outputs:
-      packages: ${{ steps.version.outputs.packages }}
+      coreVersion: ${{ steps.version.outputs.coreVersion }}
     runs-on: ubuntu-latest
     steps:
 
@@ -38,7 +38,6 @@ jobs:
 
           # Get the list of packages in the workspace
           packages=$(pnpm m ls --json --depth=-1)          
-          echo "packages=$packages" >> $GITHUB_ENV
 
           # Iterate over each package
           for package in $(echo "$packages" | jq -c '.[]'); do
@@ -55,6 +54,10 @@ jobs:
               # Update the package version in package.json using jq
               jq --arg version "$new_version" '.version = $version' "$path/package.json" > tmp.json && mv tmp.json "$path/package.json"
               cat "$path/package.json"
+          
+              if [ "$name" = "@performer/core" ]; then
+                echo "coreVersion=$version" >> $GITHUB_OUTPUT
+              fi
             fi
           done
 
@@ -127,7 +130,9 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           git_sha=$(echo $GITHUB_SHA | cut -c1-7)   
-          sed -i 's/"@performer/core": "latest"/"@performer/core": "0.0.23"/' package.json
+          sed -i 's/"@performer/core": "latest"/"@performer/core": "${{ needs.prerelease.outputs.coreVersion }}@rc.$git_sha"/' package.json
+          cat package.json
+        working-directory: ./my-project
 
       - name: Install performer app dependencies
         run: pnpm install
