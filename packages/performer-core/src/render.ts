@@ -225,7 +225,7 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     performer,
     node,
     nonce: 0,
-    abortController: performer.controller,
+    abortController: performer.abortController,
   });
   try {
     view = node.type(node.props);
@@ -242,10 +242,12 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     if (e instanceof DeferResource) {
       node.status = "PAUSED";
       logPaused(node, "resource");
-      e.cause.promise.then(() => {
-        node.status = "PENDING";
-        performer.queueRender("deferred resolved");
-      });
+      e.cause.promise
+        .then(() => {
+          node.status = "PENDING";
+          performer.queueRender("deferred resolved");
+        })
+        .catch((error) => performer.onError(node.threadId, error));
     } else if (e instanceof DeferInput) {
       node.status = "PAUSED";
       logPaused(node, "resource");

@@ -35,14 +35,21 @@ export function useResource<
     scope.node.hooks[key] = newState;
   };
   if (value instanceof Promise) {
-    value.then((result) => {
-      if (result instanceof ReadableStream) {
-        return pipeThroughStream(result, set);
-      } else {
-        set({ type: "value", value: result });
-        return result;
-      }
-    });
+    value
+      .then((result) => {
+        if (result instanceof ReadableStream) {
+          return pipeThroughStream(result, set);
+        } else {
+          set({ type: "value", value: result });
+          return result;
+        }
+      })
+      // silences unhandled promise rejection
+      // the error is handled in render in DeferResource catch
+      // don't understand why this catch is necessary
+      // try remove it and then run test "should emit error
+      // event when apiKey is incorrect" to see unhandled promise rejection
+      .catch(() => {});
     throw new DeferResource(value);
   } else if (value instanceof ReadableStream) {
     return pipeThroughStream(value, set);

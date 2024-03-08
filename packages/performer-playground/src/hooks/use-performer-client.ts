@@ -31,6 +31,9 @@ export function usePerformerClient(app: Component<any> | null) {
       setPerformer(performer);
 
       performer.addEventListener("*", (event) => {
+        consola.info(
+          `usePerformerClient event=${event.type} message="Received event"`,
+        );
         if (event instanceof PerformerMessageEvent) {
           return setEvents((prevEvents) => {
             const previous = prevEvents.findLast(
