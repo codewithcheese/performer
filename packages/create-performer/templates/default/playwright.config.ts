@@ -24,7 +24,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `npm run dev`,
+    command: `npm run playground`,
     url: "http://localhost:3011",
     reuseExistingServer: !process.env.CI,
     timeout: 10_000,
