@@ -14,6 +14,7 @@ import { JSDOM } from "jsdom";
  */
 
 export const name = "Step back prompting";
+export const target = "node";
 
 const questionContext = createContext<string>("question");
 const stepBackContext = createContext<string>("stepBack");

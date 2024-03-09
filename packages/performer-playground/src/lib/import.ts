@@ -39,7 +39,7 @@ export async function importApps(target = "browser"): Promise<AppImport[]> {
           continue;
         }
       }
-      console.log(path, module);
+      // console.log(path, module);
       imports.push({
         slug,
         name,
@@ -47,7 +47,7 @@ export async function importApps(target = "browser"): Promise<AppImport[]> {
         module: module as Record<string, any>,
       });
     } catch (e) {
-      console.error(e);
+      console.error("App import error", path, e);
     }
   }
   return imports;
