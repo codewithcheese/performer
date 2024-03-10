@@ -12,40 +12,17 @@ A declarative component framework for building AI assistants.
 
 Performer is a Javascript component framework for building programmable and modular AI assistants like chatbots and agents. Performer is inspired by frameworks like React and uses JSX and components. However, Performer is for building conversational AI backends not user interfaces.
 
-## Why?
-
-Performer was created as a result of two important insights:
-
-### Language require context not input values.
-
-To maximise the quality of a language model response we must optimize the context it receives. A context may be 1000s of characters, with a mix of messages, source text, code or structured data. This makes language models significantly different from functions or pipeline operators. 
-
-To efficiently develop applications for language models we need abstractions that make handling context data easy.
-
-Fortunately, humans also need context in the form of user interfaces.
-
-To do
-
-### AI enables a new kind of high-level programming.
-
-To do
-
-## How Performer works
-
-To do
-
 ## Quickstart
 
 To get started locally you should have a few things:
 
 - Node.js installed.
-- Either pnpm, or another package manager like npm
-or yarn. We recommend `pnpm`.
+- npm, yarn or pnpm. We recommend `pnpm`.
 
 Use the `create` command in your terminal to create a new Performer project.
 
 ```sh
-pnpm create performer@latest
+npm create performer@latest
 ```
 
 ## Creating your first performer
@@ -79,7 +56,7 @@ pnpm run playground
 
 ## Table of Contents
 - [Performer class](#performer-class)
-- [Elements](#elements) 
+- [Elements](#elements)
 - [Components](#components)
 - [Built-in components](#built-in-components)
 
@@ -224,3 +201,60 @@ function App () {
 The initial system message sets the tone, then the chat alternates between user input and assistant response.
 
 [Back to Table of Contents](#table-of-contents)
+
+### Playground
+
+The Performer Playground is a React app for testing and chatting with your performers.
+
+To use playground with your apps install the package:
+
+```sh
+npm install @performer/playground
+```
+
+The playground package comes with a CLI named `playground`.
+
+Add a script to your `package.json` pointing at your source directory:
+
+```json
+"scripts": {
+  ...
+  "playground": "playground ./src"
+}
+```
+
+**App modules**
+
+The playground imports all modules in the source directory. Modules that export the following are considered Performer apps:
+
+
+`App` function required. Any module that export an `App` function is considered a Performer app. 
+
+```jsx
+export function App () {
+  ...
+}
+```
+
+`name` string optional. Name used to identify the app in the sidebar. Filename is used if `name` not exported.
+
+```jsx
+export const name = 'My chatbot'
+```
+
+`slug` string optional. Slug used in the URL path to your app. Slugified name is used if `slug` not exported.
+
+```jsx
+export const slug = 'chatbot'
+```
+
+`target` `browser|node` optional. Control which environment the app is loaded.
+
+```jsx
+export const target = 'browser'
+```
+
+Note: Only client side `browser` loading as been implement, if set to `node` the app will not appear in the playground.
+
+
+
