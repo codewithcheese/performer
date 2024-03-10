@@ -18,6 +18,7 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "allowJs": true,
+    "types": ["react/canary"]
   },
   "references": [{ "path": "./tsconfig.node.json" }]
 }
