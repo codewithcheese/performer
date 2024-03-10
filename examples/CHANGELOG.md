@@ -1,5 +1,14 @@
 # performer-examples
 
+## 0.0.31
+
+### Patch Changes
+
+- e88c4c1: Change playground imports to hot reload apps without page reload
+- Updated dependencies [e88c4c1]
+  - @performer/playground@0.0.32
+  - @performer/core@0.0.32
+
 ## 0.0.30
 
 ### Patch Changes

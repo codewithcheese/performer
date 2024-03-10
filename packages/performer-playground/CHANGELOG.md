@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.32
+
+### Patch Changes
+
+- e88c4c1: Change playground imports to hot reload apps without page reload
+  - @performer/core@0.0.32
+
 ## 0.0.31
 
 ### Patch Changes
