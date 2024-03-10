@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("has messages", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/smoke");
 
   await expect(page.getByText("Greet the user.")).toBeVisible();
   await expect(
