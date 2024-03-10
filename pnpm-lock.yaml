@@ -182,7 +182,7 @@ importers:
         version: 2.12.0
       '@codesandbox/sandpack-react':
         specifier: ^2.12.1
-        version: 2.12.1(@lezer/common@1.2.1)(react-dom@18.2.0)(react@18.2.0)
+        version: 2.12.1(@lezer/common@1.2.1)(react-dom@18.3.0-canary-338dddc08-20240307)(react@18.3.0-canary-338dddc08-20240307)
       '@performer/core':
         specifier: workspace:*
         version: link:../performer-core
@@ -202,20 +202,20 @@ importers:
         specifier: ^4.18.2
         version: 4.18.2
       react:
-        specifier: ^18.2.0
-        version: 18.2.0
+        specifier: 18.3.0-canary-338dddc08-20240307
+        version: 18.3.0-canary-338dddc08-20240307
       react-dom:
-        specifier: ^18.2.0
-        version: 18.2.0(react@18.2.0)
+        specifier: 18.3.0-canary-338dddc08-20240307
+        version: 18.3.0-canary-338dddc08-20240307(react@18.3.0-canary-338dddc08-20240307)
       react-markdown:
         specifier: ^9.0.1
-        version: 9.0.1(@types/react@18.2.64)(react@18.2.0)
+        version: 9.0.1(@types/react@18.2.64)(react@18.3.0-canary-338dddc08-20240307)
       react-router-dom:
         specifier: ^6.22.1
-        version: 6.22.1(react-dom@18.2.0)(react@18.2.0)
+        version: 6.22.1(react-dom@18.3.0-canary-338dddc08-20240307)(react@18.3.0-canary-338dddc08-20240307)
       react-syntax-highlighter:
         specifier: ^15.5.0
-        version: 15.5.0(react@18.2.0)
+        version: 15.5.0(react@18.3.0-canary-338dddc08-20240307)
       remark-gfm:
         specifier: ^4.0.0
         version: 4.0.0
@@ -835,7 +835,7 @@ packages:
       static-browser-server: 1.0.3
     dev: false
 
-  /@codesandbox/sandpack-react@2.12.1(@lezer/common@1.2.1)(react-dom@18.2.0)(react@18.2.0):
+  /@codesandbox/sandpack-react@2.12.1(@lezer/common@1.2.1)(react-dom@18.3.0-canary-338dddc08-20240307)(react@18.3.0-canary-338dddc08-20240307):
     resolution: {integrity: sha512-/xCbeO25+SHli2+VhgHw4b3QQS4bc4KQL38OBvqoRqSb5JjVsnOs+nrKG6SFNTWz8mBhbzE20K4UxhLFRXY9rw==}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18
@@ -851,16 +851,16 @@ packages:
       '@codemirror/view': 6.24.0
       '@codesandbox/sandpack-client': 2.12.0
       '@lezer/highlight': 1.2.0
-      '@react-hook/intersection-observer': 3.1.1(react@18.2.0)
+      '@react-hook/intersection-observer': 3.1.1(react@18.3.0-canary-338dddc08-20240307)
       '@stitches/core': 1.2.8
       anser: 2.1.1
       clean-set: 1.1.2
       dequal: 2.0.3
       escape-carriage: 1.3.1
       lz-string: 1.5.0
-      react: 18.2.0
+      react: 18.3.0-canary-338dddc08-20240307
       react-devtools-inline: 4.4.0
-      react-dom: 18.2.0(react@18.2.0)
+      react-dom: 18.3.0-canary-338dddc08-20240307(react@18.3.0-canary-338dddc08-20240307)
       react-is: 17.0.2
     transitivePeerDependencies:
       - '@lezer/common'
@@ -1307,22 +1307,22 @@ packages:
     resolution: {integrity: sha512-dE6f+WCX5ZUDwXzUIWNMhhglmuLpqJhuy3X3xHrhZYI0Hm2LyQwOu0l9mdPiWrVNsE+Q7txOnJPgtIqHCYoBVA==}
     dev: false
 
-  /@react-hook/intersection-observer@3.1.1(react@18.2.0):
+  /@react-hook/intersection-observer@3.1.1(react@18.3.0-canary-338dddc08-20240307):
     resolution: {integrity: sha512-OTDx8/wFaRvzFtKl1dEUEXSOqK2zVJHporiTTdC2xO++0e9FEx9wIrPis5q3lqtXeZH9zYGLbk+aB75qNFbbuw==}
     peerDependencies:
       react: '>=16.8'
     dependencies:
-      '@react-hook/passive-layout-effect': 1.2.1(react@18.2.0)
+      '@react-hook/passive-layout-effect': 1.2.1(react@18.3.0-canary-338dddc08-20240307)
       intersection-observer: 0.10.0
-      react: 18.2.0
+      react: 18.3.0-canary-338dddc08-20240307
     dev: false
 
-  /@react-hook/passive-layout-effect@1.2.1(react@18.2.0):
+  /@react-hook/passive-layout-effect@1.2.1(react@18.3.0-canary-338dddc08-20240307):
     resolution: {integrity: sha512-IwEphTD75liO8g+6taS+4oqz+nnroocNfWVHWz7j+N+ZO2vYrc6PV1q7GQhuahL0IOR7JccFTsFKQ/mb6iZWAg==}
     peerDependencies:
       react: '>=16.8'
     dependencies:
-      react: 18.2.0
+      react: 18.3.0-canary-338dddc08-20240307
     dev: false
 
   /@remix-run/router@1.15.1:
@@ -4802,6 +4802,7 @@ packages:
     hasBin: true
     dependencies:
       js-tokens: 4.0.0
+    dev: true
 
   /loupe@2.3.7:
     resolution: {integrity: sha512-zSMINGVYkdpYSOBmLi0D1Uo7JU9nVdQKrHxC8eYlV+9YKK9WePqAlL7lSlorG/U2Fw1w0hTBmaa/jrQ3UbPHtA==}
@@ -6280,14 +6281,13 @@ packages:
       es6-symbol: 3.1.3
     dev: false
 
-  /react-dom@18.2.0(react@18.2.0):
-    resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
+  /react-dom@18.3.0-canary-338dddc08-20240307(react@18.3.0-canary-338dddc08-20240307):
+    resolution: {integrity: sha512-qxL8uAYrVb/lFX8t8mXmnGoXCsR0ngaw0R74Y4uDfdiVhk0t7GQedayebpm7gn8a0wAKrDeZXmEp14xdHT65zw==}
     peerDependencies:
-      react: ^18.2.0
+      react: 18.3.0-canary-338dddc08-20240307
     dependencies:
-      loose-envify: 1.4.0
-      react: 18.2.0
-      scheduler: 0.23.0
+      react: 18.3.0-canary-338dddc08-20240307
+      scheduler: 0.24.0-canary-338dddc08-20240307
     dev: false
 
   /react-is@17.0.2:
@@ -6298,7 +6298,7 @@ packages:
     resolution: {integrity: sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==}
     dev: true
 
-  /react-markdown@9.0.1(@types/react@18.2.64)(react@18.2.0):
+  /react-markdown@9.0.1(@types/react@18.2.64)(react@18.3.0-canary-338dddc08-20240307):
     resolution: {integrity: sha512-186Gw/vF1uRkydbsOIkcGXw7aHq0sZOCRFFjGrr7b9+nVZg4UfA4enXCaxm4fUzecU38sWfrNDitGhshuU7rdg==}
     peerDependencies:
       '@types/react': '>=18'
@@ -6310,7 +6310,7 @@ packages:
       hast-util-to-jsx-runtime: 2.3.0
       html-url-attributes: 3.0.0
       mdast-util-to-hast: 13.1.0
-      react: 18.2.0
+      react: 18.3.0-canary-338dddc08-20240307
       remark-parse: 11.0.0
       remark-rehype: 11.1.0
       unified: 11.0.4
@@ -6325,7 +6325,7 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: false
 
-  /react-router-dom@6.22.1(react-dom@18.2.0)(react@18.2.0):
+  /react-router-dom@6.22.1(react-dom@18.3.0-canary-338dddc08-20240307)(react@18.3.0-canary-338dddc08-20240307):
     resolution: {integrity: sha512-iwMyyyrbL7zkKY7MRjOVRy+TMnS/OPusaFVxM2P11x9dzSzGmLsebkCvYirGq0DWB9K9hOspHYYtDz33gE5Duw==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
@@ -6333,22 +6333,22 @@ packages:
       react-dom: '>=16.8'
     dependencies:
       '@remix-run/router': 1.15.1
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-router: 6.22.1(react@18.2.0)
+      react: 18.3.0-canary-338dddc08-20240307
+      react-dom: 18.3.0-canary-338dddc08-20240307(react@18.3.0-canary-338dddc08-20240307)
+      react-router: 6.22.1(react@18.3.0-canary-338dddc08-20240307)
     dev: false
 
-  /react-router@6.22.1(react@18.2.0):
+  /react-router@6.22.1(react@18.3.0-canary-338dddc08-20240307):
     resolution: {integrity: sha512-0pdoRGwLtemnJqn1K0XHUbnKiX0S4X8CgvVVmHGOWmofESj31msHo/1YiqcJWK7Wxfq2a4uvvtS01KAQyWK/CQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       react: '>=16.8'
     dependencies:
       '@remix-run/router': 1.15.1
-      react: 18.2.0
+      react: 18.3.0-canary-338dddc08-20240307
     dev: false
 
-  /react-syntax-highlighter@15.5.0(react@18.2.0):
+  /react-syntax-highlighter@15.5.0(react@18.3.0-canary-338dddc08-20240307):
     resolution: {integrity: sha512-+zq2myprEnQmH5yw6Gqc8lD55QHnpKaU8TOcFeC/Lg/MQSs8UknEA0JC4nTZGFAXC2J2Hyj/ijJ7NlabyPi2gg==}
     peerDependencies:
       react: '>= 0.14.0'
@@ -6357,7 +6357,7 @@ packages:
       highlight.js: 10.7.3
       lowlight: 1.20.0
       prismjs: 1.29.0
-      react: 18.2.0
+      react: 18.3.0-canary-338dddc08-20240307
       refractor: 3.6.0
     dev: false
 
@@ -6366,6 +6366,12 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
+    dev: true
+
+  /react@18.3.0-canary-338dddc08-20240307:
+    resolution: {integrity: sha512-7TGNqIchK1fCbjO6DoprqP/QIgU43GroXofsq3DH9m3GLxWFRPCWF/hP/pmXBDGU33bpmFzO7/9Lls7956GjfQ==}
+    engines: {node: '>=0.10.0'}
+    dev: false
 
   /read-pkg-up@7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
@@ -6635,10 +6641,8 @@ packages:
     dependencies:
       xmlchars: 2.2.0
 
-  /scheduler@0.23.0:
-    resolution: {integrity: sha512-CtuThmgHNg7zIZWAXi3AsyIzA3n4xx7aNyjwC2VJldO2LMVDhFK+63xGqq6CsJH4rTAt6/M+N4GhZiDYPx9eUw==}
-    dependencies:
-      loose-envify: 1.4.0
+  /scheduler@0.24.0-canary-338dddc08-20240307:
+    resolution: {integrity: sha512-8tNqtiHarRNdiICBY443emt+MbPwiYCpeH+qYhtKPA1R6Pt2E/rM/apn+mKpXcPPImWkJlwbHN4hJqGwpYlu1g==}
     dev: false
 
   /semver@5.7.2:
