@@ -3,6 +3,7 @@ import { Assistant } from "@performer/core";
 import { Thread } from "@performer/core";
 import { createTool } from "@performer/core";
 import { z } from "zod";
+import text from "multiline-ts";
 
 export const name = "Follow-up questions";
 
@@ -36,10 +37,14 @@ export function App() {
       <system>You are a helpful AI assistant. Be concise.</system>
       <Thread>
         <system>
-          The user has the following interests. A. Building AI chatbots with
-          TypeScript. B. Practicing methods of active learning. C. Improving
-          their writing skills.{"\n"}---{"\n"}
+          {text`
+          The user has the following interests. 
+          A. Building AI chatbots with TypeScript. 
+          B. Practicing methods of active learning. 
+          C. Improving their writing skills.
+          ---
           Suggest four (4) useful tasks an AI assistant can perform for the user
+          `}
         </system>
         <Assistant tools={[suggestedTaskTool]} toolChoice={suggestedTaskTool} />
       </Thread>
