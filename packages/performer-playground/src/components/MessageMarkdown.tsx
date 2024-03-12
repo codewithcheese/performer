@@ -11,7 +11,7 @@ interface MessageMarkdownProps {
 export const MessageMarkdown: FC<MessageMarkdownProps> = ({ content }) => {
   return (
     <MessageMarkdownMemoized
-      className="prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 min-w-full break-words"
+      className="prose w-full dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 break-words"
       remarkPlugins={[remarkGfm, remarkMath]}
       components={{
         p({ children }) {
