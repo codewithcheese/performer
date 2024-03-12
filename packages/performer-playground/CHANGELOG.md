@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.34
+
+### Patch Changes
+
+- b6c1d1a: Exclude assistant message with null content from chat view
+  - @performer/core@0.0.34
+
 ## 0.0.33
 
 ### Patch Changes
