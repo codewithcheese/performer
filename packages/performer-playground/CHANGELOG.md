@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.33
+
+### Patch Changes
+
+- 33738b3: Add tabs to filter chat view
+  - @performer/core@0.0.33
+
 ## 0.0.32
 
 ### Patch Changes
