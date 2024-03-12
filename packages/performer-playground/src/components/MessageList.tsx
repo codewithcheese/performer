@@ -20,9 +20,14 @@ export function MessageList({ events, filter }: MessageListProps) {
         if (event instanceof PerformerMessageEvent) {
           if (filter === "chat" && event.detail.message.role === "system") {
             return null;
+          } else if (filter === "chat" && !event.detail.message.content) {
+            return null;
           }
           return <Message key={index} message={event.detail.message} />;
         } else if (event instanceof PerformerDeltaEvent) {
+          if (filter === "chat" && !event.detail.delta.content) {
+            return null;
+          }
           return (
             <Message
               key={index}
