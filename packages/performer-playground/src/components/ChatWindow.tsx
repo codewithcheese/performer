@@ -1,14 +1,8 @@
-import { Divider, Message, ModelSelect, Splash } from "./index.js";
-import {
-  Component,
-  PerformerDeltaEvent,
-  PerformerErrorEvent,
-  PerformerLifecycleEvent,
-  PerformerMessageEvent,
-} from "@performer/core";
+import { Component } from "@performer/core";
 import { usePerformerClient } from "../hooks/use-performer-client.js";
 import { MessageInput } from "./MessageInput.js";
-import { Alert } from "./Alert.js";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs.js";
+import { MessageList } from "./MessageList.js";
 
 export function ChatWindow({ App }: { App: Component<any> }) {
   const { events, sendMessage } = usePerformerClient(App);
@@ -17,44 +11,20 @@ export function ChatWindow({ App }: { App: Component<any> }) {
     <div role="presentation" className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden">
         <div className="relative h-full overflow-y-scroll">
-          <div className="absolute left-0 right-0">
-            <ModelSelect />
-            {events.map((event, index) => {
-              if (event instanceof PerformerMessageEvent) {
-                return <Message key={index} message={event.detail.message} />;
-              } else if (event instanceof PerformerDeltaEvent) {
-                return (
-                  <Message
-                    key={index}
-                    message={
-                      event.detail.delta as {
-                        role: "assistant";
-                        content: string;
-                      }
-                    }
-                  />
-                );
-              } else if (event instanceof PerformerLifecycleEvent) {
-                return (
-                  <Divider
-                    key={index}
-                    message={`Performer ${event.detail.state}`}
-                  />
-                );
-              } else if (event instanceof PerformerErrorEvent) {
-                return (
-                  <div className="group mx-auto flex flex-1 gap-3 text-base md:max-w-3xl md:px-5 lg:max-w-[40rem] lg:px-1 xl:max-w-[48rem] xl:px-5">
-                    <Alert
-                      key={index}
-                      title="Error"
-                      message={event.detail.message}
-                    />
-                  </div>
-                );
-              }
-            })}
+          <div className="absolute left-0 right-0 mt-4">
+            <Tabs defaultValue="chat">
+              <TabsList className="m-auto grid w-[400px] grid-cols-2">
+                <TabsTrigger value="chat">Chat</TabsTrigger>
+                <TabsTrigger value="all">All messages</TabsTrigger>
+              </TabsList>
+              <TabsContent value="chat">
+                <MessageList events={events} filter="chat" />
+              </TabsContent>
+              <TabsContent value="all">
+                <MessageList events={events} filter="all" />
+              </TabsContent>
+            </Tabs>
           </div>
-          <Splash />
         </div>
       </div>
       <div className="w-full pt-2 dark:border-white/20 md:w-[calc(100%-.5rem)] md:border-transparent md:pt-0 md:dark:border-transparent">
