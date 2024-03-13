@@ -1,5 +1,12 @@
 # @performer/playground
 
+## 0.0.36
+
+### Patch Changes
+
+- a93d6e7: Use OPENAI_API_KEY for both node and playground
+  - @performer/core@0.0.36
+
 ## 0.0.35
 
 ### Patch Changes
