@@ -1,5 +1,13 @@
 # @performer/playground
 
+## 0.0.35
+
+### Patch Changes
+
+- 70157ea: Add playground auto-scrolling, fix delta updates when streaming multiple events at onces
+- Updated dependencies [70157ea]
+  - @performer/core@0.0.35
+
 ## 0.0.34
 
 ### Patch Changes
