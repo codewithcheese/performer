@@ -805,6 +805,10 @@ body {
   width: 100%;
 }
 
+.min-w-full {
+  min-width: 100%;
+}
+
 .max-w-\[67\%\] {
   max-width: 67%;
 }

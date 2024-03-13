@@ -10,7 +10,8 @@ import { Assistant } from "./Assistant.js";
 import { z } from "zod";
 import { createTool } from "../tool.js";
 
-export type Routes = { path: string; component: PerformerElement }[];
+export type Route = { path: string; component: PerformerElement };
+export type Routes = Route[];
 
 export const routesContext = createContext<Routes>("routes");
 export const pathContext = createContext<string>("routerPath");

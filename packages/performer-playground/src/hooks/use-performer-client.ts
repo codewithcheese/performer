@@ -18,7 +18,7 @@ export function usePerformerClient(app: Component<any> | null) {
     if (!performer) {
       return;
     }
-    performer.input({ role: "user", content: [{ type: "text", text }] });
+    performer.input({ role: "user", content: text });
   }
 
   useEffect(() => {
@@ -31,11 +31,11 @@ export function usePerformerClient(app: Component<any> | null) {
       setPerformer(performer);
 
       performer.addEventListener("*", (event) => {
-        consola.info(
-          `usePerformerClient event=${event.type} message="Received event"`,
-        );
+        // consola.info(
+        //   `usePerformerClient event=${event.type} message="Received event" detail=${JSON.stringify(event.detail)}`,
+        // );
         if (event instanceof PerformerMessageEvent) {
-          return setEvents((prevEvents) => {
+          setEvents((prevEvents) => {
             const previous = prevEvents.findLast(
               (prev): prev is PerformerDeltaEvent =>
                 prev instanceof PerformerDeltaEvent &&
@@ -44,37 +44,26 @@ export function usePerformerClient(app: Component<any> | null) {
 
             if (previous) {
               consola.info(
-                `usePerformerClient event=${event.type} message="Found delta, discarding message." role=${event.detail.message.role} uid=${event.detail.uid}`,
+                `usePerformerClient event=${event.type} message="Found delta, discarding message." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
               );
               return prevEvents;
             } else {
               consola.info(
-                `usePerformerClient event=${event.type} message="Adding message." content="${event.detail.message.content}" role=${event.detail.message.role} uid=${event.detail.uid}`,
+                `usePerformerClient event=${event.type} message="Adding message." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
               );
               return [...prevEvents, event];
             }
           });
         } else if (!(event instanceof PerformerDeltaEvent)) {
           consola.info(`usePerformerClient event=${event.type}`);
-          return setEvents((prevEvents) => [...prevEvents, event]);
+          setEvents((prevEvents) => [...prevEvents, event]);
         } else {
           setEvents((prevEvents) => {
-            const previous = prevEvents.findLast(
-              (prev): prev is PerformerDeltaEvent =>
-                prev instanceof PerformerDeltaEvent &&
-                prev.detail.uid === event.detail.uid,
+            const newEvents = applyDeltaEvent(prevEvents, event);
+            console.info(
+              `usePerformerClient:applyDeltaEvent uids=${JSON.stringify(mapUids(newEvents))}`,
             );
-            if (!previous) {
-              consola.info(
-                `usePerformerClient event=${event.type} message="No previous delta, adding new." uid=${event.detail.uid}`,
-              );
-              return [...prevEvents, event];
-            }
-            consola.info(
-              `usePerformerClient event=${event.type} message="Previous delta found, concatenating" uid=${event.detail.uid}`,
-            );
-            concatDelta(previous.detail.delta, event.detail.delta);
-            return prevEvents.toSpliced(prevEvents.length - 1, 1, previous);
+            return newEvents;
           });
         }
       });
@@ -85,4 +74,33 @@ export function usePerformerClient(app: Component<any> | null) {
   }, [app]);
 
   return { events, sendMessage };
+}
+
+function applyDeltaEvent(
+  prevEvents: PerformerEvent[],
+  event: PerformerDeltaEvent,
+) {
+  const previousIndex = prevEvents.findIndex(
+    (prev): prev is PerformerDeltaEvent =>
+      prev instanceof PerformerDeltaEvent &&
+      prev.detail.uid === event.detail.uid,
+  );
+  const previous = previousIndex > -1 && prevEvents[previousIndex];
+  if (!previous) {
+    consola.info(
+      `usePerformerClient event=${event.type} message="No previous delta, adding new." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)} prev=${JSON.stringify(mapUids(prevEvents))}`,
+    );
+    return [...prevEvents, event];
+  }
+  consola.info(
+    `usePerformerClient event=${event.type} message="Previous delta found, concatenating" uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
+  );
+  concatDelta(previous.detail.delta, event.detail.delta);
+  return prevEvents.toSpliced(previousIndex, 1, previous);
+}
+
+function mapUids(prevEvents: PerformerEvent[]) {
+  return prevEvents
+    .filter((p) => p instanceof PerformerDeltaEvent)
+    .map((p) => p.detail.uid);
 }
