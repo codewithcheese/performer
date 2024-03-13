@@ -346,10 +346,11 @@ export function ToolInfo() {
 
 export type MessageProps = {
   message: PerformerMessage;
+  continuation: boolean;
 };
 
-export function MessageIcon({ message }: MessageProps) {
-  switch (message.role) {
+export function MessageIcon({ role }: { role: string }) {
+  switch (role) {
     case "user":
       return (
         <svg
@@ -404,7 +405,7 @@ export function MessageIcon({ message }: MessageProps) {
   }
 }
 
-export function Message({ message }: MessageProps) {
+export function Message({ message, continuation }: MessageProps) {
   return (
     <div
       className="text-token-text-primary w-full"
@@ -414,19 +415,24 @@ export function Message({ message }: MessageProps) {
         <div className="group mx-auto flex flex-1 gap-3 text-base md:max-w-3xl md:px-5 lg:max-w-[40rem] lg:px-1 xl:max-w-[48rem] xl:px-5">
           <div className="relative flex flex-shrink-0 flex-col items-end">
             <div>
-              <div className="pt-0.5">
-                <div className="gizmo-shadow-stroke flex h-6 w-6 items-center justify-center overflow-hidden rounded-full">
-                  <div className="relative flex">
-                    <MessageIcon message={message} />
+              <div className="pt-0.5 h-6 w-6">
+                {!continuation && (
+                  <div className="gizmo-shadow-stroke flex  items-center justify-center overflow-hidden rounded-full">
+                    <div className="relative flex">
+                      <MessageIcon role={message.role} />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
+
           <div className="relative flex w-full flex-col lg:w-[calc(100%-115px)]">
-            <div className="select-none font-semibold">
-              {toTitleCase(message.role)}
-            </div>
+            {!continuation && (
+              <div className="select-none font-semibold">
+                {toTitleCase(message.role)}
+              </div>
+            )}
             <div className="flex-col gap-1 md:gap-3">
               <div className="flex max-w-full flex-grow flex-col">
                 <ToolInfo />

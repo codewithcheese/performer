@@ -32,7 +32,7 @@ A simple chat application.
 ```jsx
 import { Assistant, User, Repeat } from "@performer/core";
 
-function App() {
+export function App() {
   return () => (
     <>
       <system>Help the user. Be funny</system>
@@ -43,9 +43,6 @@ function App() {
     </>
   );
 }
-
-const performer = new Performer(<App />);
-performer.start();
 ```
 
 Start the playground to chat with your app.
@@ -59,21 +56,6 @@ pnpm run playground
 - [Elements](#elements)
 - [Components](#components)
 - [Built-in components](#built-in-components)
-
-### Performer class
-
-Use `Performer` class to run and interact with performer apps.   
-
-```jsx
-import { Performer } from '@performer/core'
-
-function App () {
-  // ...
-}
-
-const performer = new Performer(<App />);
-performer.start();
-```
 
 ### Elements
 
@@ -255,6 +237,21 @@ export const target = 'browser'
 ```
 
 Note: Only client side `browser` loading as been implement, if set to `node` the app will not appear in the playground.
+
+### Performer class
+
+Use `Performer` class to run and interact with performer apps.
+
+```jsx
+import { Performer } from '@performer/core'
+
+function App () {
+  // ...
+}
+
+const performer = new Performer(<App />);
+performer.start();
+```
 
 
 

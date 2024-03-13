@@ -3,15 +3,40 @@ import { usePerformerClient } from "../hooks/use-performer-client.js";
 import { MessageInput } from "./MessageInput.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs.js";
 import { MessageList } from "./MessageList.js";
+import { useScroll } from "../hooks/use-scroll.js";
+import { createContext, useEffect } from "react";
 
 export function ChatWindow({ App }: { App: Component<any> }) {
   const { events, sendMessage } = usePerformerClient(App);
 
+  const {
+    messagesStartRef,
+    messagesEndRef,
+    handleScroll,
+    scrollToBottom,
+    setIsAtBottom,
+    isAtTop,
+    isAtBottom,
+    isOverflowing,
+    scrollToTop,
+    userScrolled,
+  } = useScroll();
+
+  useEffect(() => {
+    if (!userScrolled) {
+      scrollToBottom();
+    }
+  }, [events]);
+
   return (
     <div role="presentation" className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden">
-        <div className="relative h-full overflow-y-scroll">
+        <div
+          className="relative h-full overflow-y-scroll"
+          onScroll={handleScroll}
+        >
           <div className="absolute left-0 right-0 mt-4">
+            <div ref={messagesStartRef} />
             <Tabs defaultValue="chat">
               <TabsList className="m-auto grid w-[400px] grid-cols-2">
                 <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -24,6 +49,7 @@ export function ChatWindow({ App }: { App: Component<any> }) {
                 <MessageList events={events} filter="all" />
               </TabsContent>
             </Tabs>
+            <div ref={messagesEndRef} />
           </div>
         </div>
       </div>
