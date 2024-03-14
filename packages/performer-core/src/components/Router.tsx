@@ -32,7 +32,6 @@ export function Router({ routes }: { routes: Routes }) {
 }
 
 export function Goto({ path, data }: { path: string; data?: any }) {
-  // add messages dependency to wait for messages
   const currentPath = useContext(pathContext);
   const currentData = useContext(routeDataContext);
 
@@ -44,8 +43,11 @@ export function Goto({ path, data }: { path: string; data?: any }) {
   return () => {};
 }
 
-export function Append({ path }: { path: string }) {
+export function Append({ path, data }: { path: string; data?: any }) {
   const routes = useContext(routesContext);
+  const currentData = useContext(routeDataContext);
+  currentData.value = data;
+
   return () => {
     const route = routes.value.find((route: any) => route.path === path);
     if (!route) {
