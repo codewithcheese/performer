@@ -4,6 +4,7 @@ import { withResolvers } from "../util/with-resolvers.js";
 
 type ThreadProps = {
   isolated?: boolean;
+  exposed?: boolean;
   onSettled?: () => any;
 };
 
@@ -12,11 +13,12 @@ type ThreadProps = {
  *
  * @param children
  * @param [isolated] - calls to useMessages do not include messages from parent threads
+ * @param [exposed] -
  * @param [onSettled] - called when all children have settled
  */
 export const Thread: Component<ThreadProps> & { AwaitAll: Component<{}> } =
-  function ({ children, onSettled, isolated = false }) {
-    useThread({ isolated });
+  function ({ children, onSettled, isolated = false, exposed = false }) {
+    useThread({ isolated, exposed });
     useAfterChildren(() => {
       onSettled && onSettled();
     });

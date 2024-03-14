@@ -438,8 +438,8 @@ export function resolveMessages(
   from: PerformerNode | undefined,
   to?: PerformerNode,
 ): PerformerMessage[] {
+  const exposed = new Set<string>([]);
   let messages: PerformerMessage[] = [];
-
   let cursor: PerformerNode | undefined = from;
   while (cursor) {
     // too noisy for now
@@ -457,7 +457,7 @@ export function resolveMessages(
     if (
       to &&
       cursor.hooks.thread &&
-      to.threadId === cursor.hooks.thread.id &&
+      to.threadId.includes(cursor.hooks.thread.id) &&
       cursor.hooks.thread.isolated
     ) {
       messages = [];
@@ -471,12 +471,20 @@ export function resolveMessages(
     if (exit) {
       break;
     }
-    // thread props is a hierarchical id
-    // parent threads are substring of the child thread
+
+    if (cursor.hooks.thread && cursor.hooks.thread.exposed) {
+      exposed.add(cursor.hooks.thread.id);
+    }
+
+    // checks if cursor has child AND (that child thread is a parent or equal targets thread OR child thread is exposed)
+    // Since thread props is a hierarchical id, parent threads are substring of the child thread
     // e.g. root/0 is parent of root/0/1, root/0 is not a parent of root/2/3
-    // to.threadId.includes(cursor.child.threadId))
-    // checks if child belongs to `to` thread or its parent
-    if (cursor.child && (!to || to.threadId.includes(cursor.child.threadId))) {
+    if (
+      cursor.child &&
+      (!to ||
+        to.threadId.includes(cursor.child.threadId) ||
+        exposed.has(cursor.child.threadId))
+    ) {
       cursor = cursor.child;
       continue;
     }

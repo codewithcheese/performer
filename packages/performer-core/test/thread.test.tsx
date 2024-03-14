@@ -198,3 +198,54 @@ test("should isolate thread from parent thread messages", async () => {
   const messages = performer.getAllMessages();
   expect(messages.map((m) => m.content)).toEqual(["1", "2", "3", "4"]);
 });
+
+test("should expose thread to root", async () => {
+  function Expect({ expected }: { expected: string[] }) {
+    const messages = useMessages();
+    expect(messages.map((m) => m.content)).toEqual(expected);
+    return () => {};
+  }
+  function App() {
+    return () => (
+      <>
+        <user>1</user>
+        <Thread>
+          <user>2</user>
+          <Expect expected={["1", "2"]} />
+        </Thread>
+        <Thread exposed={true}>
+          <user>3</user>
+          <Expect expected={["1", "3"]} />
+          <Thread exposed={true}>
+            <user>4</user>
+            <Expect expected={["1", "3", "4"]} />
+            <Thread isolated={true}>
+              <user>5</user>
+              <Expect expected={["5"]} />
+              <Thread exposed={true}>
+                <user>6</user>
+                <Expect expected={["5", "6"]} />
+              </Thread>
+              <Expect expected={["5", "6"]} />
+            </Thread>
+          </Thread>
+        </Thread>
+        <user>7</user>
+        <Expect expected={["1", "3", "4", "7"]} />
+      </>
+    );
+  }
+
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = performer.getAllMessages();
+  expect(messages.map((m) => m.content)).toEqual([
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+  ]);
+});
