@@ -1,5 +1,13 @@
 # @performer/playground
 
+## 0.0.37
+
+### Patch Changes
+
+- 9889c42: Change MessageList to exclude tool messages from chat view, only use continuations in chat view
+- Updated dependencies [9889c42]
+  - @performer/core@0.0.37
+
 ## 0.0.36
 
 ### Patch Changes
