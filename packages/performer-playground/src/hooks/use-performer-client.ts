@@ -6,11 +6,17 @@ import {
   PerformerDeltaEvent,
   PerformerEvent,
   PerformerMessageEvent,
+  PerformerOptions,
 } from "@performer/core";
 import { jsx } from "@performer/core/jsx-runtime";
 import consola from "consola";
 
-export function usePerformerClient(app: Component<any> | null) {
+const logger = consola.withTag("usePerformerClient");
+
+export function usePerformerClient(
+  app: Component<any> | null,
+  options: PerformerOptions = {},
+) {
   const [events, setEvents] = useState<PerformerEvent[]>([]);
   const [performer, setPerformer] = useState<Performer | null>(null);
 
@@ -27,13 +33,10 @@ export function usePerformerClient(app: Component<any> | null) {
     }
     try {
       setEvents([]);
-      const performer = new Performer(jsx(app, {}));
+      const performer = new Performer(jsx(app, {}), options);
       setPerformer(performer);
 
       performer.addEventListener("*", (event) => {
-        // consola.info(
-        //   `usePerformerClient event=${event.type} message="Received event" detail=${JSON.stringify(event.detail)}`,
-        // );
         if (event instanceof PerformerMessageEvent) {
           setEvents((prevEvents) => {
             const previous = prevEvents.findLast(
@@ -43,33 +46,27 @@ export function usePerformerClient(app: Component<any> | null) {
             );
 
             if (previous) {
-              consola.info(
-                `usePerformerClient event=${event.type} message="Found delta, discarding message." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
+              logger.debug(
+                `event=${event.type} message="Found delta, discarding message." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
               );
               return prevEvents;
             } else {
-              consola.info(
-                `usePerformerClient event=${event.type} message="Adding message." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
+              logger.debug(
+                `event=${event.type} message="Adding message." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
               );
               return [...prevEvents, event];
             }
           });
         } else if (!(event instanceof PerformerDeltaEvent)) {
-          consola.info(`usePerformerClient event=${event.type}`);
+          logger.debug(`event=${event.type}`);
           setEvents((prevEvents) => [...prevEvents, event]);
         } else {
-          setEvents((prevEvents) => {
-            const newEvents = applyDeltaEvent(prevEvents, event);
-            console.info(
-              `usePerformerClient:applyDeltaEvent uids=${JSON.stringify(mapUids(newEvents))}`,
-            );
-            return newEvents;
-          });
+          setEvents((prevEvents) => applyDeltaEvent(prevEvents, event));
         }
       });
       performer.start();
     } catch (e) {
-      console.error("Performer exception", e);
+      logger.error("Performer exception", e);
     }
   }, [app]);
 
@@ -87,20 +84,14 @@ function applyDeltaEvent(
   );
   const previous = previousIndex > -1 && prevEvents[previousIndex];
   if (!previous) {
-    consola.info(
-      `usePerformerClient event=${event.type} message="No previous delta, adding new." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)} prev=${JSON.stringify(mapUids(prevEvents))}`,
+    logger.debug(
+      `event=${event.type} message="No previous delta, adding new." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
     );
     return [...prevEvents, event];
   }
-  consola.info(
-    `usePerformerClient event=${event.type} message="Previous delta found, concatenating" uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
+  logger.debug(
+    `event=${event.type} message="Previous delta found, concatenating" uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,
   );
   concatDelta(previous.detail.delta, event.detail.delta);
   return prevEvents.toSpliced(previousIndex, 1, previous);
-}
-
-function mapUids(prevEvents: PerformerEvent[]) {
-  return prevEvents
-    .filter((p) => p instanceof PerformerDeltaEvent)
-    .map((p) => p.detail.uid);
 }

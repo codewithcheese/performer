@@ -21,6 +21,10 @@ function exclude(filter: FilterType, event: PerformerEvent) {
     (filter === "chat" &&
       event instanceof PerformerMessageEvent &&
       event.detail.message.role === "system") ||
+    // exclude tool messages from chat view
+    (filter === "chat" &&
+      event instanceof PerformerMessageEvent &&
+      event.detail.message.role === "tool") ||
     // exclude messages with no content from chat view
     (filter === "chat" &&
       event instanceof PerformerMessageEvent &&
@@ -64,6 +68,10 @@ function map(filter: FilterType, events: PerformerEvent[]) {
       continuation = false;
     } else {
       continuation = true;
+    }
+    // only use continuations in chat view
+    if (filter !== "chat") {
+      continuation = false;
     }
     if (event instanceof PerformerMessageEvent) {
       items.push(

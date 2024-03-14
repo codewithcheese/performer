@@ -4,12 +4,11 @@ import {
   PerformerDeltaEvent,
   PerformerErrorEvent,
   PerformerEvent,
-  PerformerMessage,
   PerformerMessageEvent,
   PerformerNode,
   RenderOp,
 } from "../index.js";
-import { consola, createConsola } from "consola";
+import { createConsola } from "consola";
 import { isImageContent, isTextContent } from "../message.js";
 
 export const logger = createConsola({});
