@@ -17,6 +17,14 @@ import { TrashIcon } from "./icons/TrashIcon.tsx";
 import { useStore } from "./store.ts";
 import { chat } from "./chat.ts";
 import { LoadingIcon } from "./icons/LoadingIcon.tsx";
+import { MessageIcon } from "./icons/MessageIcon.tsx";
+import {
+  RoleSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./components/ui/RoleSelect.tsx";
 
 type EditorNodeData = {
   role: string;
@@ -72,42 +80,55 @@ export default memo(function EditorNode({
     <>
       <div className="bg-white text-sm rounded shadow border border-gray-200 w-[60ch] max-h-[60ch] overflow-y-scroll">
         <div className="flex flex-row">
-          <div className="flex-1">
-            <select
-              onChange={(event) => {
-                updateData(id, { role: event.target.value });
+          <span>
+            <RoleSelect
+              onValueChange={(value) => {
+                updateData(id, { role: value });
               }}
               value={data.role}
-              className="bg-white"
             >
-              <option value="system">System</option>
-              <option value="user">User</option>
-              <option value="assistant">Assistant</option>
-            </select>
-          </div>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="text-sm">
+                <SelectItem value="system">
+                  <MessageIcon role="system" />
+                </SelectItem>
+                <SelectItem value="user">
+                  <MessageIcon role="user" />
+                </SelectItem>
+                <SelectItem value="assistant">
+                  <MessageIcon role="assistant" />
+                </SelectItem>
+              </SelectContent>
+            </RoleSelect>
+          </span>
         </div>
-        <CodeMirror
-          className="w-full rounded-b border-t border-t-gray-200"
-          value={data.content}
-          extensions={[
-            markdown({
-              defaultCodeLanguage: javascript(),
-              codeLanguages: languages,
-            }),
-            EditorView.lineWrapping,
-            ctrlEnter,
-          ]}
-          onChange={(value) => {
-            updateData(id, { content: value });
-          }}
-        />
+        <div className="flex flex-row">
+          <div></div>
+          <CodeMirror
+            className="flex flex-1 w-full rounded-b border-t border-t-gray-200 nodrag"
+            value={data.content}
+            extensions={[
+              markdown({
+                defaultCodeLanguage: javascript(),
+                codeLanguages: languages,
+              }),
+              EditorView.lineWrapping,
+              ctrlEnter,
+            ]}
+            onChange={(value) => {
+              updateData(id, { content: value });
+            }}
+          />
+        </div>
       </div>
-      <NodeToolbar position={Position.Left}>
+      <NodeToolbar className="nodrag" position={Position.Left}>
         <button className="hover:bg-gray-100" onClick={() => deleteNode(id)}>
           <TrashIcon />
         </button>
       </NodeToolbar>
-      <NodeToolbar position={Position.Bottom}>
+      <NodeToolbar className="nodrag" position={Position.Bottom}>
         <button
           onClick={submitChat}
           className="rounded-full bg-gray-100 p-4 hover:bg-gray-200"
