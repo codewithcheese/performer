@@ -5,6 +5,7 @@ import {
   Connection,
   Edge,
   EdgeChange,
+  getConnectedEdges,
   Node,
   NodeChange,
   OnConnect,
@@ -61,7 +62,6 @@ export const useStore = create(
         nodes: initialNodes,
         edges: initialEdges,
         onNodesChange: (changes: NodeChange[]) => {
-          console.log("changes", changes);
           set({
             nodes: applyNodeChanges(changes, get().nodes),
           });
@@ -99,11 +99,17 @@ export const useStore = create(
         },
         deleteNode: (id: string) => {
           const nodes = get().nodes;
+          const edges = get().edges;
           const index = nodes.findIndex(findId(id));
           if (index < 0) {
             throw Error(`Node ${id} not found`);
           }
-          set({ nodes: nodes.toSpliced(index, 1) });
+          const connected = getConnectedEdges([nodes[index]], edges);
+          const edgesToDelete = new Set(connected.map((e) => e.id));
+          set({
+            nodes: nodes.toSpliced(index, 1),
+            edges: edges.filter((e) => !edgesToDelete.has(e.id)),
+          });
         },
         newNode: (type, data, x, y) => {
           let { yPos, pushNode } = get();
