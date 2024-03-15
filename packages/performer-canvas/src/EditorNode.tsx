@@ -1,6 +1,6 @@
 import { memo, useCallback, useState } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { EditorView } from "@codemirror/view";
+import CodeMirror, { Prec } from "@uiw/react-codemirror";
+import { EditorView, keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import {
   Handle,
@@ -41,6 +41,33 @@ export default memo(function EditorNode({
     });
   }, []);
 
+  const submitChat = useCallback(async () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    } else {
+      const controller = new AbortController();
+      setAbortController(controller);
+      try {
+        await chat(id, controller);
+      } finally {
+        setAbortController(null);
+      }
+    }
+  }, [abortController, setAbortController]);
+
+  const ctrlEnter = Prec.highest(
+    keymap.of([
+      {
+        key: "Ctrl-Enter",
+        run: () => {
+          submitChat();
+          return true;
+        },
+      },
+    ]),
+  );
+
   return (
     <>
       <div className="bg-white text-sm rounded shadow border border-gray-200 w-[60ch] max-h-[60ch] overflow-y-scroll">
@@ -68,6 +95,7 @@ export default memo(function EditorNode({
               codeLanguages: languages,
             }),
             EditorView.lineWrapping,
+            ctrlEnter,
           ]}
           onChange={(value) => {
             updateData(id, { content: value });
@@ -81,20 +109,7 @@ export default memo(function EditorNode({
       </NodeToolbar>
       <NodeToolbar position={Position.Bottom}>
         <button
-          onClick={async () => {
-            if (abortController) {
-              abortController.abort();
-              setAbortController(null);
-            } else {
-              const controller = new AbortController();
-              setAbortController(controller);
-              try {
-                await chat(id, controller);
-              } finally {
-                setAbortController(null);
-              }
-            }
-          }}
+          onClick={submitChat}
           className="rounded-full bg-gray-100 p-4 hover:bg-gray-200"
         >
           {abortController ? <LoadingIcon /> : <PaperPlaneIcon />}
