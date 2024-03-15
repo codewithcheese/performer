@@ -23,6 +23,7 @@ function App() {
           return {
             path: app.slug,
             element: <ChatWindow App={app.module.App} />,
+            errorElement: <ErrorBoundary />,
           };
         }),
       ],

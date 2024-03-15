@@ -17,6 +17,10 @@ if (args.length === 0 || !args[0]) {
   process.exit(1); // Exits with a non-zero code to indicate an error
 }
 
+if (process.env['OPENAI_API_KEY'] && !process.env['VITE_OPENAI_API_KEY']) {
+  process.env['VITE_OPENAI_API_KEY'] = process.env['OPENAI_API_KEY']
+}
+
 const rootPath = path.join(__dirname, '../')
 const appPath = path.join(process.cwd(), args[0]);
 

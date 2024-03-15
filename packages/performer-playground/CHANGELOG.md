@@ -1,5 +1,42 @@
 # @performer/playground
 
+## 0.0.37
+
+### Patch Changes
+
+- 9889c42: Change MessageList to exclude tool messages from chat view, only use continuations in chat view
+- Updated dependencies [9889c42]
+  - @performer/core@0.0.37
+
+## 0.0.36
+
+### Patch Changes
+
+- a93d6e7: Use OPENAI_API_KEY for both node and playground
+  - @performer/core@0.0.36
+
+## 0.0.35
+
+### Patch Changes
+
+- 70157ea: Add playground auto-scrolling, fix delta updates when streaming multiple events at onces
+- Updated dependencies [70157ea]
+  - @performer/core@0.0.35
+
+## 0.0.34
+
+### Patch Changes
+
+- b6c1d1a: Exclude assistant message with null content from chat view
+  - @performer/core@0.0.34
+
+## 0.0.33
+
+### Patch Changes
+
+- 33738b3: Add tabs to filter chat view
+  - @performer/core@0.0.33
+
 ## 0.0.32
 
 ### Patch Changes

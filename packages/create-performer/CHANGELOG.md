@@ -1,5 +1,19 @@
 # create-performer
 
+## 0.0.37
+
+## 0.0.36
+
+### Patch Changes
+
+- a93d6e7: Use OPENAI_API_KEY for both node and playground
+
+## 0.0.35
+
+## 0.0.34
+
+## 0.0.33
+
 ## 0.0.32
 
 ## 0.0.31

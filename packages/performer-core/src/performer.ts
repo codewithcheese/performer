@@ -3,7 +3,6 @@ import type { PerformerNode } from "./node.js";
 import { render, resolveMessages } from "./render.js";
 import {
   PerformerErrorEvent,
-  PerformerEvent,
   PerformerEventMap,
   PerformerLifecycleEvent,
 } from "./event.js";
@@ -13,7 +12,7 @@ import { getEnv } from "./util/env.js";
 import { LogLevels, type LogType } from "consola";
 import Emittery from "emittery";
 
-type PerformerOptions = {
+export type PerformerOptions = {
   throwOnError?: boolean;
   logLevel?: LogType;
 };

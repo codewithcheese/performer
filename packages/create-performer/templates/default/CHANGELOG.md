@@ -4,6 +4,47 @@
 
 ### Patch Changes
 
+- Updated dependencies [9889c42]
+- Updated dependencies [9889c42]
+  - @performer/playground@0.0.37
+  - @performer/core@0.0.37
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [a93d6e7]
+  - @performer/playground@0.0.36
+  - @performer/core@0.0.36
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [70157ea]
+  - @performer/playground@0.0.35
+  - @performer/core@0.0.35
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [b6c1d1a]
+  - @performer/playground@0.0.34
+  - @performer/core@0.0.34
+
+## null
+
+### Patch Changes
+
+- Updated dependencies [33738b3]
+  - @performer/playground@0.0.33
+  - @performer/core@0.0.33
+
+## null
+
+### Patch Changes
+
 - Updated dependencies [e88c4c1]
   - @performer/playground@0.0.32
   - @performer/core@0.0.32

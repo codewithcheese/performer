@@ -1,5 +1,47 @@
 # performer-examples
 
+## 0.0.36
+
+### Patch Changes
+
+- Updated dependencies [9889c42]
+- Updated dependencies [9889c42]
+  - @performer/playground@0.0.37
+  - @performer/core@0.0.37
+
+## 0.0.35
+
+### Patch Changes
+
+- a93d6e7: Use OPENAI_API_KEY for both node and playground
+- Updated dependencies [a93d6e7]
+  - @performer/playground@0.0.36
+  - @performer/core@0.0.36
+
+## 0.0.34
+
+### Patch Changes
+
+- Updated dependencies [70157ea]
+  - @performer/playground@0.0.35
+  - @performer/core@0.0.35
+
+## 0.0.33
+
+### Patch Changes
+
+- Updated dependencies [b6c1d1a]
+  - @performer/playground@0.0.34
+  - @performer/core@0.0.34
+
+## 0.0.32
+
+### Patch Changes
+
+- Updated dependencies [33738b3]
+  - @performer/playground@0.0.33
+  - @performer/core@0.0.33
+
 ## 0.0.31
 
 ### Patch Changes

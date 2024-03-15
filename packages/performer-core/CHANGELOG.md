@@ -1,5 +1,23 @@
 # @performer/core
 
+## 0.0.37
+
+### Patch Changes
+
+- 9889c42: Change Append component to accept route data
+
+## 0.0.36
+
+## 0.0.35
+
+### Patch Changes
+
+- 70157ea: Add playground auto-scrolling, fix delta updates when streaming multiple events at onces
+
+## 0.0.34
+
+## 0.0.33
+
 ## 0.0.32
 
 ## 0.0.31

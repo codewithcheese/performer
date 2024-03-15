@@ -1,6 +1,81 @@
+@config "../tailwind.config.js";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
 
 .antialiased {
     -webkit-font-smoothing: antialiased;
@@ -192,107 +267,4 @@ body, html, #root {
     --tw-ring-offset-width:2px;
     box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),0 0 transparent;
     box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 transparent)
-}
-.btn-danger-outline.focus-visible {
-    --tw-ring-opacity:1;
-    --tw-ring-color:rgba(220,38,38,var(--tw-ring-opacity))
-}
-.btn-danger-outline:focus-visible {
-    --tw-ring-opacity:1;
-    --tw-ring-color:rgba(220,38,38,var(--tw-ring-opacity))
-}
-.btn-neutral {
-    background-color:#fff;
-    background-color:var(--main-surface-primary);
-    border-color:rgba(0,0,0,.15);
-    border-color:var(--border-medium);
-    border-width:1px;
-    color:#0d0d0d;
-    color:var(--text-primary)
-}
-.btn-neutral,
-.snc .btn-neutral {
-    font-size:.875rem;
-    line-height:1.25rem
-}
-.snc .btn-neutral {
-    font-size:var(--snc-text-subtitle)
-}
-@media (min-width:768px) {
-    :root .snc .btn-neutral {
-        font-size:.875rem;
-        font-size:var(--snc-text-subtitle);
-        line-height:1.25rem
-    }
-}
-.btn-neutral:hover {
-    background-color:#f9f9f9;
-    background-color:var(--main-surface-secondary)
-}
-.btn-neutral:focus {
-    --tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-    --tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-    --tw-ring-offset-width:2px;
-    box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),0 0 transparent;
-    box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 transparent)
-}
-.btn-neutral.focus-visible {
-    --tw-ring-opacity:1;
-    --tw-ring-color:rgba(103,103,103,var(--tw-ring-opacity))
-}
-.btn-neutral:focus-visible {
-    --tw-ring-opacity:1;
-    --tw-ring-color:rgba(103,103,103,var(--tw-ring-opacity))
-}
-.btn-dark {
-    --tw-border-opacity:1;
-    --tw-bg-opacity:1;
-    --tw-text-opacity:1;
-    background-color:rgba(38,38,38,var(--tw-bg-opacity));
-    border-color:rgba(103,103,103,var(--tw-border-opacity));
-    border-width:1px;
-    color:rgba(255,255,255,var(--tw-text-opacity))
-}
-.btn-dark:hover {
-    --tw-bg-opacity:1;
-    background-color:rgba(78,78,78,var(--tw-bg-opacity))
-}
-.btn-light {
-    --tw-bg-opacity:1;
-    --tw-text-opacity:1;
-    background-color:rgba(236,236,236,var(--tw-bg-opacity));
-    color:rgba(0,0,0,var(--tw-text-opacity))
-}
-.btn-light:hover {
-    --tw-bg-opacity:1;
-    background-color:rgba(255,255,255,var(--tw-bg-opacity))
-}
-.btn-high-contrast {
-    --tw-bg-opacity:1;
-    --tw-text-opacity:1;
-    background-color:rgba(0,0,0,var(--tw-bg-opacity));
-    border-width:0;
-    color:rgba(255,255,255,var(--tw-text-opacity))
-}
-.btn-high-contrast:hover {
-    background-color:rgba(0,0,0,.8)
-}
-.dark .btn-high-contrast {
-    --tw-text-opacity:1;
-    background-color:#0d0d0d;
-    background-color:var(--text-primary);
-    color:rgba(0,0,0,var(--tw-text-opacity))
-}
-:is(.dark .btn-high-contrast):hover {
-    background-color:hsla(0,0%,100%,.8)
-}
-.btn-disabled {
-    background-color:#ececec;
-    background-color:var(--main-surface-tertiary);
-    color:#676767;
-    color:var(--text-tertiary);
-    cursor:not-allowed
-}
-.btn-small {
-    padding:.25rem .5rem
 }
