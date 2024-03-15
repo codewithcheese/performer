@@ -45,7 +45,12 @@ export type RFState = {
     data: Partial<T["data"]>,
   ) => void;
   deleteNode: (id: string) => void;
-  newNode: (type: string, data: Record<string, any>) => string;
+  newNode: (
+    type: string,
+    data: Record<string, any>,
+    x?: number,
+    y?: number,
+  ) => string;
 };
 
 export const useStore = create(
@@ -56,6 +61,7 @@ export const useStore = create(
         nodes: initialNodes,
         edges: initialEdges,
         onNodesChange: (changes: NodeChange[]) => {
+          console.log("changes", changes);
           set({
             nodes: applyNodeChanges(changes, get().nodes),
           });
@@ -99,14 +105,16 @@ export const useStore = create(
           }
           set({ nodes: nodes.toSpliced(index, 1) });
         },
-        newNode: (type, data) => {
+        newNode: (type, data, x, y) => {
           let { yPos, pushNode } = get();
           yPos += 100;
+          x = x || 250;
+          y = y || yPos;
           const id = crypto.randomUUID();
           pushNode({
             id,
             type,
-            position: { x: 250, y: yPos },
+            position: { x, y },
             data,
           });
           set({ yPos });

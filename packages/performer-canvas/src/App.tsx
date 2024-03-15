@@ -72,7 +72,6 @@ function updateEdges(
 }
 
 function App() {
-  // const store = useStoreApi();
   const { setEdges } = useReactFlow();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, newNode } =
     useStore(selector, shallow);
@@ -92,36 +91,30 @@ function App() {
       if (!closest) {
         return null;
       }
-      // @ts-ignore
-      const closestNode = closest.node;
-      console.log(
-        "node",
-        node,
-        "closest",
-        closest,
-        "nodes",
-        nodes,
-        "closestNode",
-        closestNode,
-      );
+      // console.log(
+      //   "node",
+      //   node,
+      //   "closest",
+      //   closest,
+      //   "nodes",
+      //   nodes,
+      // );
 
       const closeNodeIsSource =
-        closestNode.positionAbsolute &&
+        closest.node.positionAbsolute &&
         node.positionAbsolute &&
-        closestNode.positionAbsolute.y < node.positionAbsolute.y;
+        closest.node.positionAbsolute.y < node.positionAbsolute.y;
 
       const edge: Edge = {
         id: closeNodeIsSource
-          ? `${closestNode.id}->-${node.id}`
-          : `${node.id}->-${closestNode.id}`,
-        source: closeNodeIsSource ? closestNode.id : node.id,
-        target: closeNodeIsSource ? node.id : closestNode.id,
+          ? `${closest.node.id}->-${node.id}`
+          : `${node.id}->-${closest.node.id}`,
+        source: closeNodeIsSource ? closest.node.id : node.id,
+        target: closeNodeIsSource ? node.id : closest.node.id,
         sourceHandle: "bottom",
         targetHandle: "top",
       };
-
-      console.log("edge", edge);
-
+      // console.log("edge", edge);
       return edge;
     },
     [nodes],
