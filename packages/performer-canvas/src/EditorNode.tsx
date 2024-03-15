@@ -8,6 +8,7 @@ import {
   Position,
   useReactFlow,
   Node,
+  Handle,
 } from "reactflow";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
 import { javascript } from "@codemirror/lang-javascript";
@@ -81,6 +82,8 @@ export default memo(function EditorNode({
           <PaperPlaneIcon />
         </button>
       </NodeToolbar>
+      <Handle id="top" type="target" position={Position.Top} />
+      <Handle id="bottom" type="source" position={Position.Bottom} />
     </>
   );
 });

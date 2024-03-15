@@ -11,8 +11,9 @@ import {
   OnEdgesChange,
   OnNodesChange,
 } from "reactflow";
-import { persist } from "zustand/middleware";
+import { persist, subscribeWithSelector } from "zustand/middleware";
 import { create } from "zustand";
+import { updateProximityIndex } from "./proximity.ts";
 
 /* https://reactflow.dev/learn/advanced-use/state-management */
 
@@ -48,73 +49,82 @@ export type RFState = {
 };
 
 export const useStore = create(
-  persist<RFState>(
-    (set, get) => ({
-      yPos: 0,
-      nodes: initialNodes,
-      edges: initialEdges,
-      onNodesChange: (changes: NodeChange[]) => {
-        set({
-          nodes: applyNodeChanges(changes, get().nodes),
-        });
-      },
-      onEdgesChange: (changes: EdgeChange[]) => {
-        set({
-          edges: applyEdgeChanges(changes, get().edges),
-        });
-      },
-      onConnect: (connection: Connection) => {
-        set({
-          edges: addEdge(connection, get().edges),
-        });
-      },
-      setNodes: (nodes: Node[]) => {
-        set({ nodes });
-      },
-      setEdges: (edges: Edge[]) => {
-        set({ edges });
-      },
-      pushNode: (node: Node) => {
-        set({ nodes: [...get().nodes, node] });
-      },
-      updateNodeData: (id: string, data: Record<string, any>) => {
-        const nodes = get().nodes;
-        const index = nodes.findIndex(findId(id));
-        if (index < 0) {
-          throw Error(`Node ${id} not found`);
-        }
-        nodes[index] = {
-          ...nodes[index],
-          data: { ...nodes[index].data, ...data },
-        };
-        set({ nodes: [...nodes] });
-      },
-      deleteNode: (id: string) => {
-        const nodes = get().nodes;
-        const index = nodes.findIndex(findId(id));
-        if (index < 0) {
-          throw Error(`Node ${id} not found`);
-        }
-        set({ nodes: nodes.toSpliced(index, 1) });
-      },
-      newNode: (type, data) => {
-        let { yPos, pushNode } = get();
-        yPos += 20;
-        const id = crypto.randomUUID();
-        pushNode({
-          id,
-          type,
-          position: { x: 100, y: yPos },
-          data,
-        });
-        set({ yPos });
-        return id;
-      },
-    }),
-    { name: "canvas-storage" },
+  subscribeWithSelector(
+    persist<RFState>(
+      (set, get) => ({
+        yPos: 0,
+        nodes: initialNodes,
+        edges: initialEdges,
+        onNodesChange: (changes: NodeChange[]) => {
+          set({
+            nodes: applyNodeChanges(changes, get().nodes),
+          });
+        },
+        onEdgesChange: (changes: EdgeChange[]) => {
+          set({
+            edges: applyEdgeChanges(changes, get().edges),
+          });
+        },
+        onConnect: (connection: Connection) => {
+          set({
+            edges: addEdge(connection, get().edges),
+          });
+        },
+        setNodes: (nodes: Node[]) => {
+          set({ nodes });
+        },
+        setEdges: (edges: Edge[]) => {
+          set({ edges });
+        },
+        pushNode: (node: Node) => {
+          set({ nodes: [...get().nodes, node] });
+        },
+        updateNodeData: (id: string, data: Record<string, any>) => {
+          const nodes = get().nodes;
+          const index = nodes.findIndex(findId(id));
+          if (index < 0) {
+            throw Error(`Node ${id} not found`);
+          }
+          nodes[index] = {
+            ...nodes[index],
+            data: { ...nodes[index].data, ...data },
+          };
+          set({ nodes: [...nodes] });
+        },
+        deleteNode: (id: string) => {
+          const nodes = get().nodes;
+          const index = nodes.findIndex(findId(id));
+          if (index < 0) {
+            throw Error(`Node ${id} not found`);
+          }
+          set({ nodes: nodes.toSpliced(index, 1) });
+        },
+        newNode: (type, data) => {
+          let { yPos, pushNode } = get();
+          yPos += 100;
+          const id = crypto.randomUUID();
+          pushNode({
+            id,
+            type,
+            position: { x: 250, y: yPos },
+            data,
+          });
+          set({ yPos });
+          return id;
+        },
+      }),
+      { name: "canvas-storage" },
+    ),
   ),
 );
 
-function findId(id: string) {
-  return (unknownWithId: { id: string }) => unknownWithId.id === id;
+useStore.subscribe(
+  (store) => store.nodes,
+  (nodes) => {
+    updateProximityIndex(nodes);
+  },
+);
+
+export function findId(id: string) {
+  return (obj: { id: string }) => obj.id === id;
 }

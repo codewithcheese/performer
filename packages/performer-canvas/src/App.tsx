@@ -2,8 +2,8 @@ import ReactFlow, {
   Background,
   ControlButton,
   Controls,
+  Edge,
   MiniMap,
-  useStoreApi,
   type Node,
   useReactFlow,
 } from "reactflow";
@@ -13,6 +13,7 @@ import EditorNode from "./EditorNode.tsx";
 import { useCallback } from "react";
 import { shallow } from "zustand/shallow";
 import { RFState, useStore } from "./store";
+import { proximityIndex, ProximityItem } from "./proximity.ts";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
   // @ts-ignore
@@ -36,84 +37,100 @@ const nodeTypes = { editorNode: EditorNode };
 
 const MIN_DISTANCE = 50;
 
+function updateEdges(
+  node: Node,
+  closeEdge: { id: string; source: string; target: string } | null,
+  edges: Edge[],
+) {
+  if (closeEdge) {
+    // update edge
+    const matchingEdge = edges.find(
+      (e) => e.source === closeEdge.source && e.target === closeEdge.target,
+    );
+    if (!matchingEdge) {
+      edges.push(closeEdge);
+    }
+    const inverseEdgeIndex = edges.findIndex(
+      (e) => e.target === closeEdge.source && e.source === closeEdge.target,
+    );
+    if (inverseEdgeIndex > -1) {
+      edges = edges.toSpliced(inverseEdgeIndex, 1);
+    }
+  } else {
+    // remove edges
+    const sourceEdgeIndex = edges.findIndex((e) => e.source === node.id);
+    if (sourceEdgeIndex > -1) {
+      edges = edges.toSpliced(sourceEdgeIndex, 1);
+    }
+    const targetEdgeIndex = edges.findIndex((e) => e.target === node.id);
+    if (targetEdgeIndex > -1) {
+      edges = edges.toSpliced(targetEdgeIndex, 1);
+    }
+  }
+
+  return edges;
+}
+
 function App() {
-  const store = useStoreApi();
+  // const store = useStoreApi();
   const { setEdges } = useReactFlow();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, newNode } =
     useStore(selector, shallow);
 
-  const getClosestEdge = useCallback((node: Node) => {
-    const { nodeInternals } = store.getState();
-    const storeNodes = Array.from(nodeInternals.values());
+  const getClosestEdge = useCallback(
+    (node: Node) => {
+      const closest = (
+        proximityIndex.search({
+          minX: node.position.x - MIN_DISTANCE,
+          minY: node.position.y - MIN_DISTANCE,
+          maxX: node.position.x + (node.width || 0) + MIN_DISTANCE,
+          maxY: node.position.y + (node.height || 0) + MIN_DISTANCE,
+        }) as ProximityItem[]
+      )
+        .filter((item) => item.id !== node.id)
+        .find((item) => item.node.positionAbsolute != null);
+      if (!closest) {
+        return null;
+      }
+      // @ts-ignore
+      const closestNode = closest.node;
+      console.log(
+        "node",
+        node,
+        "closest",
+        closest,
+        "nodes",
+        nodes,
+        "closestNode",
+        closestNode,
+      );
 
-    const closestNode = storeNodes.reduce<{
-      distance: number;
-      node: Node | null;
-    }>(
-      (res, n) => {
-        if (
-          n &&
-          n.positionAbsolute &&
-          node.positionAbsolute &&
-          n.id !== node.id
-        ) {
-          const dx = n.positionAbsolute.x - node.positionAbsolute.x;
-          const dy = n.positionAbsolute.y - node.positionAbsolute.y;
-          const d = Math.sqrt(dx * dx + dy * dy);
+      const closeNodeIsSource =
+        closestNode.positionAbsolute &&
+        node.positionAbsolute &&
+        closestNode.positionAbsolute.y < node.positionAbsolute.y;
 
-          if (d < res.distance && d < MIN_DISTANCE) {
-            res.distance = d;
-            res.node = n;
-          }
-        }
+      const edge: Edge = {
+        id: closeNodeIsSource
+          ? `${closestNode.id}->-${node.id}`
+          : `${node.id}->-${closestNode.id}`,
+        source: closeNodeIsSource ? closestNode.id : node.id,
+        target: closeNodeIsSource ? node.id : closestNode.id,
+        sourceHandle: "bottom",
+        targetHandle: "top",
+      };
 
-        return res;
-      },
-      {
-        distance: Number.MAX_VALUE,
-        node: null,
-      },
-    );
+      console.log("edge", edge);
 
-    if (!closestNode.node) {
-      return null;
-    }
-
-    const closeNodeIsSource =
-      closestNode.node.positionAbsolute &&
-      node.positionAbsolute &&
-      closestNode.node.positionAbsolute.x < node.positionAbsolute.x;
-
-    return {
-      id: closeNodeIsSource
-        ? `${closestNode.node.id}-${node.id}`
-        : `${node.id}-${closestNode.node.id}`,
-      source: closeNodeIsSource ? closestNode.node.id : node.id,
-      target: closeNodeIsSource ? node.id : closestNode.node.id,
-    };
-  }, []);
+      return edge;
+    },
+    [nodes],
+  );
 
   const onNodeDrag = useCallback(
     (_: unknown, node: Node) => {
       const closeEdge = getClosestEdge(node);
-
-      setEdges((es) => {
-        const nextEdges = es.filter((e) => e.className !== "temp");
-
-        if (
-          closeEdge &&
-          !nextEdges.find(
-            (ne) =>
-              ne.source === closeEdge.source && ne.target === closeEdge.target,
-          )
-        ) {
-          // @ts-expect-error
-          closeEdge.className = "temp";
-          nextEdges.push(closeEdge);
-        }
-
-        return nextEdges;
-      });
+      setEdges((edges) => updateEdges(node, closeEdge, edges));
     },
     [getClosestEdge, setEdges],
   );
@@ -121,24 +138,11 @@ function App() {
   const onNodeDragStop = useCallback(
     (_: unknown, node: Node) => {
       const closeEdge = getClosestEdge(node);
-
-      setEdges((es) => {
-        const nextEdges = es.filter((e) => e.className !== "temp");
-
-        if (
-          closeEdge &&
-          !nextEdges.find(
-            (ne) =>
-              ne.source === closeEdge.source && ne.target === closeEdge.target,
-          )
-        ) {
-          nextEdges.push(closeEdge);
-        }
-
-        return nextEdges;
-      });
+      if (closeEdge) {
+        setEdges((edges) => updateEdges(node, closeEdge, edges));
+      }
     },
-    [getClosestEdge],
+    [getClosestEdge, setEdges],
   );
 
   return (
