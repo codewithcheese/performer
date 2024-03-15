@@ -3,12 +3,12 @@ import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
 import {
+  Handle,
+  Node,
   NodeProps,
   NodeToolbar,
   Position,
   useReactFlow,
-  Node,
-  Handle,
 } from "reactflow";
 import { PaperPlaneIcon } from "@radix-ui/react-icons";
 import { javascript } from "@codemirror/lang-javascript";
@@ -55,9 +55,6 @@ export default memo(function EditorNode({
               <option value="assistant">Assistant</option>
             </select>
           </div>
-          <button className="hover:bg-gray-100" onClick={() => deleteNode(id)}>
-            <TrashIcon />
-          </button>
         </div>
         <CodeMirror
           className="w-full rounded-b border-t border-t-gray-200"
@@ -74,6 +71,11 @@ export default memo(function EditorNode({
           }}
         />
       </div>
+      <NodeToolbar position={Position.Left}>
+        <button className="hover:bg-gray-100" onClick={() => deleteNode(id)}>
+          <TrashIcon />
+        </button>
+      </NodeToolbar>
       <NodeToolbar position={Position.Bottom}>
         <button
           onClick={() => chat(id)}
