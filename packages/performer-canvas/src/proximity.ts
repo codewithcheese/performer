@@ -15,11 +15,14 @@ export const itemMap: Record<string, ProximityItem> = {};
 export const proximityIndex = new RBush();
 
 export function updateProximityIndex(nodes: Node[]) {
-  const existing = new Set(nodes.map((n) => n.id));
   nodes.forEach((node) => update(node));
+  // remove removed nodes from index
+  const nodeIds = new Set(nodes.map((n) => n.id));
   const itemIds = Object.keys(itemMap);
   itemIds.forEach((id) => {
-    if (!existing.has(id)) {
+    if (!nodeIds.has(id)) {
+      const item = itemMap[id];
+      proximityIndex.remove(item);
       delete itemMap[id];
     }
   });
