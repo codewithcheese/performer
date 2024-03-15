@@ -3,6 +3,7 @@ import ReactFlow, {
   ControlButton,
   Controls,
   Edge,
+  KeyCode,
   MiniMap,
   type Node,
   useReactFlow,
@@ -141,6 +142,9 @@ function App() {
       onNodeDrag={onNodeDrag}
       onNodeDragStop={onNodeDragStop}
       onConnect={onConnect}
+      zoomActivationKeyCode={getCtrlKeyCode()}
+      zoomOnScroll={true}
+      panOnScroll={true}
       fitView
     >
       <Background />
@@ -154,6 +158,19 @@ function App() {
       <MiniMap pannable={true} zoomable={true} zoomStep={1} />
     </ReactFlow>
   );
+}
+
+function getCtrlKeyCode(): KeyCode {
+  // Check if the platform is Mac
+  try {
+    if (navigator.platform.includes("Mac")) {
+      return "8"; // Keycode for Ctrl on Mac
+    } else {
+      return "17"; // Keycode for Ctrl on Windows and Linux
+    }
+  } catch {
+    return "17";
+  }
 }
 
 export default App;
