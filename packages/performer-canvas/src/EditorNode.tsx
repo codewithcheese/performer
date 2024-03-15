@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { EditorView } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
@@ -16,6 +16,7 @@ import { languages } from "@codemirror/language-data";
 import { TrashIcon } from "./icons/TrashIcon.tsx";
 import { useStore } from "./store.ts";
 import { chat } from "./chat.ts";
+import { LoadingIcon } from "./icons/LoadingIcon.tsx";
 
 type EditorNodeData = {
   role: string;
@@ -28,6 +29,8 @@ export default memo(function EditorNode({
   data,
 }: NodeProps<EditorNodeData>) {
   const { setNodes } = useReactFlow();
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
   const deleteNode = useStore((state) => state.deleteNode);
 
   const updateData = useCallback((id: string, data: any) => {
@@ -78,10 +81,23 @@ export default memo(function EditorNode({
       </NodeToolbar>
       <NodeToolbar position={Position.Bottom}>
         <button
-          onClick={() => chat(id)}
+          onClick={async () => {
+            if (abortController) {
+              abortController.abort();
+              setAbortController(null);
+            } else {
+              const controller = new AbortController();
+              setAbortController(controller);
+              try {
+                await chat(id, controller);
+              } finally {
+                setAbortController(null);
+              }
+            }
+          }}
           className="rounded-full bg-gray-100 p-4 hover:bg-gray-200"
         >
-          <PaperPlaneIcon />
+          {abortController ? <LoadingIcon /> : <PaperPlaneIcon />}
         </button>
       </NodeToolbar>
       <Handle id="top" type="target" position={Position.Top} />

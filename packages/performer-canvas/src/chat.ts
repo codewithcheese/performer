@@ -4,7 +4,7 @@ import { AssistantMessage } from "@performer/core";
 import { findId, useStore } from "./store.ts";
 import { getConnectedEdges, Node, Edge } from "reactflow";
 
-export async function chat(nodeId: string) {
+export async function chat(nodeId: string, controller: AbortController) {
   const { nodes, edges, updateNodeData, newNode } = useStore.getState();
   const node = nodes.find((node) => node.id === nodeId);
   if (!node) {
@@ -19,11 +19,14 @@ export async function chat(nodeId: string) {
   const openai = new OpenAI({
     dangerouslyAllowBrowser: true,
   });
-  const stream = await openai.chat.completions.create({
-    model: "gpt-4-turbo-preview",
-    messages: messages,
-    stream: true,
-  });
+  const stream = await openai.chat.completions.create(
+    {
+      model: "gpt-4-turbo-preview",
+      messages: messages,
+      stream: true,
+    },
+    { signal: controller.signal },
+  );
   const message: AssistantMessage = { role: "assistant", content: "" };
   const newId = newNode("editorNode", message, left, bottom + 10);
   for await (const chunk of stream) {
