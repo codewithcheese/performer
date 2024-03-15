@@ -91,14 +91,7 @@ function App() {
       if (!closest) {
         return null;
       }
-      // console.log(
-      //   "node",
-      //   node,
-      //   "closest",
-      //   closest,
-      //   "nodes",
-      //   nodes,
-      // );
+      // console.log("node", node, "closest", closest, "nodes", nodes);
 
       const closeNodeIsSource =
         closest.node.positionAbsolute &&
@@ -158,7 +151,7 @@ function App() {
           <CursorTextIcon />
         </ControlButton>
       </Controls>
-      <MiniMap />
+      <MiniMap pannable={true} zoomable={true} zoomStep={1} />
     </ReactFlow>
   );
 }
