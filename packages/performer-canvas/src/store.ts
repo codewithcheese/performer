@@ -14,7 +14,7 @@ import {
 } from "reactflow";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { create } from "zustand";
-import { updateProximityIndex } from "./proximity.ts";
+import { updateProximityIndex } from "./lib/proximity.ts";
 
 /* https://reactflow.dev/learn/advanced-use/state-management */
 
@@ -41,6 +41,7 @@ export type RFState = {
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
   pushNode: (node: Node) => void;
+  getNode: (id: string) => Node;
   updateNodeData: <T extends Node>(
     id: string,
     data: Partial<T["data"]>,
@@ -84,6 +85,9 @@ export const useStore = create(
         },
         pushNode: (node: Node) => {
           set({ nodes: [...get().nodes, node] });
+        },
+        getNode: (id: string) => {
+          return get().nodes.find(findId(id))!;
         },
         updateNodeData: (id: string, data: Record<string, any>) => {
           const nodes = get().nodes;

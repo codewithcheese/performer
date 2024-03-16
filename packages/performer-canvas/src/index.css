@@ -17,8 +17,6 @@ body,
 }
 
 .loading-icon {
-  width: 24px;
-  height: 24px;
   animation: rotate 1s linear infinite;
 }
 
@@ -102,4 +100,12 @@ body,
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.cm-editor {
+  width: 100%;
+}
+
+.cm-focused {
+  outline: 0 !important;
 }

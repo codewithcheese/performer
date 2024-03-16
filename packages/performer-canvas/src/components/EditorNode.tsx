@@ -10,21 +10,20 @@ import {
   Position,
   useReactFlow,
 } from "reactflow";
-import { PaperPlaneIcon } from "@radix-ui/react-icons";
 import { javascript } from "@codemirror/lang-javascript";
 import { languages } from "@codemirror/language-data";
-import { TrashIcon } from "./icons/TrashIcon.tsx";
-import { useStore } from "./store.ts";
-import { chat } from "./chat.ts";
-import { LoadingIcon } from "./icons/LoadingIcon.tsx";
-import { MessageIcon } from "./icons/MessageIcon.tsx";
+import { TrashIcon } from "../icons/TrashIcon.tsx";
+import { useStore } from "../store.ts";
+import { chat } from "../chat.ts";
+import { MessageIcon } from "../icons/MessageIcon.tsx";
 import {
   RoleSelect,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./components/ui/RoleSelect.tsx";
+} from "./ui/RoleSelect.tsx";
+import { RefreshCw, SendHorizontal, UserRoundPlus } from "lucide-react";
 
 type EditorNodeData = {
   role: string;
@@ -39,7 +38,11 @@ export default memo(function EditorNode({
   const { setNodes } = useReactFlow();
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
-  const deleteNode = useStore((state) => state.deleteNode);
+  const { deleteNode, newNode, getNode } = useStore((state) => ({
+    deleteNode: state.deleteNode,
+    newNode: state.newNode,
+    getNode: state.getNode,
+  }));
 
   const updateData = useCallback((id: string, data: any) => {
     setNodes((nodes) => {
@@ -78,7 +81,7 @@ export default memo(function EditorNode({
 
   return (
     <>
-      <div className="bg-white text-sm rounded shadow border border-gray-200 w-[60ch] max-h-[60ch] overflow-y-scroll">
+      <div className="bg-white rounded shadow border border-gray-200 w-[80ch] max-h-[60ch] overflow-y-scroll">
         <div className="flex flex-row">
           <span>
             <RoleSelect
@@ -90,7 +93,7 @@ export default memo(function EditorNode({
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="text-sm">
+              <SelectContent>
                 <SelectItem value="system">
                   <MessageIcon role="system" />
                 </SelectItem>
@@ -129,14 +132,41 @@ export default memo(function EditorNode({
         </button>
       </NodeToolbar>
       <NodeToolbar className="nodrag" position={Position.Bottom}>
-        <button
-          onClick={submitChat}
-          className="rounded-full bg-gray-100 p-4 hover:bg-gray-200"
-        >
-          {abortController ? <LoadingIcon /> : <PaperPlaneIcon />}
-        </button>
+        <div className="flex flex-row gap-1">
+          <button
+            onClick={submitChat}
+            className="rounded-full bg-gray-100 p-4 hover:bg-gray-200 text-gray-700 text-sm"
+          >
+            {abortController ? (
+              <RefreshCw className="loading-icon" size="20" />
+            ) : (
+              <SendHorizontal size="20" />
+            )}
+          </button>
+          <button
+            onClick={() => {
+              const node = getNode(id);
+              const left = node.position.x;
+              const bottom = node.position.y + node.height!;
+              newNode(
+                "editorNode",
+                { role: "user", content: "" },
+                left,
+                bottom + 10,
+              );
+            }}
+            className="rounded-full bg-gray-100 p-4 hover:bg-gray-200 text-gray-700 text-sm"
+          >
+            <UserRoundPlus size="16" />
+          </button>
+        </div>
       </NodeToolbar>
-      <Handle id="top" type="target" position={Position.Top} />
+      <Handle
+        onConnect={(connection) => console.log("connect", connection)}
+        id="top"
+        type="target"
+        position={Position.Top}
+      />
       <Handle id="bottom" type="source" position={Position.Bottom} />
     </>
   );

@@ -10,11 +10,11 @@ import ReactFlow, {
 } from "reactflow";
 import { CursorTextIcon } from "@radix-ui/react-icons";
 import "reactflow/dist/style.css";
-import EditorNode from "./EditorNode.tsx";
+import EditorNode from "./components/EditorNode.tsx";
 import { useCallback } from "react";
 import { shallow } from "zustand/shallow";
 import { RFState, useStore } from "./store";
-import { proximityIndex, ProximityItem } from "./proximity.ts";
+import { proximityIndex, ProximityItem } from "./lib/proximity.ts";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
   // @ts-ignore
