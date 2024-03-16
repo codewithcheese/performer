@@ -26,10 +26,10 @@ export function getClosestEdge(node: Node, minDistance = 20) {
     .filter((item) => item.id !== node.id)
     .find((item) => item);
   if (!closest) {
-    console.log(`No closest edge for ${node.id}: ${JSON.stringify(node.data)}`);
+    // console.log(`No closest edge for ${node.id}: ${JSON.stringify(node.data)}`);
     return null;
   }
-  console.log("node", node, "closest", closest);
+  // console.log("node", node, "closest", closest);
 
   const closeNodeIsSource =
     closest.node.position &&
@@ -45,7 +45,7 @@ export function getClosestEdge(node: Node, minDistance = 20) {
     sourceHandle: "bottom",
     targetHandle: "top",
   };
-  console.log("edge", edge);
+  // console.log("edge", edge);
   return edge;
 }
 
@@ -95,7 +95,7 @@ export function updateProximityIndex(nodes: Node[]) {
       delete itemMap[id];
     }
   });
-  console.log("Proximity items", proximityIndex);
+  // console.log("Proximity items", proximityIndex);
 }
 
 function update(node: Node) {
