@@ -42,6 +42,7 @@ export type RFState = {
   setEdges: (edges: Edge[]) => void;
   pushNode: (node: Node) => void;
   getNode: (id: string) => Node;
+  moveNode: (id: string, x: number, y: number) => void;
   updateNodeData: <T extends Node>(
     id: string,
     data: Partial<T["data"]>,
@@ -88,6 +89,13 @@ export const useStore = create(
         },
         getNode: (id: string) => {
           return get().nodes.find(findId(id))!;
+        },
+        moveNode: (id: string, x: number, y: number) => {
+          const nodes = get().nodes;
+          const index = nodes.findIndex(findId(id));
+          nodes[index].position.x = x;
+          nodes[index].position.y = y;
+          return [...nodes];
         },
         updateNodeData: (id: string, data: Record<string, any>) => {
           const nodes = get().nodes;

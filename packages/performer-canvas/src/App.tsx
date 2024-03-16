@@ -32,11 +32,13 @@ const selector = (state: RFState) => ({
   onConnect: state.onConnect,
   pushNode: state.pushNode,
   newNode: state.newNode,
+  getNode: state.getNode,
+  moveNode: state.moveNode,
 });
 
 const nodeTypes = { editorNode: EditorNode };
 
-const MIN_DISTANCE = 50;
+const MIN_DISTANCE = 20;
 
 function updateEdges(
   node: Node,
@@ -74,8 +76,16 @@ function updateEdges(
 
 function App() {
   const { setEdges } = useReactFlow();
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, newNode } =
-    useStore(selector, shallow);
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    newNode,
+    getNode,
+    moveNode,
+  } = useStore(selector, shallow);
 
   const getClosestEdge = useCallback(
     (node: Node) => {
@@ -126,6 +136,12 @@ function App() {
     (_: unknown, node: Node) => {
       const closeEdge = getClosestEdge(node);
       if (closeEdge) {
+        // snap target to source
+        const source = getNode(closeEdge.source);
+        const right = source.position.x;
+        const bottom = source.position.y + source.height!;
+        moveNode(closeEdge.target, right, bottom);
+
         setEdges((edges) => updateEdges(node, closeEdge, edges));
       }
     },
