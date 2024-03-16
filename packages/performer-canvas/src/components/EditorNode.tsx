@@ -23,12 +23,15 @@ import {
   SelectValue,
 } from "./ui/RoleSelect.tsx";
 import {
+  Edit2Icon,
+  EyeIcon,
   GripHorizontal,
   RefreshCw,
   SendHorizontal,
   UserRoundPlus,
   X,
 } from "lucide-react";
+import { MessageMarkdown } from "./MessageMarkdown.tsx";
 
 type EditorNodeData = {
   role: string;
@@ -40,6 +43,7 @@ export default memo(function EditorNode({
   id,
   data,
 }: NodeProps<EditorNodeData>) {
+  const [isEditing, setIsEditing] = useState(data.role === "user");
   const { setNodes } = useReactFlow();
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
@@ -102,17 +106,32 @@ export default memo(function EditorNode({
 
   return (
     <>
-      <div className="bg-white rounded shadow border border-gray-200 w-[80ch] max-h-[60ch] overflow-y-scroll">
-        <div className="flex flex-row">
-          <GripHorizontal className="ml-2 text-gray-500" size={14} />
-          <div className="flex-1"></div>
-          <X
-            className="text-gray-500 nodrag"
-            size={14}
-            onClick={() => deleteNode(id)}
-          />
+      <div className="bg-white rounded shadow border border-gray-200 w-[70ch]">
+        <div className="group">
+          <div className="flex flex-row gap-1 opacity-0 group-hover:opacity-100">
+            <GripHorizontal className="ml-2 text-gray-500" size={14} />
+            {isEditing ? (
+              <EyeIcon
+                className="text-gray-500"
+                size={14}
+                onClick={() => setIsEditing(false)}
+              />
+            ) : (
+              <Edit2Icon
+                className="text-gray-500"
+                onClick={() => setIsEditing(true)}
+                size={14}
+              />
+            )}
+            <div className="flex-1"></div>
+            <X
+              className="text-gray-500 nodrag"
+              size={14}
+              onClick={() => deleteNode(id)}
+            />
+          </div>
         </div>
-        <div className="flex flex-row">
+        <div className="flex flex-row border-t border-t-gray-200 ">
           <div>
             <RoleSelect
               onValueChange={(value) => {
@@ -136,13 +155,19 @@ export default memo(function EditorNode({
               </SelectContent>
             </RoleSelect>
           </div>
-          <CodeMirror
-            className="flex flex-1 w-full rounded-b border-t border-t-gray-200 nodrag"
-            value={data.content}
-            extensions={extensions}
-            // autoFocus={data.role !== "assistant"}
-            onChange={handleOnChange}
-          />
+          {isEditing ? (
+            <CodeMirror
+              className="flex flex-1 w-full nodrag "
+              value={data.content}
+              extensions={extensions}
+              // autoFocus={data.role !== "assistant"}
+              onChange={handleOnChange}
+            />
+          ) : (
+            <div className="flex flex-1 w-full nodrag p-2">
+              <MessageMarkdown content={data.content} />
+            </div>
+          )}
         </div>
       </div>
       <NodeToolbar className="nodrag" position={Position.Bottom}>
