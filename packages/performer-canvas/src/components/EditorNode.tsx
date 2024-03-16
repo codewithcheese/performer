@@ -131,6 +131,7 @@ export default memo(function EditorNode({
               EditorView.lineWrapping,
               ctrlEnter,
             ]}
+            autoFocus={data.role !== "assistant"}
             onChange={(value) => {
               updateData(id, { content: value });
             }}
