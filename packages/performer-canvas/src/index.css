@@ -111,9 +111,5 @@ body,
 }
 
 .react-flow__handle {
-  background-color: blue; /* Default color */
-}
-
-.react-flow__handle-connected {
-  background-color: green; /* Color when connected */
+  opacity: 0; /* Default color */
 }
