@@ -14,7 +14,7 @@ import EditorNode from "./components/EditorNode.tsx";
 import { useCallback } from "react";
 import { shallow } from "zustand/shallow";
 import { RFState, useStore } from "./store";
-import { proximityIndex, ProximityItem } from "./lib/proximity.ts";
+import { getClosestEdge } from "./lib/proximity.ts";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
   // @ts-ignore
@@ -37,8 +37,6 @@ const selector = (state: RFState) => ({
 });
 
 const nodeTypes = { editorNode: EditorNode };
-
-const MIN_DISTANCE = 20;
 
 function updateEdges(
   node: Node,
@@ -86,43 +84,6 @@ function App() {
     getNode,
     moveNode,
   } = useStore(selector, shallow);
-
-  const getClosestEdge = useCallback(
-    (node: Node) => {
-      const closest = (
-        proximityIndex.search({
-          minX: node.position.x - MIN_DISTANCE,
-          minY: node.position.y - MIN_DISTANCE,
-          maxX: node.position.x + (node.width || 0) + MIN_DISTANCE,
-          maxY: node.position.y + (node.height || 0) + MIN_DISTANCE,
-        }) as ProximityItem[]
-      )
-        .filter((item) => item.id !== node.id)
-        .find((item) => item.node.positionAbsolute != null);
-      if (!closest) {
-        return null;
-      }
-      // console.log("node", node, "closest", closest, "nodes", nodes);
-
-      const closeNodeIsSource =
-        closest.node.positionAbsolute &&
-        node.positionAbsolute &&
-        closest.node.positionAbsolute.y < node.positionAbsolute.y;
-
-      const edge: Edge = {
-        id: closeNodeIsSource
-          ? `${closest.node.id}->-${node.id}`
-          : `${node.id}->-${closest.node.id}`,
-        source: closeNodeIsSource ? closest.node.id : node.id,
-        target: closeNodeIsSource ? node.id : closest.node.id,
-        sourceHandle: "bottom",
-        targetHandle: "top",
-      };
-      // console.log("edge", edge);
-      return edge;
-    },
-    [nodes],
-  );
 
   const onNodeDrag = useCallback(
     (_: unknown, node: Node) => {

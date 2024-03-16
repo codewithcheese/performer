@@ -109,3 +109,11 @@ body,
 .cm-focused {
   outline: 0 !important;
 }
+
+.react-flow__handle {
+  background-color: blue; /* Default color */
+}
+
+.react-flow__handle-connected {
+  background-color: green; /* Color when connected */
+}

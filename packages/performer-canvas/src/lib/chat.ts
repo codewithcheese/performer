@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import consola from "consola";
 import { AssistantMessage } from "@performer/core";
-import { findId, useStore } from "./store.ts";
+import { findId, useStore } from "../store.ts";
 import { getConnectedEdges, Node, Edge } from "reactflow";
 
 export async function chat(nodeId: string, controller: AbortController) {
@@ -31,7 +31,6 @@ export async function chat(nodeId: string, controller: AbortController) {
   const newId = newNode("editorNode", message, left, bottom + 10);
   for await (const chunk of stream) {
     const delta = chunk.choices[0]?.delta;
-    consola.log("Assistant delta", delta);
     if ("content" in delta) {
       if (message.content == null) {
         message.content = "";
@@ -43,19 +42,18 @@ export async function chat(nodeId: string, controller: AbortController) {
 }
 
 function resolveMessages(nodeId: string, nodes: Node[], edges: Edge[]) {
+  const logger = consola.withTag("resolveMessages");
   const connected = getConnectedEdges(nodes, edges);
-  const node = nodes.find(findId(nodeId))!;
-  const messages = [{ role: node.data.role, content: node.data.content }];
-  for (const edge of connected) {
-    if (edge.target !== nodeId) {
-      break;
-    }
-    nodeId = edge.source;
-    const node = nodes.find(findId(nodeId));
-    if (!node) {
-      break;
-    }
-    messages.unshift({ role: node.data.role, content: node.data.content });
-  }
+  const connectionMap: Record<string, string> = {};
+  connected.forEach((edge) => (connectionMap[edge.target] = edge.source));
+  logger.info(`Connected to ${nodeId}`, connected);
+  const messages = [];
+  do {
+    const node = nodes.find(findId(nodeId))!;
+    const message = { role: node.data.role, content: node.data.content };
+    messages.unshift(message);
+    nodeId = connectionMap[nodeId];
+  } while (nodeId);
+  logger.info("Messages", messages);
   return messages;
 }

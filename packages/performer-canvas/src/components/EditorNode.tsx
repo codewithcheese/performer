@@ -14,7 +14,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { languages } from "@codemirror/language-data";
 import { TrashIcon } from "../icons/TrashIcon.tsx";
 import { useStore } from "../store.ts";
-import { chat } from "../chat.ts";
+import { chat } from "../lib/chat.ts";
 import { MessageIcon } from "../icons/MessageIcon.tsx";
 import {
   RoleSelect,

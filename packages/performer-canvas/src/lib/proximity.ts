@@ -1,4 +1,4 @@
-import { Node } from "reactflow";
+import { Edge, Node } from "reactflow";
 import RBush from "rbush";
 
 export type ProximityItem = {
@@ -13,6 +13,40 @@ export type ProximityItem = {
 export const itemMap: Record<string, ProximityItem> = {};
 
 export const proximityIndex = new RBush();
+
+export function getClosestEdge(node: Node, minDistance = 20) {
+  const closest = (
+    proximityIndex.search({
+      minX: node.position.x - minDistance,
+      minY: node.position.y - minDistance,
+      maxX: node.position.x + (node.width || 0) + minDistance,
+      maxY: node.position.y + (node.height || 0) + minDistance,
+    }) as ProximityItem[]
+  )
+    .filter((item) => item.id !== node.id)
+    .find((item) => item.node.positionAbsolute != null);
+  if (!closest) {
+    return null;
+  }
+  // console.log("node", node, "closest", closest, "nodes", nodes);
+
+  const closeNodeIsSource =
+    closest.node.positionAbsolute &&
+    node.positionAbsolute &&
+    closest.node.positionAbsolute.y < node.positionAbsolute.y;
+
+  const edge: Edge = {
+    id: closeNodeIsSource
+      ? `${closest.node.id}->-${node.id}`
+      : `${node.id}->-${closest.node.id}`,
+    source: closeNodeIsSource ? closest.node.id : node.id,
+    target: closeNodeIsSource ? node.id : closest.node.id,
+    sourceHandle: "bottom",
+    targetHandle: "top",
+  };
+  // console.log("edge", edge);
+  return edge;
+}
 
 export function updateProximityIndex(nodes: Node[]) {
   nodes.forEach((node) => update(node));
