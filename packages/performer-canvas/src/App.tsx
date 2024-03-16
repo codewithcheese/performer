@@ -24,7 +24,6 @@ if ("VITE_OPENAI_API_KEY" in import.meta.env) {
 const selector = (state: RFState) => ({
   nodes: state.nodes,
   edges: state.edges,
-  setEdges: state.setEdges,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,

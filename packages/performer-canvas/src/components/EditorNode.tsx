@@ -2,14 +2,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 import CodeMirror, { Prec } from "@uiw/react-codemirror";
 import { EditorView, keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
-import {
-  Handle,
-  Node,
-  NodeProps,
-  NodeToolbar,
-  Position,
-  useReactFlow,
-} from "reactflow";
+import { Handle, Node, NodeProps, NodeToolbar, Position } from "reactflow";
 import { javascript } from "@codemirror/lang-javascript";
 import { languages } from "@codemirror/language-data";
 import { useStore } from "../store.ts";
@@ -44,22 +37,18 @@ export default memo(function EditorNode({
   data,
 }: NodeProps<EditorNodeData>) {
   const [isEditing, setIsEditing] = useState(data.role === "user");
-  const { setNodes } = useReactFlow();
   const [abortController, setAbortController] =
     useState<AbortController | null>(null);
-  const { deleteNode, newNode, getNode } = useStore((state) => ({
-    deleteNode: state.deleteNode,
-    newNode: state.newNode,
-    getNode: state.getNode,
-  }));
+  const { deleteNode, newNode, getNode, updateNodeData } = useStore(
+    (state) => ({
+      deleteNode: state.deleteNode,
+      newNode: state.newNode,
+      getNode: state.getNode,
+      updateNodeData: state.updateNodeData,
+    }),
+  );
 
-  const updateData = useCallback((id: string, data: any) => {
-    setNodes((nodes) => {
-      return nodes.map((node) =>
-        node.id === id ? { ...node, data: { ...node.data, ...data } } : node,
-      );
-    });
-  }, []);
+  const role = useMemo(() => data.role, [data.role]);
 
   const submitChat = useCallback(async () => {
     if (abortController) {
@@ -108,9 +97,18 @@ export default memo(function EditorNode({
 
   const handleOnChange = useCallback(
     (value: string) => {
-      updateData(id, { content: value });
+      console.log("handleOnChange called");
+      updateNodeData(id, { content: value });
     },
     [id],
+  );
+
+  const handleRoleChange = useCallback(
+    (value: string) => {
+      console.log("handleRoleChange called");
+      updateNodeData(id, { role: value });
+    },
+    [updateNodeData],
   );
 
   return (
@@ -142,12 +140,7 @@ export default memo(function EditorNode({
         </div>
         <div className="flex flex-row ">
           <div>
-            <RoleSelect
-              onValueChange={(value) => {
-                updateData(id, { role: value });
-              }}
-              value={data.role}
-            >
+            <RoleSelect onValueChange={handleRoleChange} value={role}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
