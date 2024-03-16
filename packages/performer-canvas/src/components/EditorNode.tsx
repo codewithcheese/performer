@@ -12,7 +12,6 @@ import {
 } from "reactflow";
 import { javascript } from "@codemirror/lang-javascript";
 import { languages } from "@codemirror/language-data";
-import { TrashIcon } from "../icons/TrashIcon.tsx";
 import { useStore } from "../store.ts";
 import { chat } from "../lib/chat.ts";
 import { MessageIcon } from "../icons/MessageIcon.tsx";
@@ -23,7 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/RoleSelect.tsx";
-import { RefreshCw, SendHorizontal, UserRoundPlus } from "lucide-react";
+import {
+  GripHorizontal,
+  RefreshCw,
+  SendHorizontal,
+  UserRoundPlus,
+  X,
+} from "lucide-react";
 
 type EditorNodeData = {
   role: string;
@@ -83,7 +88,16 @@ export default memo(function EditorNode({
     <>
       <div className="bg-white rounded shadow border border-gray-200 w-[80ch] max-h-[60ch] overflow-y-scroll">
         <div className="flex flex-row">
-          <span>
+          <GripHorizontal className="ml-2 text-gray-500" size={14} />
+          <div className="flex-1"></div>
+          <X
+            className="text-gray-500"
+            size={14}
+            onClick={() => deleteNode(id)}
+          />
+        </div>
+        <div className="flex flex-row">
+          <div>
             <RoleSelect
               onValueChange={(value) => {
                 updateData(id, { role: value });
@@ -105,10 +119,7 @@ export default memo(function EditorNode({
                 </SelectItem>
               </SelectContent>
             </RoleSelect>
-          </span>
-        </div>
-        <div className="flex flex-row">
-          <div></div>
+          </div>
           <CodeMirror
             className="flex flex-1 w-full rounded-b border-t border-t-gray-200 nodrag"
             value={data.content}
@@ -126,11 +137,6 @@ export default memo(function EditorNode({
           />
         </div>
       </div>
-      <NodeToolbar className="nodrag" position={Position.Left}>
-        <button className="hover:bg-gray-100" onClick={() => deleteNode(id)}>
-          <TrashIcon />
-        </button>
-      </NodeToolbar>
       <NodeToolbar className="nodrag" position={Position.Bottom}>
         <div className="flex flex-row gap-1">
           <button
