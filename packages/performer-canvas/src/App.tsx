@@ -2,7 +2,6 @@ import ReactFlow, {
   Background,
   ControlButton,
   Controls,
-  Edge,
   KeyCode,
   MiniMap,
   type Node,
@@ -13,7 +12,7 @@ import EditorNode from "./components/EditorNode.tsx";
 import { useCallback } from "react";
 import { shallow } from "zustand/shallow";
 import { RFState, useStore } from "./store";
-import { getClosestEdge } from "./lib/proximity.ts";
+import { getClosestEdge, updateEdges } from "./lib/proximity.ts";
 import { SquareMousePointer } from "lucide-react";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
@@ -37,40 +36,6 @@ const selector = (state: RFState) => ({
 });
 
 const nodeTypes = { editorNode: EditorNode };
-
-function updateEdges(
-  node: Node,
-  closeEdge: { id: string; source: string; target: string } | null,
-  edges: Edge[],
-) {
-  if (closeEdge) {
-    // update edge
-    const matchingEdge = edges.find(
-      (e) => e.source === closeEdge.source && e.target === closeEdge.target,
-    );
-    if (!matchingEdge) {
-      edges.push(closeEdge);
-    }
-    const inverseEdgeIndex = edges.findIndex(
-      (e) => e.target === closeEdge.source && e.source === closeEdge.target,
-    );
-    if (inverseEdgeIndex > -1) {
-      edges = edges.toSpliced(inverseEdgeIndex, 1);
-    }
-  } else {
-    // remove edges
-    const sourceEdgeIndex = edges.findIndex((e) => e.source === node.id);
-    if (sourceEdgeIndex > -1) {
-      edges = edges.toSpliced(sourceEdgeIndex, 1);
-    }
-    const targetEdgeIndex = edges.findIndex((e) => e.target === node.id);
-    if (targetEdgeIndex > -1) {
-      edges = edges.toSpliced(targetEdgeIndex, 1);
-    }
-  }
-
-  return edges;
-}
 
 function App() {
   const { setEdges } = useReactFlow();

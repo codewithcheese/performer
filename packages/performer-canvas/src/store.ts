@@ -14,7 +14,11 @@ import {
 } from "reactflow";
 import { persist, subscribeWithSelector } from "zustand/middleware";
 import { create } from "zustand";
-import { updateProximityIndex } from "./lib/proximity.ts";
+import {
+  getClosestEdge,
+  updateEdges,
+  updateProximityIndex,
+} from "./lib/proximity.ts";
 
 /* https://reactflow.dev/learn/advanced-use/state-management */
 
@@ -124,18 +128,27 @@ export const useStore = create(
           });
         },
         newNode: (type, data, x, y) => {
-          let { yPos, pushNode } = get();
+          let { yPos, pushNode, edges, getNode, moveNode } = get();
           yPos += 100;
           x = x || 250;
           y = y || yPos;
           const id = crypto.randomUUID();
-          pushNode({
+          const newNode = {
             id,
             type,
             position: { x, y },
             data,
-          });
-          set({ yPos });
+          };
+          pushNode(newNode);
+          const closeEdge = getClosestEdge(newNode);
+          if (closeEdge) {
+            // snap target to source
+            const source = getNode(closeEdge.source);
+            const right = source.position.x;
+            const bottom = source.position.y + source.height!;
+            moveNode(closeEdge.target, right, bottom);
+          }
+          set({ yPos, edges: updateEdges(newNode, closeEdge, edges) });
           return id;
         },
       }),

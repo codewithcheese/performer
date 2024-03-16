@@ -31,9 +31,9 @@ export function getClosestEdge(node: Node, minDistance = 20) {
   // console.log("node", node, "closest", closest, "nodes", nodes);
 
   const closeNodeIsSource =
-    closest.node.positionAbsolute &&
-    node.positionAbsolute &&
-    closest.node.positionAbsolute.y < node.positionAbsolute.y;
+    closest.node.position &&
+    node.position &&
+    closest.node.position.y < node.position.y;
 
   const edge: Edge = {
     id: closeNodeIsSource
@@ -46,6 +46,40 @@ export function getClosestEdge(node: Node, minDistance = 20) {
   };
   // console.log("edge", edge);
   return edge;
+}
+
+export function updateEdges(
+  node: Node,
+  closeEdge: { id: string; source: string; target: string } | null,
+  edges: Edge[],
+) {
+  if (closeEdge) {
+    // update edge
+    const matchingEdge = edges.find(
+      (e) => e.source === closeEdge.source && e.target === closeEdge.target,
+    );
+    if (!matchingEdge) {
+      edges.push(closeEdge);
+    }
+    const inverseEdgeIndex = edges.findIndex(
+      (e) => e.target === closeEdge.source && e.source === closeEdge.target,
+    );
+    if (inverseEdgeIndex > -1) {
+      edges = edges.toSpliced(inverseEdgeIndex, 1);
+    }
+  } else {
+    // remove edges
+    const sourceEdgeIndex = edges.findIndex((e) => e.source === node.id);
+    if (sourceEdgeIndex > -1) {
+      edges = edges.toSpliced(sourceEdgeIndex, 1);
+    }
+    const targetEdgeIndex = edges.findIndex((e) => e.target === node.id);
+    if (targetEdgeIndex > -1) {
+      edges = edges.toSpliced(targetEdgeIndex, 1);
+    }
+  }
+
+  return edges;
 }
 
 export function updateProximityIndex(nodes: Node[]) {

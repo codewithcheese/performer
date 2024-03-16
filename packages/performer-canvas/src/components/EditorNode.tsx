@@ -91,7 +91,7 @@ export default memo(function EditorNode({
           <GripHorizontal className="ml-2 text-gray-500" size={14} />
           <div className="flex-1"></div>
           <X
-            className="text-gray-500"
+            className="text-gray-500 nodrag"
             size={14}
             onClick={() => deleteNode(id)}
           />
