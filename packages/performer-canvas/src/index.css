@@ -20,6 +20,13 @@ body,
   animation: rotate 1s linear infinite;
 }
 
+.selectable {
+  -webkit-user-select: text; /* Safari */
+  -moz-user-select: text; /* Firefox */
+  -ms-user-select: text; /* Internet Explorer/Edge */
+  user-select: text; /* Non-prefixed version, currently supported by Chrome, Edge, Opera, and Firefox */
+}
+
 @keyframes rotate {
   0% {
     transform: rotate(0deg);

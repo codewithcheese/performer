@@ -118,24 +118,24 @@ export default memo(function EditorNode({
       <div className="bg-white rounded shadow border border-gray-200 w-[70ch]">
         <div className="group">
           <div className="flex flex-row gap-1 opacity-0 group-hover:opacity-100">
-            <GripHorizontal className="ml-2 text-gray-500" size={14} />
+            <GripHorizontal className="ml-2 text-gray-500" size={16} />
             {isEditing ? (
               <EyeIcon
                 className="text-gray-500"
-                size={14}
+                size={16}
                 onClick={() => setIsEditing(false)}
               />
             ) : (
               <Edit2Icon
                 className="text-gray-500"
                 onClick={() => setIsEditing(true)}
-                size={14}
+                size={16}
               />
             )}
             <div className="flex-1"></div>
             <X
               className="text-gray-500 nodrag"
-              size={14}
+              size={16}
               onClick={() => deleteNode(id)}
             />
           </div>
@@ -174,7 +174,7 @@ export default memo(function EditorNode({
               onChange={handleOnChange}
             />
           ) : (
-            <div className="flex flex-1 w-full nodrag p-2">
+            <div className="flex flex-1 w-full nodrag p-2 selectable">
               <MessageMarkdown content={data.content} />
             </div>
           )}
