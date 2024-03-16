@@ -170,7 +170,7 @@ export default memo(function EditorNode({
               className="flex flex-1 w-full nodrag "
               value={data.content}
               extensions={extensions}
-              // autoFocus={data.role !== "assistant"}
+              autoFocus={data.role !== "assistant"}
               onChange={handleOnChange}
             />
           ) : (
