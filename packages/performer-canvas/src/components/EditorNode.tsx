@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import CodeMirror, { Prec } from "@uiw/react-codemirror";
 import { EditorView, keymap } from "@codemirror/view";
 import { markdown } from "@codemirror/lang-markdown";
@@ -72,16 +72,32 @@ export default memo(function EditorNode({
     }
   }, [abortController, setAbortController]);
 
-  const ctrlEnter = Prec.highest(
-    keymap.of([
-      {
-        key: "Ctrl-Enter",
-        run: () => {
-          submitChat();
-          return true;
-        },
-      },
-    ]),
+  const extensions = useMemo(() => {
+    return [
+      markdown({
+        defaultCodeLanguage: javascript(),
+        codeLanguages: languages,
+      }),
+      EditorView.lineWrapping,
+      Prec.highest(
+        keymap.of([
+          {
+            key: "Ctrl-Enter",
+            run: () => {
+              submitChat();
+              return true;
+            },
+          },
+        ]),
+      ),
+    ];
+  }, [submitChat]);
+
+  const handleOnChange = useCallback(
+    (value: string) => {
+      updateData(id, { content: value });
+    },
+    [id],
   );
 
   return (
@@ -123,18 +139,9 @@ export default memo(function EditorNode({
           <CodeMirror
             className="flex flex-1 w-full rounded-b border-t border-t-gray-200 nodrag"
             value={data.content}
-            extensions={[
-              markdown({
-                defaultCodeLanguage: javascript(),
-                codeLanguages: languages,
-              }),
-              EditorView.lineWrapping,
-              ctrlEnter,
-            ]}
-            autoFocus={data.role !== "assistant"}
-            onChange={(value) => {
-              updateData(id, { content: value });
-            }}
+            extensions={extensions}
+            // autoFocus={data.role !== "assistant"}
+            onChange={handleOnChange}
           />
         </div>
       </div>
