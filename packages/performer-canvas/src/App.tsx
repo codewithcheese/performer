@@ -8,13 +8,13 @@ import ReactFlow, {
   type Node,
   useReactFlow,
 } from "reactflow";
-import { CursorTextIcon } from "@radix-ui/react-icons";
 import "reactflow/dist/style.css";
 import EditorNode from "./components/EditorNode.tsx";
 import { useCallback } from "react";
 import { shallow } from "zustand/shallow";
 import { RFState, useStore } from "./store";
 import { getClosestEdge } from "./lib/proximity.ts";
+import { SquareMousePointer } from "lucide-react";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
   // @ts-ignore
@@ -125,11 +125,11 @@ function App() {
       fitView
     >
       <Background />
-      <Controls>
+      <Controls showInteractive={false}>
         <ControlButton
           onClick={() => newNode("editorNode", { role: "user", content: "" })}
         >
-          <CursorTextIcon />
+          <SquareMousePointer />
         </ControlButton>
       </Controls>
       <MiniMap pannable={true} zoomable={true} zoomStep={1} />
