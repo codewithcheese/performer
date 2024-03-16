@@ -17,9 +17,9 @@ export const proximityIndex = new RBush();
 export function getClosestEdge(node: Node, minDistance = 20) {
   const closest = (
     proximityIndex.search({
-      minX: node.position.x - minDistance,
+      minX: node.position.x + Math.floor((node.width || 0) / 2) - minDistance, // minDistance from middle
       minY: node.position.y - minDistance,
-      maxX: node.position.x + (node.width || 0) + minDistance,
+      maxX: node.position.x + Math.floor((node.width || 0) / 2) + minDistance,
       maxY: node.position.y + (node.height || 0) + minDistance,
     }) as ProximityItem[]
   )
