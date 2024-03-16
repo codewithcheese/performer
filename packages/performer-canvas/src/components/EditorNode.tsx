@@ -83,6 +83,7 @@ export default memo(function EditorNode({
         codeLanguages: languages,
       }),
       EditorView.lineWrapping,
+
       Prec.highest(
         keymap.of([
           {
@@ -96,6 +97,14 @@ export default memo(function EditorNode({
       ),
     ];
   }, [submitChat]);
+
+  const setup = useMemo(
+    () => ({
+      lineNumbers: false,
+      foldGutter: false,
+    }),
+    [],
+  );
 
   const handleOnChange = useCallback(
     (value: string) => {
@@ -157,6 +166,7 @@ export default memo(function EditorNode({
           </div>
           {isEditing ? (
             <CodeMirror
+              basicSetup={setup}
               className="flex flex-1 w-full nodrag "
               value={data.content}
               extensions={extensions}
