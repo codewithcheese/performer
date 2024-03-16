@@ -140,7 +140,7 @@ export default memo(function EditorNode({
             />
           </div>
         </div>
-        <div className="flex flex-row border-t border-t-gray-200 ">
+        <div className="flex flex-row ">
           <div>
             <RoleSelect
               onValueChange={(value) => {
