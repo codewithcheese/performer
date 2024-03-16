@@ -2,7 +2,6 @@ import ReactFlow, {
   Background,
   ControlButton,
   Controls,
-  KeyCode,
   MiniMap,
   type Node,
   useReactFlow,
@@ -38,7 +37,7 @@ const selector = (state: RFState) => ({
 const nodeTypes = { editorNode: EditorNode };
 
 function App() {
-  const { setEdges } = useReactFlow();
+  const { setEdges, screenToFlowPosition } = useReactFlow();
   const {
     nodes,
     edges,
@@ -49,6 +48,13 @@ function App() {
     getNode,
     moveNode,
   } = useStore(selector, shallow);
+
+  const getViewportCenter = useCallback(() => {
+    return screenToFlowPosition({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    });
+  }, [screenToFlowPosition]);
 
   const onNodeDrag = useCallback(
     (_: unknown, node: Node) => {
@@ -84,15 +90,22 @@ function App() {
       onNodeDrag={onNodeDrag}
       onNodeDragStop={onNodeDragStop}
       onConnect={onConnect}
-      zoomActivationKeyCode={getCtrlKeyCode()}
       zoomOnScroll={true}
       panOnScroll={true}
       fitView
     >
       <Background />
-      <Controls showInteractive={false}>
+      <Controls className="bg-white" showInteractive={false}>
         <ControlButton
-          onClick={() => newNode("editorNode", { role: "user", content: "" })}
+          onClick={() => {
+            const pos = getViewportCenter();
+            newNode(
+              "editorNode",
+              { role: "user", content: "" },
+              pos.x - 200,
+              pos.y - 100,
+            );
+          }}
         >
           <SquareMousePointer />
         </ControlButton>
@@ -100,19 +113,6 @@ function App() {
       <MiniMap pannable={true} zoomable={true} zoomStep={1} />
     </ReactFlow>
   );
-}
-
-function getCtrlKeyCode(): KeyCode {
-  // Check if the platform is Mac
-  try {
-    if (navigator.platform.includes("Mac")) {
-      return "8"; // Keycode for Ctrl on Mac
-    } else {
-      return "17"; // Keycode for Ctrl on Windows and Linux
-    }
-  } catch {
-    return "17";
-  }
 }
 
 export default App;
