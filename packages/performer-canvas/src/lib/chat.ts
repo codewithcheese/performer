@@ -5,8 +5,7 @@ import { findId, useStore } from "../store.ts";
 import { getConnectedEdges, Node, Edge } from "reactflow";
 
 export async function chat(nodeId: string, controller: AbortController) {
-  const { nodes, edges, updateNodeData, newNode, getNode } =
-    useStore.getState();
+  const { nodes, edges, updateNodeData, newNode } = useStore.getState();
   const node = nodes.find((node) => node.id === nodeId);
   if (!node) {
     console.error(`node not found for ${nodeId}`, nodes);
@@ -40,13 +39,13 @@ export async function chat(nodeId: string, controller: AbortController) {
       updateNodeData(newId, message);
     }
   }
-  const assistantNode = getNode(newId);
-  newNode(
-    "editorNode",
-    { role: "user", content: "" },
-    assistantNode.position.x,
-    assistantNode.position.y + assistantNode.height! + 10,
-  );
+  // const assistantNode = getNode(newId);
+  // newNode(
+  //   "editorNode",
+  //   { role: "user", content: "" },
+  //   assistantNode.position.x,
+  //   assistantNode.position.y + assistantNode.height! + 10,
+  // );
 }
 
 function resolveMessages(nodeId: string, nodes: Node[], edges: Edge[]) {
