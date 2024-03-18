@@ -13,6 +13,7 @@ import { shallow } from "zustand/shallow";
 import { RFState, useStore } from "./store";
 import { getClosestEdge, updateEdges } from "./lib/proximity.ts";
 import { SquareMousePointer } from "lucide-react";
+import ChatNode from "./components/ChatNode.tsx";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
   // @ts-ignore
@@ -33,7 +34,7 @@ const selector = (state: RFState) => ({
   moveNode: state.moveNode,
 });
 
-const nodeTypes = { editorNode: EditorNode };
+const nodeTypes = { editorNode: EditorNode, chatNode: ChatNode };
 
 function App() {
   const { setEdges, screenToFlowPosition } = useReactFlow();
@@ -48,6 +49,11 @@ function App() {
     moveNode,
   } = useStore(selector, shallow);
 
+  // @ts-ignore
+  window.nodes = nodes;
+  // @ts-ignore
+  window.edges = edges;
+
   const getViewportCenter = useCallback(() => {
     return screenToFlowPosition({
       x: window.innerWidth / 2,
@@ -57,24 +63,24 @@ function App() {
 
   const onNodeDrag = useCallback(
     (_: unknown, node: Node) => {
-      const closeEdge = getClosestEdge(node);
-      setEdges((edges) => updateEdges(node, closeEdge, edges));
+      // const closeEdge = getClosestEdge(node);
+      // setEdges((edges) => updateEdges(node, closeEdge, edges));
     },
     [getClosestEdge, setEdges],
   );
 
   const onNodeDragStop = useCallback(
     (_: unknown, node: Node) => {
-      const closeEdge = getClosestEdge(node);
-      if (closeEdge) {
-        // snap target to source
-        const source = getNode(closeEdge.source);
-        const right = source.position.x;
-        const bottom = source.position.y + source.height!;
-        moveNode(closeEdge.target, right, bottom);
-
-        setEdges((edges) => updateEdges(node, closeEdge, edges));
-      }
+      // const closeEdge = getClosestEdge(node);
+      // if (closeEdge) {
+      //   // snap target to source
+      //   const source = getNode(closeEdge.source);
+      //   const right = source.position.x;
+      //   const bottom = source.position.y + source.height!;
+      //   moveNode(closeEdge.target, right, bottom);
+      //
+      //   setEdges((edges) => updateEdges(node, closeEdge, edges));
+      // }
     },
     [getClosestEdge, setEdges],
   );
@@ -98,12 +104,11 @@ function App() {
         <ControlButton
           onClick={() => {
             const pos = getViewportCenter();
-            newNode(
-              "editorNode",
-              { role: "user", content: "" },
-              pos.x - 200,
-              pos.y - 100,
-            );
+            newNode({
+              type: "chatNode",
+              data: { messages: [] },
+              position: { x: pos.x - 200, y: pos.y - 100 },
+            });
           }}
         >
           <SquareMousePointer />

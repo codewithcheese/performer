@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import { MessageMarkdown } from "./MessageMarkdown.tsx";
+import { TitleBar } from "./TitleBar.tsx";
 
 type EditorNodeData = {
   role: string;
@@ -113,31 +114,29 @@ export default memo(function EditorNode({
 
   return (
     <>
-      <div className="bg-white rounded shadow border border-gray-200 w-[70ch]">
-        <div className="group">
-          <div className="flex flex-row gap-1 opacity-0 group-hover:opacity-100">
-            <GripHorizontal className="ml-2 text-gray-500" size={16} />
-            {isEditing ? (
-              <EyeIcon
-                className="text-gray-500"
-                size={16}
-                onClick={() => setIsEditing(false)}
-              />
-            ) : (
-              <Edit2Icon
-                className="text-gray-500"
-                onClick={() => setIsEditing(true)}
-                size={16}
-              />
-            )}
-            <div className="flex-1"></div>
-            <X
-              className="text-gray-500 nodrag"
+      <div className="bg-white w-[70ch]">
+        <TitleBar>
+          <GripHorizontal className="ml-2 text-gray-500" size={16} />
+          {isEditing ? (
+            <EyeIcon
+              className="text-gray-500"
               size={16}
-              onClick={() => deleteNode(id)}
+              onClick={() => setIsEditing(false)}
             />
-          </div>
-        </div>
+          ) : (
+            <Edit2Icon
+              className="text-gray-500"
+              onClick={() => setIsEditing(true)}
+              size={16}
+            />
+          )}
+          <div className="flex-1"></div>
+          <X
+            className="text-gray-500 nodrag"
+            size={16}
+            onClick={() => deleteNode(id)}
+          />
+        </TitleBar>
         <div className="flex flex-row ">
           <div>
             <RoleSelect onValueChange={handleRoleChange} value={role}>
@@ -190,12 +189,11 @@ export default memo(function EditorNode({
               const node = getNode(id);
               const left = node.position.x;
               const bottom = node.position.y + node.height!;
-              newNode(
-                "editorNode",
-                { role: "user", content: "" },
-                left,
-                bottom + 10,
-              );
+              newNode({
+                type: "editorNode",
+                data: { role: "user", content: "" },
+                position: { x: left, y: bottom + 10 },
+              });
             }}
             className="rounded-full bg-gray-100 p-4 hover:bg-gray-200 text-gray-700 text-sm"
           >
