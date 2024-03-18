@@ -1,14 +1,4 @@
-import { TitleBar } from "./TitleBar.tsx";
-import {
-  CopyIcon,
-  Edit2Icon,
-  EyeIcon,
-  GripHorizontal,
-  PictureInPicture2,
-  ScissorsIcon,
-  TrashIcon,
-  X,
-} from "lucide-react";
+import { CopyIcon, Edit2Icon, EyeIcon, TrashIcon } from "lucide-react";
 import {
   RoleSelect,
   SelectContent,
@@ -19,13 +9,14 @@ import {
 import { MessageIcon } from "../icons/MessageIcon.tsx";
 import CodeMirror, { Prec } from "@uiw/react-codemirror";
 import { MessageMarkdown } from "./MessageMarkdown.tsx";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { PerformerMessage } from "@performer/core";
 import { markdown } from "@codemirror/lang-markdown";
 import { javascript } from "@codemirror/lang-javascript";
 import { languages } from "@codemirror/language-data";
 import { EditorView, keymap } from "@codemirror/view";
 import { useReactFlow, XYPosition } from "reactflow";
+import { memo } from "react-tracked";
 
 export type MessageProps = {
   index: number;

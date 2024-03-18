@@ -1,19 +1,9 @@
-import { memo, useCallback, useState } from "react";
-import { NodeProps, useReactFlow, XYPosition } from "reactflow";
+import { useCallback, useRef, useState } from "react";
+import { memo } from "react-tracked";
+import { NodeProps, XYPosition } from "reactflow";
 import { MessageInput } from "./MessageInput.tsx";
 import { TitleBar } from "./TitleBar.tsx";
-import {
-  ChevronDown,
-  ChevronUp,
-  ExpandIcon,
-  GripHorizontal,
-  Maximize,
-  Minimize,
-  Minimize2,
-  MinusIcon,
-  X,
-} from "lucide-react";
-import { useStore } from "../store.ts";
+import { GripHorizontal, MinusIcon, X } from "lucide-react";
 import {
   AssistantMessage,
   PerformerMessage,
@@ -21,157 +11,164 @@ import {
 } from "@performer/core";
 import Message from "./Message.tsx";
 import OpenAI from "openai";
+import {
+  deleteNode,
+  getChatMessages,
+  newNode,
+  pushChatMessage,
+  removeChatMessage,
+  updateChatMessage,
+} from "../valtio.ts";
 
 type ChatNodeData = {
   messages: PerformerMessage[];
   headless: boolean;
 };
 
-export default memo(function ChatNode({ id, data }: NodeProps<ChatNodeData>) {
-  // store methods
-  const {
-    newNode,
-    deleteNode,
-    updateChatMessage,
-    removeChatMessage,
-    insertChatMessage,
-  } = useStore((state) => ({
-    deleteNode: state.deleteNode,
-    newNode: state.newNode,
-    updateChatMessage: state.updateChatMessage,
-    removeChatMessage: state.removeChatMessage,
-    insertChatMessage: state.insertChatMessage,
-  }));
-  const [abortController, setAbortController] =
-    useState<AbortController | null>(null);
-  const [isHeadless, setIsHeadless] = useState<boolean>(data.headless);
+export default memo(
+  function ChatNode({ id, data }: NodeProps<ChatNodeData>) {
+    console.log("ChatNode render", id, data);
 
-  const onSubmit = useCallback(
-    async (text?: string) => {
-      if (abortController) {
-        console.error("Unable to submit message while response is generating");
-        return;
-      }
+    const [abortController, setAbortController] =
+      useState<AbortController | null>(null);
+    const [isHeadless, setIsHeadless] = useState<boolean>(data.headless);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
-      const messages = data.messages;
-      if (text) {
-        const userMessage: UserMessage = { role: "user", content: text };
-        insertChatMessage(id, userMessage);
-        messages.push(userMessage);
-      }
-
-      // create completion
-      try {
-        const controller = new AbortController();
-        setAbortController(controller);
-        const openai = new OpenAI({
-          dangerouslyAllowBrowser: true,
-        });
-        const stream = await openai.chat.completions.create(
-          {
-            model: "gpt-4-turbo-preview",
-            messages,
-            stream: true,
-          },
-          { signal: controller.signal },
-        );
-
-        // add message node
-        const message: AssistantMessage = {
-          role: "assistant",
-          content: "",
-        };
-        const index = insertChatMessage(id, message);
-
-        // consume completion, update node
-        for await (const chunk of stream) {
-          const delta = chunk.choices[0]?.delta;
-          if ("content" in delta) {
-            if (message.content == null) {
-              message.content = "";
-            }
-            message.content += delta.content;
-            updateChatMessage(id, index, message);
-          }
+    const onSubmit = useCallback(
+      async (text?: string) => {
+        if (abortController) {
+          console.error(
+            "Unable to submit message while response is generating",
+          );
+          return;
         }
-      } finally {
-        setAbortController(null);
-      }
-    },
-    [id, data, abortController],
-  );
 
-  const handleChange = useCallback(
-    (index: number, message: Partial<PerformerMessage>) => {
-      updateChatMessage(id, index, message);
-    },
-    [id],
-  );
+        if (text) {
+          const userMessage: UserMessage = { role: "user", content: text };
+          pushChatMessage(id, userMessage);
+        }
 
-  const handleRemove = useCallback(
-    (index: number) => {
-      removeChatMessage(id, index);
-    },
-    [id],
-  );
+        // create completion
+        try {
+          const controller = new AbortController();
+          setAbortController(controller);
+          const openai = new OpenAI({
+            dangerouslyAllowBrowser: true,
+          });
+          const stream = await openai.chat.completions.create(
+            {
+              model: "gpt-4-turbo-preview",
+              messages: getChatMessages(id),
+              stream: true,
+            },
+            { signal: controller.signal },
+          );
 
-  const handleCopy = useCallback(
-    (index: number, position: XYPosition) => {
-      const message = data.messages[index];
-      newNode({
-        type: "chatNode",
-        data: { messages: [message], headless: true },
-        position,
-      });
-    },
-    [data],
-  );
+          // add message node
+          const message: AssistantMessage = {
+            role: "assistant",
+            content: "",
+          };
+          const index = pushChatMessage(id, message);
 
-  console.log("ChatNode", id, data);
+          // consume completion, update node
+          for await (const chunk of stream) {
+            const delta = chunk.choices[0]?.delta;
+            if ("content" in delta) {
+              if (message.content == null) {
+                message.content = "";
+              }
+              message.content += delta.content;
+              console.log("delta", message);
+              updateChatMessage(id, index, message);
+            }
+          }
+          inputRef.current?.focus();
+        } finally {
+          setAbortController(null);
+        }
+      },
+      [id, data, abortController],
+    );
 
-  return (
-    <>
-      <div className="bg-white rounded shadow border border-gray-200 w-[70ch]">
-        <TitleBar>
-          <GripHorizontal className="ml-2 text-gray-500" size={16} />
-          <div className="flex-1"></div>
-          <X
-            className="text-gray-500 nodrag"
-            size={16}
-            onClick={() => deleteNode(id)}
-          />
-        </TitleBar>
-        <div>
-          {data.messages.map((m, index) => (
-            <Message
-              key={index}
-              index={index}
-              message={m}
-              onSubmit={onSubmit}
-              onRemove={handleRemove}
-              onChange={handleChange}
-              onCopy={handleCopy}
+    const handleChange = useCallback(
+      (index: number, message: Partial<PerformerMessage>) => {
+        updateChatMessage(id, index, message);
+      },
+      [id],
+    );
+
+    const handleRemove = useCallback(
+      (index: number) => {
+        removeChatMessage(id, index);
+      },
+      [id],
+    );
+
+    const handleCopy = useCallback(
+      (index: number, position: XYPosition) => {
+        const message = data.messages[index];
+        newNode({
+          type: "chatNode",
+          data: { messages: [message], headless: true },
+          position,
+        });
+      },
+      [data],
+    );
+
+    return (
+      <>
+        <div className="bg-white rounded shadow border border-gray-200 w-[70ch]">
+          <TitleBar>
+            <GripHorizontal className="ml-2 text-gray-500" size={16} />
+            <div className="flex-1"></div>
+            <X
+              className="text-gray-500 nodrag"
+              size={16}
+              onClick={() => deleteNode(id)}
             />
-          ))}
-        </div>
-        {isHeadless ? (
-          <div className="flex flex-row justify-center items-center text-gray-500 nodrag ">
-            <MinusIcon size={16} onClick={() => setIsHeadless((p) => !p)} />
-          </div>
-        ) : (
-          <>
-            <div className="p-4 pt-0">
-              <MessageInput
+          </TitleBar>
+          <div>
+            {data.messages.map((m, index) => (
+              <Message
+                key={index}
+                index={index}
+                message={m}
                 onSubmit={onSubmit}
-                placeholder="Enter a message..."
+                onRemove={handleRemove}
+                onChange={handleChange}
+                onCopy={handleCopy}
               />
-            </div>
-            <div className="flex flex-row justify-center items-center text-gray-500 nodrag">
+            ))}
+          </div>
+          {isHeadless ? (
+            <div className="flex flex-row justify-center items-center text-gray-500 nodrag ">
               <MinusIcon size={16} onClick={() => setIsHeadless((p) => !p)} />
             </div>
-          </>
-        )}
-      </div>
-    </>
-  );
-});
+          ) : (
+            <>
+              <div className="p-4 pt-0">
+                <MessageInput
+                  ref={inputRef}
+                  onSubmit={onSubmit}
+                  placeholder="Enter a message..."
+                />
+              </div>
+              <div className="flex flex-row justify-center items-center text-gray-500 nodrag">
+                <MinusIcon size={16} onClick={() => setIsHeadless((p) => !p)} />
+              </div>
+            </>
+          )}
+        </div>
+      </>
+    );
+  },
+  (prevProps, nextProps) => {
+    // console.log(
+    //   "ChatNode memo",
+    //   prevProps.id === nextProps.id && prevProps.data === nextProps.data,
+    // );
+    return prevProps.id === nextProps.id && prevProps.data === nextProps.data;
+  },
+);

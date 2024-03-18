@@ -1,4 +1,10 @@
-import { KeyboardEventHandler, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  KeyboardEventHandler,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 export type MessageInputProps = {
   disclaimer?: string;
@@ -7,14 +13,12 @@ export type MessageInputProps = {
   placeholder?: string;
 };
 
-export function MessageInput({
-  disclaimer,
-  disabled = false,
-  onSubmit,
-  placeholder,
-}: MessageInputProps) {
+export const MessageInput = forwardRef(function (
+  { disclaimer, disabled = false, onSubmit, placeholder }: MessageInputProps,
+  ref,
+) {
   const [text, setText] = useState("");
-  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(ref as any);
   const hiddenDivRef = useRef<HTMLDivElement>(null);
   const submitBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -110,4 +114,4 @@ export function MessageInput({
       )}
     </>
   );
-}
+});

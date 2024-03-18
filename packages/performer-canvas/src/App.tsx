@@ -7,13 +7,18 @@ import ReactFlow, {
   useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import EditorNode from "./components/EditorNode.tsx";
 import { useCallback } from "react";
-import { shallow } from "zustand/shallow";
-import { RFState, useStore } from "./store";
-import { getClosestEdge, updateEdges } from "./lib/proximity.ts";
+import { getClosestEdge } from "./lib/proximity.ts";
 import { SquareMousePointer } from "lucide-react";
 import ChatNode from "./components/ChatNode.tsx";
+import { useSnapshot } from "valtio";
+import {
+  newNode,
+  onConnect,
+  onEdgesChange,
+  onNodesChange,
+  state,
+} from "./valtio.ts";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
   // @ts-ignore
@@ -22,37 +27,19 @@ if ("VITE_OPENAI_API_KEY" in import.meta.env) {
   };
 }
 
-const selector = (state: RFState) => ({
-  nodes: state.nodes,
-  edges: state.edges,
-  onNodesChange: state.onNodesChange,
-  onEdgesChange: state.onEdgesChange,
-  onConnect: state.onConnect,
-  pushNode: state.pushNode,
-  newNode: state.newNode,
-  getNode: state.getNode,
-  moveNode: state.moveNode,
-});
-
-const nodeTypes = { editorNode: EditorNode, chatNode: ChatNode };
+const nodeTypes = {
+  // editorNode: EditorNode,
+  chatNode: ChatNode,
+};
 
 function App() {
   const { setEdges, screenToFlowPosition } = useReactFlow();
-  const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    newNode,
-    getNode,
-    moveNode,
-  } = useStore(selector, shallow);
+  const snap = useSnapshot(state);
 
   // @ts-ignore
-  window.nodes = nodes;
+  window.nodes = snap.nodes;
   // @ts-ignore
-  window.edges = edges;
+  window.edges = snap.edges;
 
   const getViewportCenter = useCallback(() => {
     return screenToFlowPosition({
@@ -88,9 +75,9 @@ function App() {
   return (
     <ReactFlow
       nodeTypes={nodeTypes}
-      nodes={nodes}
+      nodes={snap.nodes}
       onNodesChange={onNodesChange}
-      edges={edges}
+      edges={snap.edges}
       onEdgesChange={onEdgesChange}
       onNodeDrag={onNodeDrag}
       onNodeDragStop={onNodeDragStop}
@@ -106,7 +93,7 @@ function App() {
             const pos = getViewportCenter();
             newNode({
               type: "chatNode",
-              data: { messages: [] },
+              data: { messages: [], headless: false },
               position: { x: pos.x - 200, y: pos.y - 100 },
             });
           }}
