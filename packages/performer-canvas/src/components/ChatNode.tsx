@@ -115,7 +115,7 @@ export default memo(function ChatNode({ id, data }: NodeProps<ChatNodeData>) {
     [id],
   );
 
-  const handleCut = useCallback(
+  const handleCopy = useCallback(
     (index: number, position: XYPosition) => {
       const message = data.messages[index];
       newNode({
@@ -150,7 +150,7 @@ export default memo(function ChatNode({ id, data }: NodeProps<ChatNodeData>) {
               onSubmit={onSubmit}
               onRemove={handleRemove}
               onChange={handleChange}
-              onCut={handleCut}
+              onCopy={handleCopy}
             />
           ))}
         </div>

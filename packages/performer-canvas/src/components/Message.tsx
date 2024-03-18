@@ -1,5 +1,6 @@
 import { TitleBar } from "./TitleBar.tsx";
 import {
+  CopyIcon,
   Edit2Icon,
   EyeIcon,
   GripHorizontal,
@@ -32,7 +33,7 @@ export type MessageProps = {
   onRemove: (index: number) => void;
   onChange: (index: number, message: Partial<PerformerMessage>) => void;
   onSubmit: () => void;
-  onCut: (index: number, position: XYPosition) => void;
+  onCopy: (index: number, position: XYPosition) => void;
 };
 
 export default memo(function Message({
@@ -41,13 +42,13 @@ export default memo(function Message({
   onRemove,
   onChange,
   onSubmit,
-  onCut,
+  onCopy,
 }: MessageProps) {
   const [isEditing, setIsEditing] = useState(message.role === "user");
   if (typeof message.content !== "string") {
     throw Error("Content must be string");
   }
-  const cutButtonRef = useRef<SVGSVGElement>(null);
+  const copyButtonRef = useRef<SVGSVGElement>(null);
   const { screenToFlowPosition } = useReactFlow();
 
   const extensions = useMemo(() => {
@@ -98,18 +99,18 @@ export default memo(function Message({
     [onChange],
   );
 
-  const handleCut = useCallback(() => {
-    if (!cutButtonRef.current) {
+  const handleCopy = useCallback(() => {
+    if (!copyButtonRef.current) {
       return;
     }
-    const rect = cutButtonRef.current.getBoundingClientRect();
+    const rect = copyButtonRef.current.getBoundingClientRect();
     const position = { x: rect.x, y: rect.y };
     // const position = {
-    //   x: cutButtonRef.current.clientLeft,
-    //   y: cutButtonRef.current.clientTop,
+    //   x: copyButtonRef.current.clientLeft,
+    //   y: copyButtonRef.current.clientTop,
     // };
-    onCut(index, screenToFlowPosition(position));
-  }, [onCut]);
+    onCopy(index, screenToFlowPosition(position));
+  }, [onCopy]);
 
   return (
     <div className="px-2 py-1">
@@ -149,7 +150,7 @@ export default memo(function Message({
           )}
 
           <div className="flex flex-row gap-2 opacity-0 group-hover:opacity-100 text-gray-500 nodrag">
-            <ScissorsIcon ref={cutButtonRef} size={13} onClick={handleCut} />
+            <CopyIcon ref={copyButtonRef} size={13} onClick={handleCopy} />
             {isEditing ? (
               <EyeIcon size={13} onClick={() => setIsEditing(false)} />
             ) : (
