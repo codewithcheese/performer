@@ -16,6 +16,7 @@ import {
 import { findId } from "./lib/array.ts";
 import { PerformerMessage } from "@performer/core";
 
+// loosen readonly for TS happiness
 declare module "valtio" {
   function useSnapshot<T extends object>(p: T): T;
 }
@@ -23,11 +24,22 @@ declare module "valtio" {
 export type FlowState = {
   nodes: Node[];
   edges: Edge[];
+  dropFocus: { id: string; index: number } | null;
 };
 
+const STORAGE_KEY = "flow-state";
+
 export const state = proxy<FlowState>(
-  JSON.parse(localStorage.getItem("flow-state")!) || { nodes: [], edges: [] },
+  JSON.parse(localStorage.getItem(STORAGE_KEY)!) || {
+    nodes: [],
+    edges: [],
+    dropFocus: null,
+  },
 );
+
+subscribe(state, () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+});
 
 export function onNodesChange(changes: NodeChange[]) {
   state.nodes = applyNodeChanges(changes, state.nodes);
@@ -61,15 +73,6 @@ export function newNode({
     position,
   };
   state.nodes.push(newNode);
-  // const closeEdge = getClosestEdge(newNode);
-  // if (closeEdge) {
-  //   // snap target to source
-  //   const source = getNode(closeEdge.source);
-  //   const right = source.position.x;
-  //   const bottom = source.position.y + source.height!;
-  //   moveNode(closeEdge.target, right, bottom);
-  // }
-  // set({ yPos, edges: updateEdges(newNode, closeEdge, edges) });
   return id;
 }
 
@@ -108,6 +111,39 @@ export function removeChatMessage(id: string, index: number) {
   node.data.messages = node.data.messages.toSpliced(index, 1);
 }
 
-subscribe(state, () => {
-  localStorage.setItem("flow-state", JSON.stringify(state));
-});
+export function setDropFocus(id: string, index: number) {
+  if (
+    state.dropFocus &&
+    (state.dropFocus.id !== id || state.dropFocus.index !== index)
+  ) {
+    // remove dropFocus
+    const node = state.nodes.find(findId(state.dropFocus.id))!;
+    node.data.dropIndex = null;
+  }
+  const node = state.nodes.find(findId(id))!;
+  node.data.dropIndex = index;
+  state.dropFocus = { id, index };
+}
+
+export function clearDropFocus() {
+  if (state.dropFocus) {
+    const node = state.nodes.find(findId(state.dropFocus.id))!;
+    node.data.dropIndex = null;
+  }
+  state.dropFocus = null;
+}
+
+export function dropNode(node: Node) {
+  if (state.dropFocus) {
+    // insert message into focus node and delete dropped node
+    const focusNode = state.nodes.find(findId(state.dropFocus.id))!;
+    focusNode.data.messages = focusNode.data.messages.toSpliced(
+      state.dropFocus.index,
+      0,
+      ...node.data.messages,
+    );
+    focusNode.data.dropIndex = null;
+    deleteNode(node.id);
+  }
+  state.dropFocus = null;
+}

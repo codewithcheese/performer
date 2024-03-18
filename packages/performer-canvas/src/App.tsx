@@ -8,17 +8,20 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { useCallback } from "react";
-import { getClosestEdge } from "./lib/proximity.ts";
+import { getIntersections, proximityIndex } from "./lib/proximity.ts";
 import { SquareMousePointer } from "lucide-react";
 import ChatNode from "./components/ChatNode.tsx";
 import { useSnapshot } from "valtio";
 import {
+  clearDropFocus,
+  dropNode,
   newNode,
   onConnect,
   onEdgesChange,
   onNodesChange,
+  setDropFocus,
   state,
-} from "./valtio.ts";
+} from "./store.ts";
 
 if ("VITE_OPENAI_API_KEY" in import.meta.env) {
   // @ts-ignore
@@ -48,29 +51,43 @@ function App() {
     });
   }, [screenToFlowPosition]);
 
-  const onNodeDrag = useCallback(
-    (_: unknown, node: Node) => {
-      // const closeEdge = getClosestEdge(node);
-      // setEdges((edges) => updateEdges(node, closeEdge, edges));
-    },
-    [getClosestEdge, setEdges],
-  );
+  const onNodeDrag = useCallback((_: unknown, node: Node) => {
+    const intersections = getIntersections(node, 0);
+    if (intersections.length) {
+      const highlight = intersections[0];
+      setDropFocus(highlight.id, highlight.index);
+    } else {
+      clearDropFocus();
+    }
+  }, []);
 
-  const onNodeDragStop = useCallback(
-    (_: unknown, node: Node) => {
-      // const closeEdge = getClosestEdge(node);
-      // if (closeEdge) {
-      //   // snap target to source
-      //   const source = getNode(closeEdge.source);
-      //   const right = source.position.x;
-      //   const bottom = source.position.y + source.height!;
-      //   moveNode(closeEdge.target, right, bottom);
-      //
-      //   setEdges((edges) => updateEdges(node, closeEdge, edges));
-      // }
-    },
-    [getClosestEdge, setEdges],
-  );
+  const onNodeDragStop = useCallback((_: unknown, node: Node) => {
+    dropNode(node);
+    proximityIndex.clear();
+  }, []);
+
+  const onNodeDragStart = useCallback((_: unknown, node: Node) => {
+    // track all the drop zones
+    // note: only supports dragging one node at a time
+    const dropZones =
+      document.querySelectorAll<HTMLDivElement>(`.message-dropzone`);
+    proximityIndex.clear();
+    const items = [];
+    for (const el of dropZones) {
+      const rect = el.getBoundingClientRect();
+      const pos = screenToFlowPosition({ x: rect.x, y: rect.y });
+      items.push({
+        minX: pos.x + Math.floor(el.offsetWidth / 2) - 20, // 20 left of the middle
+        minY: pos.y,
+        maxX: pos.x + Math.floor(el.offsetWidth / 2) + 20, // 20 right of the middle
+        maxY: pos.y + el.offsetHeight,
+        index: parseInt(el.getAttribute("data-index")!),
+        id: el.getAttribute("data-nodeid")!,
+      });
+    }
+    console.log("loading dropzones", items);
+    proximityIndex.load(items);
+  }, []);
 
   return (
     <ReactFlow
@@ -79,6 +96,7 @@ function App() {
       onNodesChange={onNodesChange}
       edges={snap.edges}
       onEdgesChange={onEdgesChange}
+      onNodeDragStart={onNodeDragStart}
       onNodeDrag={onNodeDrag}
       onNodeDragStop={onNodeDragStop}
       onConnect={onConnect}

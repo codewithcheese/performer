@@ -18,11 +18,13 @@ import {
   pushChatMessage,
   removeChatMessage,
   updateChatMessage,
-} from "../valtio.ts";
+} from "../store.ts";
+import { cn } from "../lib/cn.ts";
 
 type ChatNodeData = {
   messages: PerformerMessage[];
   headless: boolean;
+  dropIndex: number;
 };
 
 export default memo(
@@ -129,19 +131,39 @@ export default memo(
               onClick={() => deleteNode(id)}
             />
           </TitleBar>
-          <div>
+          <>
+            <div
+              className={cn(
+                "message-dropzone w-full",
+                data.dropIndex === 0 && "border-blue-500 border border-dashed ",
+              )}
+              data-nodeid={id}
+              data-index={0}
+            />
             {data.messages.map((m, index) => (
-              <Message
-                key={index}
-                index={index}
-                message={m}
-                onSubmit={onSubmit}
-                onRemove={handleRemove}
-                onChange={handleChange}
-                onCopy={handleCopy}
-              />
+              <>
+                <Message
+                  key={`message-${index}`}
+                  index={index}
+                  message={m}
+                  onSubmit={onSubmit}
+                  onRemove={handleRemove}
+                  onChange={handleChange}
+                  onCopy={handleCopy}
+                />
+                <div
+                  key={`dropzone-${index}`}
+                  className={cn(
+                    "message-dropzone w-full",
+                    data.dropIndex === index + 1 &&
+                      "border-blue-500 border border-dashed ",
+                  )}
+                  data-nodeid={id}
+                  data-index={index + 1}
+                />
+              </>
             ))}
-          </div>
+          </>
           {isHeadless ? (
             <div className="flex flex-row justify-center items-center text-gray-500 nodrag ">
               <MinusIcon size={16} onClick={() => setIsHeadless((p) => !p)} />
