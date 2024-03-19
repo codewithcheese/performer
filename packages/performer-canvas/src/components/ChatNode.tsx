@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { memo } from "react-tracked";
-import { NodeProps, XYPosition } from "reactflow";
+import { NodeProps, XYPosition, Node } from "reactflow";
 import { MessageInput } from "./MessageInput.tsx";
 import { TitleBar } from "./TitleBar.tsx";
 import { GripHorizontal, MinusIcon, X } from "lucide-react";
@@ -26,8 +26,10 @@ import { snapshot } from "valtio";
 type ChatNodeData = {
   messages: PerformerMessage[];
   headless: boolean;
-  dropIndex: number;
+  dropIndex?: number;
 };
+
+export type ChatNodeType = Node<ChatNodeData, "chatNode">;
 
 type ChatState =
   | { type: "idle" }

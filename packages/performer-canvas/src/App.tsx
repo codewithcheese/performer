@@ -10,12 +10,12 @@ import "reactflow/dist/style.css";
 import { useCallback } from "react";
 import { getIntersections, proximityIndex } from "./lib/proximity.ts";
 import { SquareMousePointer } from "lucide-react";
-import ChatNode from "./components/ChatNode.tsx";
 import { useSnapshot } from "valtio";
 import {
   clearDropFocus,
   dropNode,
   newNode,
+  nodeTypes,
   onConnect,
   onEdgesChange,
   onNodesChange,
@@ -29,11 +29,6 @@ if ("VITE_OPENAI_API_KEY" in import.meta.env) {
     env: { OPENAI_API_KEY: import.meta.env["VITE_OPENAI_API_KEY"] },
   };
 }
-
-const nodeTypes = {
-  // editorNode: EditorNode,
-  chatNode: ChatNode,
-};
 
 function App() {
   const { setEdges, screenToFlowPosition } = useReactFlow();

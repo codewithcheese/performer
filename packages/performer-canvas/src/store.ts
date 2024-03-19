@@ -15,14 +15,21 @@ import {
 } from "reactflow";
 import { findId } from "./lib/array.ts";
 import { PerformerMessage } from "@performer/core";
+import ChatNode, { ChatNodeType } from "./components/ChatNode.tsx";
 
 // loosen readonly for TS happiness
 declare module "valtio" {
   function useSnapshot<T extends object>(p: T): T;
 }
 
+export type NodeType = ChatNodeType;
+
+export const nodeTypes = {
+  chatNode: ChatNode,
+};
+
 export type FlowState = {
-  nodes: Node[];
+  nodes: NodeType[];
   edges: Edge[];
   dropFocus: { id: string; index: number } | null;
 };
@@ -50,7 +57,7 @@ subscribe(state, () => {
  */
 
 export function onNodesChange(changes: NodeChange[]) {
-  state.nodes = applyNodeChanges(changes, state.nodes);
+  state.nodes = applyNodeChanges(changes, state.nodes) as NodeType[];
 }
 
 export function onEdgesChange(changes: EdgeChange[]) {
@@ -66,7 +73,7 @@ export function onConnect(connection: Connection) {
  */
 
 export function newNode(
-  node: Partial<Node> & Required<Pick<Node, "position" | "data">>,
+  node: Partial<NodeType> & Required<Pick<NodeType, "position" | "data">>,
 ) {
   const id = crypto.randomUUID();
   state.nodes.push({ ...node, id: node.id || crypto.randomUUID() });
@@ -123,7 +130,7 @@ export function setDropFocus(id: string, index: number) {
   ) {
     // remove dropFocus
     const node = state.nodes.find(findId(state.dropFocus.id))!;
-    node.data.dropIndex = null;
+    node.data.dropIndex = undefined;
   }
   const node = state.nodes.find(findId(id))!;
   node.data.dropIndex = index;
@@ -137,7 +144,7 @@ export function setDropFocus(id: string, index: number) {
 export function clearDropFocus() {
   if (state.dropFocus) {
     const node = state.nodes.find(findId(state.dropFocus.id))!;
-    node.data.dropIndex = null;
+    node.data.dropIndex = undefined;
   }
   state.dropFocus = null;
 }
@@ -151,7 +158,7 @@ export function dropNode(node: Node) {
       0,
       ...node.data.messages,
     );
-    focusNode.data.dropIndex = null;
+    focusNode.data.dropIndex = undefined;
     deleteNode(node.id);
   }
   state.dropFocus = null;
