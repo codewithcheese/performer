@@ -1,5 +1,11 @@
 # @performer/core
 
+## 0.0.38
+
+### Patch Changes
+
+- 6818713: Use POJO for Events instead of classes
+
 ## 0.0.37
 
 ### Patch Changes
