@@ -5,16 +5,24 @@ import {
   useRef,
   useState,
 } from "react";
+import { ArrowUp, MessageSquarePlus, SendIcon } from "lucide-react";
 
 export type MessageInputProps = {
   disclaimer?: string;
   disabled?: boolean;
   onSubmit: (text: string) => void;
+  onAddMessage: () => void;
   placeholder?: string;
 };
 
 export const MessageInput = forwardRef(function (
-  { disclaimer, disabled = false, onSubmit, placeholder }: MessageInputProps,
+  {
+    disclaimer,
+    disabled = false,
+    onSubmit,
+    onAddMessage,
+    placeholder,
+  }: MessageInputProps,
   ref,
 ) {
   const [text, setText] = useState("");
@@ -42,15 +50,23 @@ export const MessageInput = forwardRef(function (
   };
 
   return (
-    <>
+    <div className="flex flex-row w-full nodrag">
+      <div className="flex justify-center items-center">
+        <button
+          onClick={onAddMessage}
+          className="p-2 rounded-lg border border-gray-200 text-white transition-colors enabled:bg-white disabled:bg-gray-200 disabled:text-gray-400 disabled:opacity-10"
+        >
+          <MessageSquarePlus className="text-black" />
+        </button>
+      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit(text);
         }}
-        className="stretch mx-2 flex flex-row gap-3 nodrag"
+        className="stretch mx-2 flex flex-row flex-1 gap-3 nodrag"
       >
-        <div className="relative flex h-full flex-1 items-stretch md:flex-col">
+        <div className="relative flex flex-col h-full flex-1 items-stretch">
           <div className="flex w-full items-center">
             <div className="[&:has(textarea:focus)]:border-token-border-xheavy dark:border-token-border-heavy border-token-border-heavy relative flex w-full flex-grow flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_0_0_2px_rgba(255,255,255,0.95)] dark:bg-gray-800 dark:text-white dark:shadow-[0_0_0_2px_rgba(52,53,65,0.95)] [&:has(textarea:focus)]:shadow-[0_2px_6px_rgba(0,0,0,.05)]">
               <textarea
@@ -72,23 +88,7 @@ export const MessageInput = forwardRef(function (
                 className="absolute bottom-1.5 right-2 rounded-lg border border-black p-0.5 text-white transition-colors enabled:bg-black disabled:bg-black disabled:text-gray-400 disabled:opacity-10 dark:border-white dark:bg-white dark:hover:bg-gray-900 dark:disabled:bg-white dark:disabled:hover:bg-transparent md:bottom-3 md:right-3"
                 data-testid="send-button"
               >
-                <span className="" data-state="closed">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="text-white dark:text-black"
-                  >
-                    <path
-                      d="M7 11L12 6L17 11M12 18V7"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    ></path>
-                  </svg>
-                </span>
+                <ArrowUp />
               </button>
             </div>
             <div
@@ -112,6 +112,6 @@ export const MessageInput = forwardRef(function (
           <span>{disclaimer}</span>
         </div>
       )}
-    </>
+    </div>
   );
 });

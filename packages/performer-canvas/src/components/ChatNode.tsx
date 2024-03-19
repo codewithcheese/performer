@@ -57,10 +57,12 @@ export default memo(
           const openai = new OpenAI({
             dangerouslyAllowBrowser: true,
           });
+          const messages = getChatMessages(id);
+          console.log("messages", messages);
           const stream = await openai.chat.completions.create(
             {
               model: "gpt-4-turbo-preview",
-              messages: getChatMessages(id),
+              messages,
               stream: true,
             },
             { signal: controller.signal },
@@ -81,7 +83,6 @@ export default memo(
                 message.content = "";
               }
               message.content += delta.content;
-              console.log("delta", message);
               updateChatMessage(id, index, message);
             }
           }
@@ -118,6 +119,10 @@ export default memo(
       },
       [data],
     );
+
+    const handleAddMessage = useCallback(() => {
+      pushChatMessage(id, { role: "user", content: "" });
+    }, [id]);
 
     return (
       <>
@@ -170,10 +175,11 @@ export default memo(
             </div>
           ) : (
             <>
-              <div className="p-4 pt-0">
+              <div className="px-4">
                 <MessageInput
                   ref={inputRef}
                   onSubmit={onSubmit}
+                  onAddMessage={handleAddMessage}
                   placeholder="Enter a message..."
                 />
               </div>
