@@ -20,7 +20,7 @@ test("should load root route by default and then goto /second", async () => {
   }
   function Second() {
     const data = useRouteData<string>();
-    return () => <system>{data.value}</system>;
+    return () => <system>{data}</system>;
   }
   const routes: Routes = [
     { path: "/", component: <First /> },

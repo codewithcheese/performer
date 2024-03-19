@@ -5,7 +5,6 @@ import {
   Performer,
   PerformerDeltaEvent,
   PerformerEvent,
-  PerformerMessageEvent,
   PerformerOptions,
 } from "@performer/core";
 import { jsx } from "@performer/core/jsx-runtime";
@@ -37,12 +36,11 @@ export function usePerformerClient(
       setPerformer(performer);
 
       performer.addEventListener("*", (event) => {
-        if (event instanceof PerformerMessageEvent) {
+        if (event.type === "message") {
           setEvents((prevEvents) => {
             const previous = prevEvents.findLast(
-              (prev): prev is PerformerDeltaEvent =>
-                prev instanceof PerformerDeltaEvent &&
-                prev.detail.uid === event.detail.uid,
+              (prev) =>
+                prev.type === "delta" && prev.detail.uid === event.detail.uid,
             );
 
             if (previous) {
@@ -57,7 +55,7 @@ export function usePerformerClient(
               return [...prevEvents, event];
             }
           });
-        } else if (!(event instanceof PerformerDeltaEvent)) {
+        } else if (event.type !== "delta") {
           logger.debug(`event=${event.type}`);
           setEvents((prevEvents) => [...prevEvents, event]);
         } else {
@@ -78,11 +76,10 @@ function applyDeltaEvent(
   event: PerformerDeltaEvent,
 ) {
   const previousIndex = prevEvents.findIndex(
-    (prev): prev is PerformerDeltaEvent =>
-      prev instanceof PerformerDeltaEvent &&
-      prev.detail.uid === event.detail.uid,
+    (prev) => prev.type === "delta" && prev.detail.uid === event.detail.uid,
   );
-  const previous = previousIndex > -1 && prevEvents[previousIndex];
+  const previous =
+    previousIndex > -1 && (prevEvents[previousIndex] as PerformerDeltaEvent);
   if (!previous) {
     logger.debug(
       `event=${event.type} message="No previous delta, adding new." uid=${event.detail.uid} detail=${JSON.stringify(event.detail)}`,

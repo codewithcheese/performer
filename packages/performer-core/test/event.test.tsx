@@ -1,20 +1,19 @@
 import { expect, test } from "vitest";
 import {
-  PerformerErrorEvent,
+  createErrorEvent,
+  createMessageEvent,
   PerformerEventMap,
-  PerformerMessageEvent,
 } from "../src/index.js";
 import { nanoid } from "nanoid";
 import Emittery from "emittery";
-import { sleep } from "../src/util/sleep.js";
 
 test("should use static type of subclass", () => {
-  const evt = new PerformerErrorEvent("root", "Oops");
+  const evt = createErrorEvent("root", { error: "Oops" });
   expect(evt.type).toEqual("error");
 });
 
 test("should stringify", () => {
-  const evt = new PerformerErrorEvent("root", "Oops");
+  const evt = createErrorEvent("root", { error: "Oops" });
   expect(JSON.stringify(evt)).toEqual(
     '{"type":"error","threadId":"root","detail":{"message":"Oops"}}',
   );
@@ -33,14 +32,14 @@ test("should support wildcard", async () => {
   eventTarget.onAny(listener);
   await eventTarget.emit(
     "error",
-    new PerformerErrorEvent("root", { message: "1" }),
+    createErrorEvent("root", { error: { message: "1" } }),
   );
   // await sleep(0);
   expect(count).toEqual(1);
   expect(errorCount).toEqual(1);
   await eventTarget.emit(
     "error",
-    new PerformerErrorEvent("root", { message: "2" }),
+    createErrorEvent("root", { error: { message: "2" } }),
   );
 
   expect(count).toEqual(2);
@@ -48,19 +47,19 @@ test("should support wildcard", async () => {
   eventTarget.offAny(listener);
   await eventTarget.emit(
     "error",
-    new PerformerErrorEvent("root", { message: "3" }),
+    createErrorEvent("root", { error: { message: "3" } }),
   );
   expect(count).toEqual(2);
   expect(errorCount).toEqual(3);
 });
 
 test("message event should generate uid if not provided", () => {
-  const event1 = new PerformerMessageEvent("root", {
+  const event1 = createMessageEvent("root", {
     message: { role: "user", content: [{ type: "text", text: "Hello world" }] },
   });
   expect(event1.detail.uid).toBeDefined();
   const uid = nanoid();
-  const event2 = new PerformerMessageEvent("root", {
+  const event2 = createMessageEvent("root", {
     uid,
     message: { role: "user", content: [{ type: "text", text: "Hello world" }] },
   });
