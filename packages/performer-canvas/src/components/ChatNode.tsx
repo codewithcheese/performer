@@ -5,21 +5,23 @@ import { MessageInput } from "./MessageInput.tsx";
 import { TitleBar } from "./TitleBar.tsx";
 import { GripHorizontal, MinusIcon, X } from "lucide-react";
 import {
-  AssistantMessage,
+  Assistant,
+  Performer,
   PerformerMessage,
   UserMessage,
 } from "@performer/core";
 import Message from "./Message.tsx";
-import OpenAI from "openai";
 import {
   deleteNode,
   getChatMessages,
+  getNode,
   newNode,
   pushChatMessage,
   removeChatMessage,
   updateChatMessage,
 } from "../store.ts";
 import { cn } from "../lib/cn.ts";
+import { snapshot } from "valtio";
 
 type ChatNodeData = {
   messages: PerformerMessage[];
@@ -112,13 +114,14 @@ export default memo(
 
     const handleCopy = useCallback(
       (index: number, position: XYPosition) => {
-        // get change messages instead of using `data` dep
-        // so that this callback is not invalidated during message streaming
-        const messages = getChatMessages(id);
+        // get change messages instead of using props
+        // so this callback is not invalidated during message streaming
+        const node = getNode(id)!;
         newNode({
           type: "chatNode",
-          data: { messages: [messages[index]], headless: true },
+          data: { messages: [node.data.messages[index]], headless: true },
           position,
+          zIndex: node.zIndex ? node.zIndex + 1 : 1000,
         });
       },
       [id],
@@ -199,6 +202,7 @@ export default memo(
     );
   },
   (prevProps, nextProps) => {
+    console.log("ChatNode memo", nextProps);
     // console.log(
     //   "ChatNode memo",
     //   prevProps.id === nextProps.id && prevProps.data === nextProps.data,

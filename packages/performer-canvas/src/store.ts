@@ -37,9 +37,17 @@ export const state = proxy<FlowState>(
   },
 );
 
+/**
+ * Persistence
+ */
+
 subscribe(state, () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 });
+
+/**
+ * ReactFlow callbacks
+ */
 
 export function onNodesChange(changes: NodeChange[]) {
   state.nodes = applyNodeChanges(changes, state.nodes);
@@ -53,26 +61,15 @@ export function onConnect(connection: Connection) {
   state.edges = addEdge(connection, state.edges);
 }
 
-export function newNode({
-  type,
-  data,
-  position,
-  parentNode,
-}: {
-  type: string;
-  data: Record<string, any>;
-  parentNode?: string;
-  position: XYPosition;
-}) {
+/**
+ * Node handling
+ */
+
+export function newNode(
+  node: Partial<Node> & Required<Pick<Node, "position" | "data">>,
+) {
   const id = crypto.randomUUID();
-  const newNode: Node = {
-    id,
-    type,
-    data,
-    parentNode,
-    position,
-  };
-  state.nodes.push(newNode);
+  state.nodes.push({ ...node, id: node.id || crypto.randomUUID() });
   return id;
 }
 
@@ -87,6 +84,10 @@ export function deleteNode(id: string) {
   );
 }
 
+export function getNode(id: string) {
+  return state.nodes.find(findId(id));
+}
+
 /**
  * Chat messages
  */
@@ -96,7 +97,7 @@ export function pushChatMessage(id: string, message: PerformerMessage) {
   return node.data.messages.push(message) - 1;
 }
 
-export function getChatMessages(id: string) {
+export function getChatMessages(id: string): PerformerMessage[] {
   return state.nodes.find(findId(id))!.data.messages;
 }
 
