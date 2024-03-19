@@ -1,12 +1,6 @@
 import { Divider, Message } from "./index.js";
 import { Alert } from "./Alert.js";
-import {
-  PerformerEvent,
-  PerformerMessageEvent,
-  PerformerDeltaEvent,
-  PerformerLifecycleEvent,
-  PerformerErrorEvent,
-} from "@performer/core";
+import { PerformerEvent } from "@performer/core";
 
 type FilterType = "chat" | "all";
 
@@ -19,19 +13,19 @@ function exclude(filter: FilterType, event: PerformerEvent) {
   return (
     // exclude system messages from chat view
     (filter === "chat" &&
-      event instanceof PerformerMessageEvent &&
+      event.type === "message" &&
       event.detail.message.role === "system") ||
     // exclude tool messages from chat view
     (filter === "chat" &&
-      event instanceof PerformerMessageEvent &&
+      event.type === "message" &&
       event.detail.message.role === "tool") ||
     // exclude messages with no content from chat view
     (filter === "chat" &&
-      event instanceof PerformerMessageEvent &&
+      event.type === "message" &&
       !event.detail.message.content) ||
     // exclude delta with no content from chat view
     (filter === "chat" &&
-      event instanceof PerformerDeltaEvent &&
+      event.type === "delta" &&
       !event.detail.delta.content) ||
     // exclude non-root threads from chat view
     (filter === "chat" && event.threadId != "root")
@@ -39,9 +33,9 @@ function exclude(filter: FilterType, event: PerformerEvent) {
 }
 
 function getRole(event: PerformerEvent) {
-  if (event instanceof PerformerMessageEvent) {
+  if (event.type === "message") {
     return event.detail.message.role;
-  } else if (event instanceof PerformerDeltaEvent) {
+  } else if (event.type === "delta") {
     return event.detail.delta.role;
   } else {
     return undefined;
@@ -58,7 +52,7 @@ function map(filter: FilterType, events: PerformerEvent[]) {
     }
     if (
       prevEvent &&
-      prevEvent instanceof PerformerMessageEvent &&
+      prevEvent.type === "message" &&
       prevEvent.detail.message.role === "user"
     ) {
       continuation = false;
@@ -73,7 +67,7 @@ function map(filter: FilterType, events: PerformerEvent[]) {
     if (filter !== "chat") {
       continuation = false;
     }
-    if (event instanceof PerformerMessageEvent) {
+    if (event.type === "message") {
       items.push(
         <Message
           key={index}
@@ -81,7 +75,7 @@ function map(filter: FilterType, events: PerformerEvent[]) {
           continuation={continuation}
         />,
       );
-    } else if (event instanceof PerformerDeltaEvent) {
+    } else if (event.type === "delta") {
       items.push(
         <Message
           key={index}
@@ -94,11 +88,11 @@ function map(filter: FilterType, events: PerformerEvent[]) {
           continuation={continuation}
         />,
       );
-    } else if (event instanceof PerformerLifecycleEvent) {
+    } else if (event.type === "lifecycle") {
       items.push(
         <Divider key={index} message={`Performer ${event.detail.state}`} />,
       );
-    } else if (event instanceof PerformerErrorEvent) {
+    } else if (event.type === "error") {
       items.push(
         <div className="group mx-auto flex flex-1 gap-3 text-base md:max-w-3xl md:px-5 lg:max-w-[40rem] lg:px-1 xl:max-w-[48rem] xl:px-5">
           <Alert key={index} title="Error" message={event.detail.message} />

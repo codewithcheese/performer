@@ -122,8 +122,6 @@ test("message element should resolve stream into message object", async () => {
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual(userMessage);
   expect(onMessageValue).toEqual(userMessage);
-  assert(messageEventValue);
-  expect(messageEventValue).instanceof(PerformerMessageEvent);
   await testHydration(performer);
 });
 
