@@ -2,9 +2,10 @@ import type { PerformerElement } from "./element.js";
 import type { PerformerNode } from "./node.js";
 import { render, resolveMessages } from "./render.js";
 import {
+  createErrorEvent,
+  createLifecycleEvent,
   PerformerErrorEvent,
   PerformerEventMap,
-  PerformerLifecycleEvent,
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
 import { logEvent, logger, nodeToStr, toLogFmt } from "./util/log.js";
@@ -62,18 +63,14 @@ export class Performer {
   }
 
   abort() {
-    this.dispatchEvent(
-      new PerformerLifecycleEvent("root", { state: "aborted" }),
-    );
+    this.dispatchEvent(createLifecycleEvent("root", { state: "aborted" }));
     this.abortController.abort();
     // this.finish();
   }
 
   finish() {
     this.hasFinished = true;
-    this.dispatchEvent(
-      new PerformerLifecycleEvent("root", { state: "finished" }),
-    );
+    this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
   }
 
   get aborted() {
@@ -138,7 +135,7 @@ export class Performer {
     } else {
       this.inputNode = inputNode;
       this.dispatchEvent(
-        new PerformerLifecycleEvent(node.threadId, { state: "listening" }),
+        createLifecycleEvent(node.threadId, { state: "listening" }),
       );
     }
   }
@@ -177,7 +174,7 @@ export class Performer {
   }
 
   onError(threadId: string, error: unknown) {
-    this.dispatchEvent(new PerformerErrorEvent(threadId, error));
+    this.dispatchEvent(createErrorEvent(threadId, { error }));
     this.finish();
     if (this.options.throwOnError) {
       throw error;

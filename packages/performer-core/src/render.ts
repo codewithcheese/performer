@@ -18,14 +18,14 @@ import { isEqualWith } from "lodash-es";
 import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
 import {
-  nodeToStr,
-  logOp,
-  toLogFmt,
-  logMessageResolved,
-  logPaused,
   logger,
+  logMessageResolved,
+  logOp,
+  logPaused,
+  nodeToStr,
+  toLogFmt,
 } from "./util/log.js";
-import { PerformerDeltaEvent, PerformerMessageEvent } from "./event.js";
+import { createDeltaEvent, createMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
 
@@ -342,7 +342,7 @@ function dispatchMessageElement(
     message = nodeToMessage(node);
   }
   performer.dispatchEvent(
-    new PerformerMessageEvent(node.threadId, {
+    createMessageEvent(node.threadId, {
       uid: node.uid,
       message: structuredClone(message),
     }),
@@ -366,7 +366,7 @@ async function consumeDeltaStream(
     }
     performer.dispatchEvent(
       // clone chunk so event consumers mutations don't modify this chunk
-      new PerformerDeltaEvent(node.threadId, {
+      createDeltaEvent(node.threadId, {
         uid: node.uid,
         delta: structuredClone(chunk),
       }),

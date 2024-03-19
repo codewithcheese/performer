@@ -1,17 +1,13 @@
 import { expect, test } from "vitest";
 import {
   Performer,
-  PerformerEvent,
+  PerformerEventBase,
   useDispatchEvent,
 } from "../../src/index.js";
 
-class MyEvent implements PerformerEvent {
-  type = "my-event";
-  threadId = "root";
+interface MyEvent extends PerformerEventBase {
+  type: "my-event";
   detail: { value: number };
-  constructor(detail: { value: number }) {
-    this.detail = detail;
-  }
 }
 
 declare module "../../src/index.js" {
@@ -23,7 +19,11 @@ declare module "../../src/index.js" {
 test("should dispatch event from component", async () => {
   function App() {
     const dispatchEvent = useDispatchEvent();
-    dispatchEvent(new MyEvent({ value: 1337 }));
+    dispatchEvent({
+      type: "my-event",
+      threadId: "root",
+      detail: { value: 1337 },
+    });
     return () => <assistant>How may I serve the?</assistant>;
   }
   const performer = new Performer(<App />);

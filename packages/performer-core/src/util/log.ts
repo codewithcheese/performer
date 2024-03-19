@@ -1,10 +1,7 @@
 import {
   isAssistantMessage,
   nodeToMessage,
-  PerformerDeltaEvent,
-  PerformerErrorEvent,
   PerformerEvent,
-  PerformerMessageEvent,
   PerformerNode,
   RenderOp,
 } from "../index.js";
@@ -53,10 +50,7 @@ export function logEvent(event: PerformerEvent) {
     pairs.push(["threadId", event.threadId]);
   }
 
-  if (
-    event instanceof PerformerMessageEvent ||
-    event instanceof PerformerDeltaEvent
-  ) {
+  if (event.type === "message" || event.type === "delta") {
     const message =
       "message" in event.detail ? event.detail.message : event.detail.delta;
     if (message.role) {
@@ -85,11 +79,11 @@ export function logEvent(event: PerformerEvent) {
         }
       }
     }
-  } else if (event instanceof PerformerErrorEvent) {
+  } else if (event.type === "error") {
     pairs.push(["message", event.detail.message]);
   }
 
-  if (event instanceof PerformerDeltaEvent) {
+  if (event.type === "delta") {
     logger.debug(toLogFmt(pairs));
   } else {
     logger.info(toLogFmt(pairs));
