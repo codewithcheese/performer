@@ -63,6 +63,7 @@ export const MessageInput = forwardRef(function (
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit(text);
+          setText("");
         }}
         className="stretch mx-2 flex flex-row flex-1 gap-3 nodrag"
       >
@@ -75,7 +76,7 @@ export const MessageInput = forwardRef(function (
                 data-id="root"
                 rows={1}
                 placeholder={placeholder || "Message Performer…"}
-                className="w-full p-4 resize-none border-0 bg-transparent placeholder-black/50 focus:outline-0 focus:ring-0 focus-visible:ring-0 dark:bg-transparent dark:placeholder-white/50"
+                className="w-full p-4 resize-none border-0 bg-transparent placeholder-black/50 focus:outline-0 focus:ring-0 focus-visible:ring-0"
                 ref={textAreaRef}
                 value={text}
                 onChange={handleChange}

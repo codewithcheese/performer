@@ -35,7 +35,7 @@ export default memo(function Message({
   onSubmit,
   onCopy,
 }: MessageProps) {
-  const [isEditing, setIsEditing] = useState(message.role === "user");
+  const [isEditing, setIsEditing] = useState(false);
   if (typeof message.content !== "string") {
     throw Error("Content must be string");
   }

@@ -16,6 +16,11 @@ body,
   margin: 0;
 }
 
+/* Hide focus outline */
+:focus {
+  outline: none;
+}
+
 .loading-icon {
   animation: rotate 1s linear infinite;
 }

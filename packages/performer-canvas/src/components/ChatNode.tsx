@@ -29,7 +29,7 @@ type ChatNodeData = {
 
 export default memo(
   function ChatNode({ id, data }: NodeProps<ChatNodeData>) {
-    console.log("ChatNode render", id, data);
+    // console.log("ChatNode render", id, data);
 
     const [abortController, setAbortController] =
       useState<AbortController | null>(null);
@@ -91,7 +91,7 @@ export default memo(
           setAbortController(null);
         }
       },
-      [id, data, abortController],
+      [id, abortController],
     );
 
     const handleChange = useCallback(
@@ -110,14 +110,16 @@ export default memo(
 
     const handleCopy = useCallback(
       (index: number, position: XYPosition) => {
-        const message = data.messages[index];
+        // get change messages instead of using `data` dep
+        // so that this callback is not invalidated during message streaming
+        const messages = getChatMessages(id);
         newNode({
           type: "chatNode",
-          data: { messages: [message], headless: true },
+          data: { messages: [messages[index]], headless: true },
           position,
         });
       },
-      [data],
+      [id],
     );
 
     const handleAddMessage = useCallback(() => {
@@ -146,9 +148,8 @@ export default memo(
               data-index={0}
             />
             {data.messages.map((m, index) => (
-              <>
+              <div key={`message-${index}`}>
                 <Message
-                  key={`message-${index}`}
                   index={index}
                   message={m}
                   onSubmit={onSubmit}
@@ -157,7 +158,6 @@ export default memo(
                   onCopy={handleCopy}
                 />
                 <div
-                  key={`dropzone-${index}`}
                   className={cn(
                     "message-dropzone w-full",
                     data.dropIndex === index + 1 &&
@@ -166,7 +166,7 @@ export default memo(
                   data-nodeid={id}
                   data-index={index + 1}
                 />
-              </>
+              </div>
             ))}
           </>
           {isHeadless ? (

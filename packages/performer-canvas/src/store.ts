@@ -87,6 +87,10 @@ export function deleteNode(id: string) {
   );
 }
 
+/**
+ * Chat messages
+ */
+
 export function pushChatMessage(id: string, message: PerformerMessage) {
   const node = state.nodes.find(findId(id))!;
   return node.data.messages.push(message) - 1;
@@ -124,6 +128,10 @@ export function setDropFocus(id: string, index: number) {
   node.data.dropIndex = index;
   state.dropFocus = { id, index };
 }
+
+/**
+ * Message DnD
+ */
 
 export function clearDropFocus() {
   if (state.dropFocus) {
