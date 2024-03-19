@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ArrowUp, MessageSquarePlus, SendIcon } from "lucide-react";
+import { ArrowUp, MessageSquarePlus, RefreshCw, SendIcon } from "lucide-react";
 
 export type MessageInputProps = {
   disclaimer?: string;
@@ -13,6 +13,7 @@ export type MessageInputProps = {
   onSubmit: (text: string) => void;
   onAddMessage: () => void;
   placeholder?: string;
+  isGenerating: boolean;
 };
 
 export const MessageInput = forwardRef(function (
@@ -22,6 +23,7 @@ export const MessageInput = forwardRef(function (
     onSubmit,
     onAddMessage,
     placeholder,
+    isGenerating,
   }: MessageInputProps,
   ref,
 ) {
@@ -89,7 +91,11 @@ export const MessageInput = forwardRef(function (
                 className="absolute bottom-1.5 right-2 rounded-lg border border-black p-0.5 text-white transition-colors enabled:bg-black disabled:bg-black disabled:text-gray-400 disabled:opacity-10 dark:border-white dark:bg-white dark:hover:bg-gray-900 dark:disabled:bg-white dark:disabled:hover:bg-transparent md:bottom-3 md:right-3"
                 data-testid="send-button"
               >
-                <ArrowUp />
+                {isGenerating ? (
+                  <RefreshCw className="loading-icon" />
+                ) : (
+                  <ArrowUp />
+                )}
               </button>
             </div>
             <div

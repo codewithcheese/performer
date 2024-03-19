@@ -27,21 +27,23 @@ type ChatNodeData = {
   dropIndex: number;
 };
 
+type ChatState =
+  | { type: "idle" }
+  | { type: "generating"; index: number; controller: AbortController };
+
 export default memo(
   function ChatNode({ id, data }: NodeProps<ChatNodeData>) {
     // console.log("ChatNode render", id, data);
-
-    const [abortController, setAbortController] =
-      useState<AbortController | null>(null);
+    const [chatState, setChatState] = useState<ChatState>({ type: "idle" });
     const [isHeadless, setIsHeadless] = useState<boolean>(data.headless);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const onSubmit = useCallback(
       async (text?: string) => {
-        if (abortController) {
-          console.error(
-            "Unable to submit message while response is generating",
-          );
+        if (chatState.type === "generating") {
+          // submit when generating is considered a cancel
+          chatState.controller.abort();
+          setChatState({ type: "idle" });
           return;
         }
 
@@ -50,10 +52,17 @@ export default memo(
           pushChatMessage(id, userMessage);
         }
 
-        // create completion
         try {
           const controller = new AbortController();
-          setAbortController(controller);
+          // add assistant message
+          const message: AssistantMessage = {
+            role: "assistant",
+            content: "",
+          };
+          const index = pushChatMessage(id, message);
+          setChatState({ type: "generating", controller, index });
+
+          // create completion
           const openai = new OpenAI({
             dangerouslyAllowBrowser: true,
           });
@@ -68,13 +77,6 @@ export default memo(
             { signal: controller.signal },
           );
 
-          // add message node
-          const message: AssistantMessage = {
-            role: "assistant",
-            content: "",
-          };
-          const index = pushChatMessage(id, message);
-
           // consume completion, update node
           for await (const chunk of stream) {
             const delta = chunk.choices[0]?.delta;
@@ -88,10 +90,10 @@ export default memo(
           }
           inputRef.current?.focus();
         } finally {
-          setAbortController(null);
+          setChatState({ type: "idle" });
         }
       },
-      [id, abortController],
+      [id, chatState],
     );
 
     const handleChange = useCallback(
@@ -150,6 +152,9 @@ export default memo(
             {data.messages.map((m, index) => (
               <div key={`message-${index}`}>
                 <Message
+                  isGenerating={
+                    chatState.type === "generating" && chatState.index === index
+                  }
                   index={index}
                   message={m}
                   onSubmit={onSubmit}
@@ -177,6 +182,7 @@ export default memo(
             <>
               <div className="px-4">
                 <MessageInput
+                  isGenerating={chatState.type === "generating"}
                   ref={inputRef}
                   onSubmit={onSubmit}
                   onAddMessage={handleAddMessage}

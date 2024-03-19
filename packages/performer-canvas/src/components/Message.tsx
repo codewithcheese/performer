@@ -1,4 +1,11 @@
-import { CopyIcon, Edit2Icon, EyeIcon, TrashIcon } from "lucide-react";
+import {
+  CopyIcon,
+  Edit2Icon,
+  EyeIcon,
+  RefreshCcw,
+  RefreshCw,
+  TrashIcon,
+} from "lucide-react";
 import {
   RoleSelect,
   SelectContent,
@@ -21,6 +28,7 @@ import { memo } from "react-tracked";
 export type MessageProps = {
   index: number;
   message: PerformerMessage;
+  isGenerating: boolean;
   onRemove: (index: number) => void;
   onChange: (index: number, message: Partial<PerformerMessage>) => void;
   onSubmit: () => void;
@@ -30,6 +38,7 @@ export type MessageProps = {
 export default memo(function Message({
   index,
   message,
+  isGenerating,
   onRemove,
   onChange,
   onSubmit,
@@ -105,24 +114,33 @@ export default memo(function Message({
 
   return (
     <div className="px-2 py-1">
-      <div className="flex flex-row ">
+      <div className="flex flex-row nodrag">
         <div>
-          <RoleSelect onValueChange={handleRoleChange} value={message.role}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="system">
-                <MessageIcon role="system" />
-              </SelectItem>
-              <SelectItem value="user">
-                <MessageIcon role="user" />
-              </SelectItem>
-              <SelectItem value="assistant">
-                <MessageIcon role="assistant" />
-              </SelectItem>
-            </SelectContent>
-          </RoleSelect>
+          {isGenerating ? (
+            <div className="mx-1">
+              <RefreshCw
+                className="loading-icon text-gray-700 h-6 w-6"
+                onClick={onSubmit}
+              />
+            </div>
+          ) : (
+            <RoleSelect onValueChange={handleRoleChange} value={message.role}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="system">
+                  <MessageIcon role="system" />
+                </SelectItem>
+                <SelectItem value="user">
+                  <MessageIcon role="user" />
+                </SelectItem>
+                <SelectItem value="assistant">
+                  <MessageIcon role="assistant" />
+                </SelectItem>
+              </SelectContent>
+            </RoleSelect>
+          )}
         </div>
         <div className="w-full group">
           {isEditing ? (
