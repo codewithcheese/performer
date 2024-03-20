@@ -14,7 +14,7 @@ import { useSnapshot } from "valtio";
 import {
   clearDropFocus,
   dropNode,
-  newNode,
+  newChatNode,
   nodeTypes,
   onConnect,
   onEdgesChange,
@@ -104,10 +104,9 @@ function App() {
         <ControlButton
           onClick={() => {
             const pos = getViewportCenter();
-            newNode({
-              type: "chatNode",
-              data: { messages: [], headless: false },
+            newChatNode({
               position: { x: pos.x - 200, y: pos.y - 100 },
+              headless: false,
             });
           }}
         >

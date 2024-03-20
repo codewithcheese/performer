@@ -1,4 +1,4 @@
-import { proxy, subscribe } from "valtio";
+import { proxy, ref, subscribe } from "valtio";
 import {
   addEdge,
   applyEdgeChanges,
@@ -8,19 +8,32 @@ import {
   EdgeChange,
   Node,
   NodeChange,
-  OnConnect,
-  OnEdgesChange,
-  OnNodesChange,
   XYPosition,
 } from "reactflow";
 import { findId } from "./lib/array.ts";
-import { PerformerMessage } from "@performer/core";
-import ChatNode, { ChatNodeType } from "./components/ChatNode.tsx";
+import {
+  Performer,
+  PerformerEvent,
+  PerformerMessage,
+  hydrate,
+  serialize,
+} from "@performer/core";
+import ChatNode from "./components/ChatNode.tsx";
+import { Fragment, jsx } from "@performer/core/jsx-runtime";
 
 // loosen readonly for TS happiness
 declare module "valtio" {
   function useSnapshot<T extends object>(p: T): T;
 }
+
+export type ChatNodeData = {
+  headless: boolean;
+  dropIndex?: number;
+  performer: Performer;
+  events: PerformerEvent[];
+};
+
+export type ChatNodeType = Node<ChatNodeData, "chatNode">;
 
 export type NodeType = ChatNodeType;
 
@@ -37,7 +50,7 @@ export type FlowState = {
 const STORAGE_KEY = "flow-state";
 
 export const state = proxy<FlowState>(
-  JSON.parse(localStorage.getItem(STORAGE_KEY)!) || {
+  (await parse(localStorage.getItem(STORAGE_KEY)!)) || {
     nodes: [],
     edges: [],
     dropFocus: null,
@@ -49,8 +62,41 @@ export const state = proxy<FlowState>(
  */
 
 subscribe(state, () => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(STORAGE_KEY, stringify(state));
 });
+
+export function stringify(state: FlowState) {
+  return JSON.stringify(state, function (this, key, value) {
+    if (value instanceof Performer) {
+      // todo use cache if performer unchanged
+      const root = value.root ? serialize(value.root) : undefined;
+      return { $$$type: "Performer", serialized: root };
+    }
+    return value;
+  });
+}
+
+export async function parse(str: string) {
+  if (!str) {
+    return null;
+  }
+  const state = JSON.parse(str);
+  for (let node of state.nodes) {
+    const performer = node.data.performer;
+    if (performer && "$$$type" in performer) {
+      // using valtio `ref` so performer is not proxified
+      node.data.performer = ref(new Performer(jsx(Fragment, {})));
+      if (performer.serialized) {
+        await hydrate({
+          performer: node.data.performer,
+          element: jsx(Fragment, {}),
+          serialized: performer.serialized,
+        });
+      }
+    }
+  }
+  return state;
+}
 
 /**
  * ReactFlow callbacks
@@ -72,11 +118,29 @@ export function onConnect(connection: Connection) {
  * Node handling
  */
 
-export function newNode(
-  node: Partial<NodeType> & Required<Pick<NodeType, "position" | "data">>,
-) {
+export function newChatNode({
+  position,
+  zIndex,
+  headless = true,
+}: {
+  position: XYPosition;
+  zIndex?: number;
+  headless?: boolean;
+}) {
   const id = crypto.randomUUID();
-  state.nodes.push({ ...node, id: node.id || crypto.randomUUID() });
+  const node: ChatNodeType = {
+    id,
+    type: "chatNode",
+    data: {
+      headless,
+      dropIndex: undefined,
+      performer: ref(new Performer(jsx(Fragment, {}))),
+      events: [],
+    },
+    position,
+    zIndex,
+  };
+  state.nodes.push(node);
   return id;
 }
 

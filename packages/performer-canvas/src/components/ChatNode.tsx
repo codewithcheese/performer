@@ -1,35 +1,28 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { memo } from "react-tracked";
-import { NodeProps, XYPosition, Node } from "reactflow";
+import { NodeProps, XYPosition } from "reactflow";
 import { MessageInput } from "./MessageInput.tsx";
 import { TitleBar } from "./TitleBar.tsx";
 import { GripHorizontal, MinusIcon, X } from "lucide-react";
 import {
   Assistant,
-  Performer,
+  concatDelta,
+  PerformerDeltaEvent,
   PerformerMessage,
-  UserMessage,
+  pushElement,
 } from "@performer/core";
 import Message from "./Message.tsx";
 import {
+  ChatNodeData,
   deleteNode,
-  getChatMessages,
   getNode,
-  newNode,
+  newChatNode,
   pushChatMessage,
   removeChatMessage,
   updateChatMessage,
 } from "../store.ts";
 import { cn } from "../lib/cn.ts";
-import { snapshot } from "valtio";
-
-type ChatNodeData = {
-  messages: PerformerMessage[];
-  headless: boolean;
-  dropIndex?: number;
-};
-
-export type ChatNodeType = Node<ChatNodeData, "chatNode">;
+import { jsx } from "@performer/core/jsx-runtime";
 
 type ChatState =
   | { type: "idle" }
@@ -37,67 +30,146 @@ type ChatState =
 
 export default memo(
   function ChatNode({ id, data }: NodeProps<ChatNodeData>) {
-    // console.log("ChatNode render", id, data);
-    const [chatState, setChatState] = useState<ChatState>({ type: "idle" });
-    const [isHeadless, setIsHeadless] = useState<boolean>(data.headless);
     const inputRef = useRef<HTMLTextAreaElement>(null);
+    const { performer } = data;
+
+    console.log("ChatNode render", id, data);
+
+    useEffect(() => {
+      // start performer on mount
+      performer.start();
+      performer.addEventListener("*", (event) => {
+        const node = getNode(id)!;
+        // handle performer event
+        if (event.type === "delta") {
+          const prevEvent = node.data.events.find(
+            (e): e is PerformerDeltaEvent =>
+              e.type === "delta" && e.detail.uid === event.detail.uid,
+          );
+          if (prevEvent) {
+            concatDelta(prevEvent.detail.delta, event.detail.delta);
+          } else {
+            node.data.events.push(event);
+          }
+        } else if (event.type === "message") {
+          const prevEvent = node.data.events.find(
+            (e) =>
+              (e.type === "delta" || e.type === "message") &&
+              e.detail.uid === event.detail.uid,
+          );
+          if (!prevEvent) {
+            node.data.events.push(event);
+          }
+        } else {
+          node.data.events.push(event);
+        }
+      });
+      return () => {
+        // abort performer if still running
+        if (performer.state === "running") {
+          performer.abort();
+        }
+      };
+    }, []);
 
     const onSubmit = useCallback(
       async (text?: string) => {
-        if (chatState.type === "generating") {
-          // submit when generating is considered a cancel
-          chatState.controller.abort();
-          setChatState({ type: "idle" });
+        if (performer.state === "running") {
+          // submit when running is considered a cancel
+          performer.abort();
           return;
         }
 
-        if (text) {
-          const userMessage: UserMessage = { role: "user", content: text };
-          pushChatMessage(id, userMessage);
-        }
-
-        try {
-          const controller = new AbortController();
-          // add assistant message
-          const message: AssistantMessage = {
-            role: "assistant",
-            content: "",
-          };
-          const index = pushChatMessage(id, message);
-          setChatState({ type: "generating", controller, index });
-
-          // create completion
-          const openai = new OpenAI({
-            dangerouslyAllowBrowser: true,
-          });
-          const messages = getChatMessages(id);
-          console.log("messages", messages);
-          const stream = await openai.chat.completions.create(
-            {
-              model: "gpt-4-turbo-preview",
-              messages,
-              stream: true,
-            },
-            { signal: controller.signal },
-          );
-
-          // consume completion, update node
-          for await (const chunk of stream) {
-            const delta = chunk.choices[0]?.delta;
-            if ("content" in delta) {
-              if (message.content == null) {
-                message.content = "";
-              }
-              message.content += delta.content;
-              updateChatMessage(id, index, message);
-            }
+        if (performer.inputNode) {
+          // if performer is listening
+          if (text) {
+            // input user message
+            performer.input({ role: "user", content: text });
+          } else {
+            // not yet supported
+            throw Error("Performer expects new message");
           }
-          inputRef.current?.focus();
-        } finally {
-          setChatState({ type: "idle" });
+        } else {
+          // if not listening
+          if (text) {
+            // insert user message and Assistant
+            pushElement(
+              performer,
+              jsx("user", { role: "user", content: text }),
+            );
+          }
+          // insert Assistant
+          pushElement(performer, jsx(Assistant, {}));
         }
+        performer.start();
+
+        // const messages = getChatMessages(id);
+        //
+        // if (text) {
+        //   const userMessage: UserMessage = { role: "user", content: text };
+        //   messages.push(userMessage);
+        // }
+        //
+        // try {
+        //   const app = (
+        //     <>
+        //       {messages.map((message) => {
+        //         // @ts-ignore
+        //         return <raw message={snapshot(message)} />;
+        //       })}
+        //       {/* @ts-ignore */}
+        //       <Assistant />
+        //     </>
+        //   );
+        //
+        //   const performer = new Performer(app);
+        //   performer.start();
+        //   performer.addEventListener("*", (event) => {
+        //     console.log("event", event);
+        //     if (event.type === "message") {
+        //       messages.push(event.detail.message);
+        //     }
+        //   });
+        //   await performer.waitUntilSettled();
+
+        // const controller = new AbortController();
+        // // add assistant message
+        // const message: AssistantMessage = {
+        //   role: "assistant",
+        //   content: "",
+        // };
+        // const index = pushChatMessage(id, message);
+        // setChatState({ type: "generating", controller, index });
+        //
+        // // create completion
+        // const openai = new OpenAI({
+        //   dangerouslyAllowBrowser: true,
+        // });
+        // // const messages = getChatMessages(id);
+        // console.log("messages", messages);
+        // const stream = await openai.chat.completions.create(
+        //   {
+        //     model: "gpt-4-turbo-preview",
+        //     messages,
+        //     stream: true,
+        //   },
+        //   { signal: controller.signal },
+        // );
+        //
+        // // consume completion, update node
+        // for await (const chunk of stream) {
+        //   const delta = chunk.choices[0]?.delta;
+        //   if ("content" in delta) {
+        //     if (message.content == null) {
+        //       message.content = "";
+        //     }
+        //     message.content += delta.content;
+        //     updateChatMessage(id, index, message);
+        //   }
+        // }
+        // inputRef.current?.focus();
       },
-      [id, chatState],
+      [id],
     );
 
     const handleChange = useCallback(
@@ -119,9 +191,7 @@ export default memo(
         // get change messages instead of using props
         // so this callback is not invalidated during message streaming
         const node = getNode(id)!;
-        newNode({
-          type: "chatNode",
-          data: { messages: [node.data.messages[index]], headless: true },
+        newChatNode({
           position,
           zIndex: node.zIndex ? node.zIndex + 1 : 1000,
         });
@@ -131,6 +201,11 @@ export default memo(
 
     const handleAddMessage = useCallback(() => {
       pushChatMessage(id, { role: "user", content: "" });
+    }, [id]);
+
+    const toggleHeadless = useCallback(() => {
+      const node = getNode(id)!;
+      node.data.headless = !data.headless;
     }, [id]);
 
     return (
@@ -154,40 +229,50 @@ export default memo(
               data-nodeid={id}
               data-index={0}
             />
-            {data.messages.map((m, index) => (
-              <div key={`message-${index}`}>
-                <Message
-                  isGenerating={
-                    chatState.type === "generating" && chatState.index === index
-                  }
-                  index={index}
-                  message={m}
-                  onSubmit={onSubmit}
-                  onRemove={handleRemove}
-                  onChange={handleChange}
-                  onCopy={handleCopy}
-                />
-                <div
-                  className={cn(
-                    "message-dropzone w-full",
-                    data.dropIndex === index + 1 &&
-                      "border-blue-500 border border-dashed ",
-                  )}
-                  data-nodeid={id}
-                  data-index={index + 1}
-                />
-              </div>
-            ))}
+            {data.events.map((event, index) => {
+              if (event.type === "message" || event.type === "delta") {
+                return (
+                  <div key={`message-${index}`}>
+                    <Message
+                      isGenerating={
+                        performer.state === "running" &&
+                        index === data.events.length - 1
+                      }
+                      index={index}
+                      message={
+                        event.type === "message"
+                          ? event.detail.message
+                          : (event.detail.delta as PerformerMessage)
+                      }
+                      onSubmit={onSubmit}
+                      onRemove={handleRemove}
+                      onChange={handleChange}
+                      onCopy={handleCopy}
+                    />
+                    <div
+                      className={cn(
+                        "message-dropzone w-full",
+                        data.dropIndex === index + 1 &&
+                          "border-blue-500 border border-dashed ",
+                      )}
+                      data-nodeid={id}
+                      data-index={index + 1}
+                    />
+                  </div>
+                );
+              }
+              return null;
+            })}
           </>
-          {isHeadless ? (
+          {data.headless ? (
             <div className="flex flex-row justify-center items-center text-gray-500 nodrag ">
-              <MinusIcon size={16} onClick={() => setIsHeadless((p) => !p)} />
+              <MinusIcon size={16} onClick={toggleHeadless} />
             </div>
           ) : (
             <>
               <div className="px-4">
                 <MessageInput
-                  isGenerating={chatState.type === "generating"}
+                  isGenerating={performer.state === "running"}
                   ref={inputRef}
                   onSubmit={onSubmit}
                   onAddMessage={handleAddMessage}
@@ -195,7 +280,7 @@ export default memo(
                 />
               </div>
               <div className="flex flex-row justify-center items-center text-gray-500 nodrag">
-                <MinusIcon size={16} onClick={() => setIsHeadless((p) => !p)} />
+                <MinusIcon size={16} onClick={toggleHeadless} />
               </div>
             </>
           )}
@@ -204,7 +289,7 @@ export default memo(
     );
   },
   (prevProps, nextProps) => {
-    console.log("ChatNode memo", nextProps);
+    // console.log("ChatNode memo", nextProps);
     // console.log(
     //   "ChatNode memo",
     //   prevProps.id === nextProps.id && prevProps.data === nextProps.data,
