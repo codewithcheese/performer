@@ -434,6 +434,13 @@ function freeNode(
   }
 }
 
+export function pushElement(performer: Performer, element: PerformerElement) {
+  if (performer.state !== "settled") {
+    throw Error("Failed to push element. Performer state not `settled`");
+  }
+  performer.root!.childElements!.push(element);
+}
+
 export function resolveMessages(
   from: PerformerNode | undefined,
   to?: PerformerNode,

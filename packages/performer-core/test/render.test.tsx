@@ -4,6 +4,7 @@ import {
   Performer,
   PerformerErrorEvent,
   PerformerMessage,
+  pushElement,
   resolveMessages,
   useResource,
   useState,
@@ -392,6 +393,22 @@ test("should cast non-string message children", async () => {
   const messages = resolveMessages(performer.root);
   expect(messages[0].content).toEqual(
     "Message with 1 and 0 and true and false and null and undefined [object Object]",
+  );
+});
+
+test("should push and render element onto root", async () => {
+  function App() {
+    return () => <system>0</system>;
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  pushElement(performer, <user>1</user>);
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = performer.getAllMessages();
+  expect(JSON.stringify(messages)).toEqual(
+    `[{"role":"system","content":"0"},{"role":"user","content":"1"}]`,
   );
 });
 
