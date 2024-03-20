@@ -18,6 +18,8 @@ export type PerformerOptions = {
   logLevel?: LogType;
 };
 
+type PerformerState = "pending" | "running" | "settled" | "aborted";
+
 export class Performer {
   #uid: string;
 
@@ -25,6 +27,7 @@ export class Performer {
   root?: PerformerNode;
   options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
+  state: PerformerState = "pending";
 
   hasFinished: boolean = false;
 
@@ -59,16 +62,19 @@ export class Performer {
   }
 
   start() {
+    this.state = "running";
     this.renderPromised = render(this);
   }
 
   abort() {
+    this.state = "aborted";
     this.dispatchEvent(createLifecycleEvent("root", { state: "aborted" }));
     this.abortController.abort();
     // this.finish();
   }
 
   finish() {
+    this.state = "settled";
     this.hasFinished = true;
     this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
   }
