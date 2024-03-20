@@ -5,7 +5,3 @@ export type PerformerElement = {
   type: Component<any> | PerformerMessage["role"] | "raw";
   props: Record<string, any>;
 };
-
-export function Fragment(props: any) {
-  return props.children;
-}
