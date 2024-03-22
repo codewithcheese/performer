@@ -1,5 +1,14 @@
 # @performer/playground
 
+## 0.0.39
+
+### Patch Changes
+
+- dbba314: Add state property to Performer class to replace hasFinished logic
+- Updated dependencies [fc10871]
+- Updated dependencies [dbba314]
+  - @performer/core@0.0.39
+
 ## 0.0.38
 
 ### Patch Changes
