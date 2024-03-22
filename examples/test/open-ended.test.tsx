@@ -15,7 +15,10 @@ test("should have chat until ended", async () => {
     role: "user",
     content: "Beautiful! That's all for now. Good bye!",
   });
-  await performer.waitUntilFinished();
+  await Promise.race([
+    performer.waitUntilFinished(),
+    performer.waitUntilListening,
+  ]);
   const messages = resolveMessages(performer.root);
   expect(performer.errors).toHaveLength(0);
 }, 60_000);
