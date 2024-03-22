@@ -47,9 +47,11 @@ export class Performer {
     this.app = app;
     this.options = options;
     const logLevel: LogType =
-      (getEnv("LOGLEVEL") as LogType) || options.logLevel || getEnv("VITEST")
-        ? "debug"
-        : "info";
+      (getEnv("LOGLEVEL") as LogType) ||
+      options.logLevel ||
+      (getEnv("VITEST") && "info") ||
+      "info";
+
     logger.level = LogLevels[logLevel];
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
