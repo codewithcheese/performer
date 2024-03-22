@@ -1,64 +1,44 @@
 import { expect, test } from "vitest";
 import {
-  Assistant,
   Performer,
   Repeat,
   resolveMessages,
+  useResource,
   useState,
 } from "../../src/index.js";
 import { testHydration } from "../util/test-hydration.js";
-import { expectTree } from "../util/expect-tree.js";
+import { sleep } from "openai/core";
 
-test("should repeat", async () => {});
+function Async({ children }: any) {
+  useResource(sleep, 5);
+  return () => children;
+}
 
-test("should repeat multiple times", async () => {
+test("should repeat until times prop is reached", async () => {
   const app = (
     <>
-      <system>X = 0. Answer using scalar value only.</system>
-      <Repeat times={2}>
-        <system>Increment X by 1</system>
-        <Assistant />
+      <system>0</system>
+      <Repeat times={1}>
+        <system>A</system>
+        <assistant>B</assistant>
+        <Async>
+          <user>C</user>
+        </Async>
       </Repeat>
       <Repeat times={2}>
-        <system>Increment X by 2</system>
-        <Assistant />
+        <system>D</system>
+        <assistant>E</assistant>
+        <Async>
+          <user>F</user>
+        </Async>
       </Repeat>
     </>
   );
-  const events = [];
   const performer = new Performer(app);
-  performer.addEventListener("*", (event) => {
-    events.push(event);
-  });
   performer.start();
   await performer.waitUntilSettled();
-  expect(performer.errors).toHaveLength(0);
-  expectTree(performer.root!, {
-    type: "Fragment",
-    children: [
-      { type: "system" },
-      {
-        type: "Repeat",
-        children: [
-          { type: "system" },
-          { type: "Assistant" },
-          { type: "system" },
-          { type: "Assistant" },
-        ],
-      },
-      {
-        type: "Repeat",
-        children: [
-          { type: "system" },
-          { type: "Assistant" },
-          { type: "system" },
-          { type: "Assistant" },
-        ],
-      },
-    ],
-  });
   let messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(9);
+  expect(messages).toHaveLength(1 + 1 * 3 + 2 * 3);
   await testHydration(performer);
 }, 30_000);
 
@@ -74,10 +54,13 @@ test("should stop repeating using stop prop", async () => {
     };
     return () => (
       <>
-        <system>X = 0. Answer with scalar.</system>
+        <system>0</system>
         <Repeat stop={stop}>
-          <system onMessage={onMessage}>Increment X by 1</system>
-          <Assistant onMessage={onMessage} />
+          <system onMessage={onMessage}>A</system>
+          <assistant>B</assistant>
+          <Async>
+            <user>C</user>
+          </Async>
         </Repeat>
       </>
     );
@@ -86,6 +69,6 @@ test("should stop repeating using stop prop", async () => {
   performer.start();
   await performer.waitUntilSettled();
   const messages = resolveMessages(performer.root);
-  expect(messages.length).toEqual(5);
+  expect(messages.length).toEqual(1 + 3 * 4);
   await testHydration(performer);
 }, 10_000);

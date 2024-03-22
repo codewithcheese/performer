@@ -55,7 +55,7 @@ type PausedOp = {
 export type RenderOp = CreateOp | ResumeOp | PausedOp;
 
 export async function render(performer: Performer) {
-  logger.debug("call=render");
+  logger.withTag("render").debug("start");
   try {
     const ops = evaluateRenderOps(
       "root",
@@ -79,6 +79,8 @@ export async function render(performer: Performer) {
     }
   } catch (error) {
     performer.onError("root", error);
+  } finally {
+    logger.withTag("render").debug("finally");
   }
 }
 
@@ -228,7 +230,11 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     abortController: performer.abortController,
   });
   try {
-    view = node.type(node.props);
+    try {
+      view = node.type(node.props);
+    } finally {
+      clearRenderScope();
+    }
     if (typeof view !== "function") {
       const returnType = view instanceof Promise ? "Promise" : typeof view;
       throw Error(
@@ -236,8 +242,8 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
           `To make async calls in your component use the \`useResource\` hook`,
       );
     }
-    registerView(performer, node, view);
     node.status = "RESOLVED";
+    registerView(performer, node, view);
   } catch (e) {
     if (e instanceof DeferResource) {
       node.status = "PAUSED";
@@ -255,8 +261,6 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     } else {
       throw e;
     }
-  } finally {
-    clearRenderScope();
   }
 }
 

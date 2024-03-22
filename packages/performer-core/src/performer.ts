@@ -35,7 +35,7 @@ export class Performer {
   abortController = new AbortController();
 
   renderQueued = false;
-  renderPromised: ReturnType<typeof render> | null = null;
+  renderInProgress: boolean = false;
 
   threadNonce = 0;
 
@@ -46,7 +46,9 @@ export class Performer {
     this.app = app;
     this.options = options;
     const logLevel: LogType =
-      (getEnv("LOGLEVEL") as LogType) || options.logLevel || "info";
+      (getEnv("LOGLEVEL") as LogType) || options.logLevel || getEnv("VITEST")
+        ? "debug"
+        : "info";
     logger.level = LogLevels[logLevel];
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
@@ -59,7 +61,14 @@ export class Performer {
   }
 
   start() {
-    this.renderPromised = render(this);
+    this.renderInProgress = true;
+    render(this).finally(() => {
+      this.renderInProgress = false;
+      if (this.renderQueued) {
+        this.renderQueued = false;
+        this.start();
+      }
+    });
   }
 
   abort() {
@@ -88,21 +97,10 @@ export class Performer {
         ["reason", reason],
       ]),
     );
-    if (this.renderQueued) {
-      return;
-    }
-    if (this.renderPromised) {
-      this.renderQueued = true;
-      this.renderPromised.finally(() => {
-        this.renderQueued = false;
-        this.renderPromised = render(this);
-      });
+    if (!this.renderInProgress) {
+      this.start();
     } else {
       this.renderQueued = true;
-      Promise.resolve().then(() => {
-        this.renderQueued = false;
-        this.renderPromised = render(this);
-      });
     }
   }
 
