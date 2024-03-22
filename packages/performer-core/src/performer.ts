@@ -166,7 +166,7 @@ export class Performer {
     }
   }
 
-  async waitUntilFinished() {
+  async waitUntilFinished(signal?: AbortSignal) {
     if (this.state === "finished") {
       return;
     }
@@ -176,10 +176,13 @@ export class Performer {
           resolve();
         }
       });
+      if (signal) {
+        signal.addEventListener("abort", () => resolve());
+      }
     });
   }
 
-  async waitUntilListening() {
+  async waitUntilListening(signal?: AbortSignal) {
     if (this.state === "listening") {
       return;
     }
@@ -188,8 +191,24 @@ export class Performer {
         if (event.detail.state === "listening") {
           resolve();
         }
+        if (signal) {
+          signal.addEventListener("abort", () => resolve());
+        }
       });
     });
+  }
+
+  /**
+   * Wait for listening or finished state.
+   *
+   * Useful for tests when the final state is not controllable due to flakey model
+   */
+  async waitUntilSettled() {
+    const controller = new AbortController();
+    return Promise.race([
+      this.waitUntilListening(controller.signal),
+      this.waitUntilFinished(controller.signal),
+    ]).then(() => controller.abort());
   }
 
   onError(threadId: string, error: unknown) {
