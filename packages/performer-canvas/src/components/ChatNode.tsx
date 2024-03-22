@@ -7,31 +7,23 @@ import { GripHorizontal, MinusIcon, X } from "lucide-react";
 import {
   Assistant,
   concatDelta,
+  findNodeByUid,
+  flagAsDeleted,
+  flagAsEdited,
   PerformerDeltaEvent,
   PerformerMessage,
+  PerformerMessageEvent,
   pushElement,
 } from "@performer/core";
 import Message from "./Message.tsx";
-import {
-  ChatNodeData,
-  deleteNode,
-  getNode,
-  newChatNode,
-  pushChatMessage,
-  removeChatMessage,
-  updateChatMessage,
-} from "../store.ts";
+import { ChatNodeData, deleteNode, getNode, newChatNode } from "../store.ts";
 import { cn } from "../lib/cn.ts";
 import { jsx } from "@performer/core/jsx-runtime";
-
-type ChatState =
-  | { type: "idle" }
-  | { type: "generating"; index: number; controller: AbortController };
 
 export default memo(
   function ChatNode({ id, data }: NodeProps<ChatNodeData>) {
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const { performer } = data;
+    const performer = data.performer;
 
     console.log("ChatNode render", id, data);
 
@@ -74,8 +66,8 @@ export default memo(
 
     const onSubmit = useCallback(
       async (text?: string) => {
-        if (performer.state === "running") {
-          // submit when running is considered a cancel
+        if (performer.state !== "settled") {
+          // submit when not settled is considered a cancel
           performer.abort();
           return;
         }
@@ -94,100 +86,64 @@ export default memo(
           if (text) {
             // insert user message and Assistant
             pushElement(
-              performer,
+              performer.root!,
               jsx("user", { role: "user", content: text }),
             );
           }
           // insert Assistant
-          pushElement(performer, jsx(Assistant, {}));
+          pushElement(performer.root!, jsx(Assistant, {}));
         }
         performer.start();
-
-        // const messages = getChatMessages(id);
-        //
-        // if (text) {
-        //   const userMessage: UserMessage = { role: "user", content: text };
-        //   messages.push(userMessage);
-        // }
-        //
-        // try {
-        //   const app = (
-        //     <>
-        //       {messages.map((message) => {
-        //         // @ts-ignore
-        //         return <raw message={snapshot(message)} />;
-        //       })}
-        //       {/* @ts-ignore */}
-        //       <Assistant />
-        //     </>
-        //   );
-        //
-        //   const performer = new Performer(app);
-        //   performer.start();
-        //   performer.addEventListener("*", (event) => {
-        //     console.log("event", event);
-        //     if (event.type === "message") {
-        //       messages.push(event.detail.message);
-        //     }
-        //   });
-        //   await performer.waitUntilSettled();
-
-        // const controller = new AbortController();
-        // // add assistant message
-        // const message: AssistantMessage = {
-        //   role: "assistant",
-        //   content: "",
-        // };
-        // const index = pushChatMessage(id, message);
-        // setChatState({ type: "generating", controller, index });
-        //
-        // // create completion
-        // const openai = new OpenAI({
-        //   dangerouslyAllowBrowser: true,
-        // });
-        // // const messages = getChatMessages(id);
-        // console.log("messages", messages);
-        // const stream = await openai.chat.completions.create(
-        //   {
-        //     model: "gpt-4-turbo-preview",
-        //     messages,
-        //     stream: true,
-        //   },
-        //   { signal: controller.signal },
-        // );
-        //
-        // // consume completion, update node
-        // for await (const chunk of stream) {
-        //   const delta = chunk.choices[0]?.delta;
-        //   if ("content" in delta) {
-        //     if (message.content == null) {
-        //       message.content = "";
-        //     }
-        //     message.content += delta.content;
-        //     updateChatMessage(id, index, message);
-        //   }
-        // }
-        // inputRef.current?.focus();
       },
       [id],
     );
 
     const handleChange = useCallback(
-      (index: number, message: Partial<PerformerMessage>) => {
-        updateChatMessage(id, index, message);
+      (uid: string, edits: Partial<PerformerMessage>) => {
+        const performerNode = findNodeByUid(performer.root!, uid);
+        if (!performerNode) {
+          throw Error(`Failed to update message. Message #${uid} not found.`);
+        }
+        flagAsEdited(performerNode, edits);
+        // edit event history
+        const node = getNode(id)!;
+        const event = node.data.events.find(
+          (e): e is PerformerDeltaEvent | PerformerMessageEvent =>
+            (e.type === "message" || e.type === "delta") &&
+            e.detail.uid === uid,
+        );
+        if (event && event.type === "message") {
+          event.detail.message = Object.assign(event.detail.message, edits);
+        } else if (event && event.type === "delta") {
+          event.detail.delta = Object.assign(event.detail.delta, edits);
+        }
       },
       [id],
     );
 
     const handleRemove = useCallback(
-      (index: number) => {
-        removeChatMessage(id, index);
+      (uid: string) => {
+        const performerNode = findNodeByUid(performer.root!, uid);
+        if (!performerNode) {
+          throw Error(`Failed to remove message. Message #${uid} not found.`);
+        }
+        flagAsDeleted(performerNode);
+        // delete event history
+        const node = getNode(id)!;
+        const eventIndex = node.data.events.findIndex(
+          (e) =>
+            (e.type === "message" || e.type === "delta") &&
+            e.detail.uid === uid,
+        );
+        if (eventIndex > -1) {
+          node.data.events.splice(eventIndex, 1);
+        }
       },
       [id],
     );
 
     const handleCopy = useCallback(
-      (index: number, position: XYPosition) => {
+      (uid: string, position: XYPosition) => {
         // get change messages instead of using props
         // so this callback is not invalidated during message streaming
         const node = getNode(id)!;
@@ -200,7 +156,8 @@ export default memo(
     );
 
     const handleAddMessage = useCallback(() => {
-      pushChatMessage(id, { role: "user", content: "" });
+      // todo how to handle when listening
+      pushElement(performer.root!, jsx("user", { role: "user", content: "" }));
     }, [id]);
 
     const toggleHeadless = useCallback(() => {
@@ -238,7 +195,7 @@ export default memo(
                         performer.state === "running" &&
                         index === data.events.length - 1
                       }
-                      index={index}
+                      uid={event.detail.uid}
                       message={
                         event.type === "message"
                           ? event.detail.message

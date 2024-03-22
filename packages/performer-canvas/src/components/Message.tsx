@@ -26,17 +26,17 @@ import { useReactFlow, XYPosition } from "reactflow";
 import { memo } from "react-tracked";
 
 export type MessageProps = {
-  index: number;
+  uid: string;
   message: PerformerMessage;
   isGenerating: boolean;
-  onRemove: (index: number) => void;
-  onChange: (index: number, message: Partial<PerformerMessage>) => void;
+  onRemove: (uid: string) => void;
+  onChange: (uid: string, message: Partial<PerformerMessage>) => void;
   onSubmit: () => void;
-  onCopy: (index: number, position: XYPosition) => void;
+  onCopy: (uid: string, position: XYPosition) => void;
 };
 
 export default memo(function Message({
-  index,
+  uid,
   message,
   isGenerating,
   onRemove,
@@ -82,21 +82,21 @@ export default memo(function Message({
   );
 
   const handleRemove = useCallback(() => {
-    onRemove(index);
-  }, [onRemove]);
+    onRemove(uid);
+  }, [uid, onRemove]);
 
   const handleRoleChange = useCallback(
     (role: string) => {
-      onChange(index, { role: role as PerformerMessage["role"] });
+      onChange(uid, { role: role as PerformerMessage["role"] });
     },
     [onChange],
   );
 
   const handleEditorChange = useCallback(
     (text: string) => {
-      onChange(index, { content: text });
+      onChange(uid, { content: text });
     },
-    [onChange],
+    [uid, onChange],
   );
 
   const handleCopy = useCallback(() => {
@@ -109,8 +109,8 @@ export default memo(function Message({
     //   x: copyButtonRef.current.clientLeft,
     //   y: copyButtonRef.current.clientTop,
     // };
-    onCopy(index, screenToFlowPosition(position));
-  }, [onCopy]);
+    onCopy(uid, screenToFlowPosition(position));
+  }, [uid, onCopy]);
 
   return (
     <div className="px-2 py-1">

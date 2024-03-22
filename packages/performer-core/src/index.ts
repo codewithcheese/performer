@@ -1,3 +1,11 @@
+import { getEnv } from "./util/env.js";
+
+declare global {
+  var __DEV__: boolean;
+}
+
+globalThis.__DEV__ = getEnv("NODE_ENV") === "development";
+
 export * from "./component.js";
 export * from "./element.js";
 export * from "./event.js";

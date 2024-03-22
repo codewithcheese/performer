@@ -1,5 +1,5 @@
 import type { PerformerElement } from "./element.js";
-import type { PerformerNode } from "./node.js";
+import type { PerformerNode, SerializedNode } from "./node.js";
 import { render, resolveMessages } from "./render.js";
 import {
   createErrorEvent,
@@ -12,13 +12,14 @@ import { logEvent, logger, nodeToStr, toLogFmt } from "./util/log.js";
 import { getEnv } from "./util/env.js";
 import { LogLevels, type LogType } from "consola";
 import Emittery from "emittery";
+import { hydrate, serialize } from "./hydration.js";
 
 export type PerformerOptions = {
   throwOnError?: boolean;
   logLevel?: LogType;
 };
 
-type PerformerState = "pending" | "running" | "settled" | "aborted";
+type PerformerState = "pending" | "running" | "settled";
 
 export class Performer {
   #uid: string;
@@ -28,8 +29,6 @@ export class Performer {
   options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
   state: PerformerState = "pending";
-
-  hasFinished: boolean = false;
 
   // todo add deadline
   inputQueue: PerformerMessage[] = [];
@@ -62,21 +61,21 @@ export class Performer {
   }
 
   start() {
-    this.state = "running";
     this.renderPromised = render(this);
   }
 
   abort() {
-    this.state = "aborted";
     this.dispatchEvent(createLifecycleEvent("root", { state: "aborted" }));
+    // abort should result in settled state
     this.abortController.abort();
-    // this.finish();
   }
 
-  finish() {
-    this.state = "settled";
-    this.hasFinished = true;
-    this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
+  setState(state: PerformerState) {
+    if (state === "settled") {
+      // todo update lifecycle event to be consistent for all states
+      this.dispatchEvent(createLifecycleEvent("root", { state: "settled" }));
+    }
+    this.state = state;
   }
 
   get aborted() {
@@ -140,6 +139,7 @@ export class Performer {
       this.queueRender("input fulfilled");
     } else {
       this.inputNode = inputNode;
+      this.state = "settled";
       this.dispatchEvent(
         createLifecycleEvent(node.threadId, { state: "listening" }),
       );
@@ -161,17 +161,20 @@ export class Performer {
   }
 
   async waitUntilSettled() {
-    if (this.hasFinished) {
-      return;
-    }
-    if (this.inputNode) {
-      return;
+    // if (this.hasFinished) {
+    //   return;
+    // }
+    // if (this.inputNode) {
+    //   return;
+    // }
+    if (this.state === "settled") {
+      return true;
     }
     return new Promise<void>((resolve) => {
       this.addEventListener("lifecycle", (event) => {
         if (
           event.detail.state === "listening" ||
-          event.detail.state === "finished"
+          event.detail.state === "settled"
         ) {
           resolve();
         }
@@ -181,7 +184,7 @@ export class Performer {
 
   onError(threadId: string, error: unknown) {
     this.dispatchEvent(createErrorEvent(threadId, { error }));
-    this.finish();
+    this.setState("settled");
     if (this.options.throwOnError) {
       throw error;
     }
@@ -205,5 +208,26 @@ export class Performer {
 
   dispatchEvent(event: PerformerEventMap[keyof PerformerEventMap]) {
     this.emitter.emit(event.type as keyof PerformerEventMap, event);
+  }
+
+  /* Hydration */
+
+  async hydrate(
+    serialized: SerializedNode,
+    elementMap: Record<string, PerformerElement> = {},
+  ) {
+    await hydrate({
+      performer: this,
+      element: this.app,
+      serialized: serialized,
+      elementMap,
+    });
+  }
+
+  serialize() {
+    if (!this.root) {
+      throw Error("Cannot serialize before Performer started.");
+    }
+    return serialize(this.root);
   }
 }

@@ -24,6 +24,7 @@ export async function testHydration(performer: Performer) {
     performer: hydratedPerformer,
     element: performer.app,
     serialized,
+    elementMap: {},
   });
   const hydratedMessages = resolveMessages(hydratedPerformer.root);
   expect(ogMessages).toEqual(hydratedMessages);

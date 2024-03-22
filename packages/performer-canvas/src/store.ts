@@ -82,19 +82,22 @@ export async function parse(str: string) {
   }
   const state = JSON.parse(str);
   for (let node of state.nodes) {
-    const performer = node.data.performer;
-    if (performer && "$$$type" in performer) {
+    if (node.data.performer && "$$$type" in node.data.performer) {
+      const serialized = node.data.performer.serialized;
       // using valtio `ref` so performer is not proxified
-      node.data.performer = ref(new Performer(jsx(Fragment, {})));
-      if (performer.serialized) {
-        await hydrate({
-          performer: node.data.performer,
+      const performer = new Performer(jsx(Fragment, {}));
+      if (serialized) {
+        const hydrated = await hydrate({
+          performer: performer,
           element: jsx(Fragment, {}),
-          serialized: performer.serialized,
+          serialized,
         });
+        console.log("hydrated", hydrated, serialized);
       }
+      node.data.performer = ref(performer);
     }
   }
+  console.log("Parsed state", state);
   return state;
 }
 
@@ -160,32 +163,8 @@ export function getNode(id: string) {
 }
 
 /**
- * Chat messages
+ * Message DnD
  */
-
-export function pushChatMessage(id: string, message: PerformerMessage) {
-  const node = state.nodes.find(findId(id))!;
-  return node.data.messages.push(message) - 1;
-}
-
-export function getChatMessages(id: string): PerformerMessage[] {
-  return state.nodes.find(findId(id))!.data.messages;
-}
-
-export function updateChatMessage(
-  id: string,
-  index: number,
-  changes: Partial<PerformerMessage>,
-) {
-  const node = state.nodes.find(findId(id))!;
-  const message = node.data.messages[index];
-  Object.assign(message, changes);
-}
-
-export function removeChatMessage(id: string, index: number) {
-  const node = state.nodes.find(findId(id))!;
-  node.data.messages = node.data.messages.toSpliced(index, 1);
-}
 
 export function setDropFocus(id: string, index: number) {
   if (
@@ -201,10 +180,6 @@ export function setDropFocus(id: string, index: number) {
   state.dropFocus = { id, index };
 }
 
-/**
- * Message DnD
- */
-
 export function clearDropFocus() {
   if (state.dropFocus) {
     const node = state.nodes.find(findId(state.dropFocus.id))!;
@@ -215,15 +190,15 @@ export function clearDropFocus() {
 
 export function dropNode(node: Node) {
   if (state.dropFocus) {
-    // insert message into focus node and delete dropped node
-    const focusNode = state.nodes.find(findId(state.dropFocus.id))!;
-    focusNode.data.messages = focusNode.data.messages.toSpliced(
-      state.dropFocus.index,
-      0,
-      ...node.data.messages,
-    );
-    focusNode.data.dropIndex = undefined;
-    deleteNode(node.id);
+    // todo insert message into focus node and delete dropped node
+    // const focusNode = state.nodes.find(findId(state.dropFocus.id))!;
+    // focusNode.data.messages = focusNode.data.messages.toSpliced(
+    //   state.dropFocus.index,
+    //   0,
+    //   ...node.data.messages,
+    // );
+    // focusNode.data.dropIndex = undefined;
+    // deleteNode(node.id);
   }
   state.dropFocus = null;
 }

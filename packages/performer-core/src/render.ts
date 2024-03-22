@@ -28,6 +28,8 @@ import {
 import { createDeltaEvent, createMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
+import { walk } from "./util/walk.js";
+import { search } from "./util/search.js";
 
 type CreateOp = {
   type: "CREATE";
@@ -55,6 +57,7 @@ type PausedOp = {
 export type RenderOp = CreateOp | ResumeOp | PausedOp;
 
 export async function render(performer: Performer) {
+  performer.setState("running");
   logger.debug("call=render");
   try {
     const ops = evaluateRenderOps(
@@ -74,8 +77,9 @@ export async function render(performer: Performer) {
           await performOp(performer, op);
       }
     }
+    // todo User is consider paused so its not resolving to settled here
     if (Object.keys(ops).length === 0 && !performer.renderQueued) {
-      performer.finish();
+      performer.setState("settled");
     }
   } catch (error) {
     performer.onError("root", error);
@@ -434,11 +438,24 @@ function freeNode(
   }
 }
 
-export function pushElement(performer: Performer, element: PerformerElement) {
-  if (performer.state !== "settled") {
-    throw Error("Failed to push element. Performer state not `settled`");
-  }
-  performer.root!.childElements!.push(element);
+export function pushElement(node: PerformerNode, element: PerformerElement) {
+  element.transplant = true;
+  node.childElements!.push(element);
+}
+
+export function findNodeByUid(from: PerformerNode, uid: string) {
+  return search(from, (node) => node.uid === uid);
+}
+
+export function flagAsDeleted(node: PerformerNode) {
+  node.hooks.flag = { type: "deleted" };
+}
+
+export function flagAsEdited(
+  node: PerformerNode,
+  edits: Partial<PerformerMessage>,
+) {
+  node.hooks.flag = { type: "edited", edits };
 }
 
 export function resolveMessages(
@@ -470,7 +487,10 @@ export function resolveMessages(
       messages = [];
     }
 
-    if (typeof cursor.type === "string") {
+    let flag =
+      "flag" in cursor.hooks && cursor.hooks.flag ? cursor.hooks.flag : null;
+
+    if (typeof cursor.type === "string" && (!flag || flag.type !== "deleted")) {
       messages.push(nodeToMessage(cursor));
     }
 
@@ -504,45 +524,62 @@ export function resolveMessages(
 }
 
 export function nodeToMessage(node: PerformerNode): PerformerMessage {
+  let flag = "flag" in node.hooks && node.hooks.flag ? node.hooks.flag : null;
+
+  if (flag && flag.type === "deleted") {
+    throw Error("Invalid message node. Node marked as deleted.");
+  }
   if (typeof node.type !== "string") {
     throw Error(
-      "Cannot convert component to messages, must use intrinsic elements to represent messages",
+      `Invalid message node "${node.type.name}". Expected message node 'user', 'system', 'assistant', 'tool'.`,
     );
   }
   if (node.type === "raw") {
     if (!node.hooks.message && !node.props.message) {
       throw Error("`message` element not resolved.");
     }
-    return node.hooks.message || node.props.message;
+    let message = node.hooks.message || node.props.message;
+    if (flag && flag.type === "edited") {
+      message = Object.assign(message, flag.edits);
+    }
+    return message;
   }
-  // fixme refactor without branching
-  else if (node.type === "tool") {
-    return {
+
+  let content = childrenToContent(node.props.children) || node.props.content;
+
+  let message;
+  if (node.type === "tool") {
+    message = {
       tool_call_id: node.props.tool_call_id,
       role: node.type,
-      content: childrenToContent(node.props.children) || node.props.content,
+      content,
     };
   } else if (node.type === "assistant") {
-    return {
+    message = {
       role: node.type,
-      content: childrenToContent(node.props.children) || node.props.content,
+      content,
       ...(node.props.tool_calls ? { tool_calls: node.props.tool_calls } : {}),
       ...(node.props.function_call
         ? { function_call: node.props.function_call }
         : {}),
     };
   } else if (node.type === "system") {
-    return {
+    message = {
       role: node.type,
-      content: childrenToContent(node.props.children) || node.props.content,
+      content,
     };
   } else if (node.type === "user") {
-    return {
+    message = {
       role: node.type,
-      content: childrenToContent(node.props.children) || node.props.content,
+      content,
     };
+  } else {
+    throw Error(`Unexpected message element ${node.type}`);
   }
-  throw Error(`Unexpected message element ${node.type}`);
+  if (flag && flag.type === "edited") {
+    return Object.assign(message, flag.edits);
+  }
+  return message;
 }
 
 function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {

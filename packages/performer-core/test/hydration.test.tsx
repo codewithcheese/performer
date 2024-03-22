@@ -9,8 +9,10 @@ import {
   useInput,
   UserMessage,
   useState,
+  pushElement,
 } from "../src/index.js";
 import { testHydration } from "./util/test-hydration.js";
+import { jsx } from "../src/jsx/index.js";
 
 test("should serialize hooks", async () => {
   function App() {
@@ -40,18 +42,15 @@ test("should serialize when listening, for input and accept input when hydrated"
   performer.start();
   await performer.waitUntilSettled();
   expect(performer.root?.child).toEqual(undefined);
-  expect(performer.hasFinished).toEqual(false);
   const hydratedPerformer = await testHydration(performer);
   hydratedPerformer.start();
   await hydratedPerformer.waitUntilSettled();
-  expect(hydratedPerformer.hasFinished).toEqual(false);
   const userMessage: UserMessage = {
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
   hydratedPerformer.input(userMessage);
   await hydratedPerformer.waitUntilSettled();
-  expect(hydratedPerformer.hasFinished).toEqual(true);
   // expect original performer node still undefined
   expect(performer.root?.child).toEqual(undefined);
   expect(hydratedPerformer.root?.child?.type).toEqual("user");
@@ -76,14 +75,56 @@ test("should use hydrated input instead of listening again", async () => {
   performer.input(userMessage);
   await performer.waitUntilSettled();
   expect(performer.root?.child?.type).toEqual("user");
-  expect(performer.hasFinished).toEqual(true);
+  expect(performer.state).toEqual("settled");
   const hydratedPerformer = await testHydration(performer);
   hydratedPerformer.start();
   await hydratedPerformer.waitUntilSettled();
-  expect(hydratedPerformer.hasFinished).toEqual(true);
+  expect(performer.state).toEqual("settled");
   expect(hydratedPerformer.root?.child?.type).toEqual("user");
   assert(isTextContent(hydratedPerformer.root?.child?.props.content[0]));
   expect(hydratedPerformer.root?.child?.props.content[0].text).toEqual(
     "Hello, world!",
+  );
+});
+
+test("should mark pushed element as transplant", async () => {
+  const performer = new Performer(<></>);
+  performer.start();
+  await performer.waitUntilSettled();
+  pushElement(performer.root!, <user>0</user>);
+  performer.start();
+  await performer.waitUntilSettled();
+  expect(performer.root!.child!.transplant).toEqual(true);
+});
+
+test("should hydrate inserted nodes", async () => {
+  function Any({ id }: any) {
+    return () => <system>{id}</system>;
+  }
+  const performer = new Performer(<></>);
+  performer.start();
+  await performer.waitUntilSettled();
+
+  // push elements
+  pushElement(performer.root!, <user>0</user>);
+  pushElement(performer.root!, <Any id="1" />);
+
+  // restart
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = performer.getAllMessages();
+  expect(JSON.stringify(messages)).toEqual('[{"role":"user","content":"0"}]');
+  // serialize
+  const serialized = performer.serialize();
+  console.log(JSON.stringify(serialized, null, 2));
+  // hydrate new performer
+  const hydrated = new Performer(<></>);
+  await hydrated.hydrate(serialized, {
+    user: jsx("user", {}),
+    Any: jsx(Any, {}),
+  });
+  const hydratedMessages = hydrated.getAllMessages();
+  expect(JSON.stringify(hydratedMessages)).toEqual(
+    '[{"role":"user","content":"0"}]',
   );
 });

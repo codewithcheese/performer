@@ -12,6 +12,8 @@ export type PerformerNode = {
   uid: string;
   type: Component<any> | PerformerMessage["role"] | "raw";
   _typeName: string;
+  // node that was transplanted into tree, since not a result of parents childrenElements its serialized with props and component map
+  transplant?: true;
   props: Record<string, any>;
   hooks: Record<string, unknown> & HookRecord;
   element: PerformerElement;
@@ -31,6 +33,8 @@ export type PerformerNode = {
 export type SerializedNode = {
   uid: string;
   type: string;
+  transplant?: true;
+  props?: Record<string, any>;
   hooks: Record<string, unknown> & HookRecord;
   children: SerializedNode[];
 };
@@ -63,6 +67,7 @@ export function createNode({
   prevSibling,
   child,
   serialized,
+  transplant,
 }: {
   threadId: string;
   element: PerformerElement;
@@ -70,6 +75,7 @@ export function createNode({
   prevSibling?: PerformerNode;
   child?: PerformerNode;
   serialized?: SerializedNode;
+  transplant?: true;
 }): PerformerNode {
   validateElement(element, parent);
   // React compat Fragment type is Symbol(react.fragment)
@@ -79,6 +85,7 @@ export function createNode({
     threadId,
     uid: serialized ? serialized.uid : nanoid(),
     type,
+    transplant: element.transplant || transplant,
     props: element.props,
     element,
     hooks: serialized ? hydrateHooks(serialized.hooks) : {},
