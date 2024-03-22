@@ -52,7 +52,14 @@ type PausedOp = {
   type: "PAUSED";
 };
 
-export type RenderOp = CreateOp | ResumeOp | PausedOp;
+type AfterChildrenOp = {
+  type: "AFTER_CHILDREN";
+  payload: {
+    node: PerformerNode;
+  };
+};
+
+export type RenderOp = CreateOp | ResumeOp | PausedOp | AfterChildrenOp;
 
 export async function render(performer: Performer) {
   logger.withTag("render").debug("start");
@@ -72,6 +79,10 @@ export async function render(performer: Performer) {
           continue;
         case "RESUME":
           await performOp(performer, op);
+          continue;
+        case "AFTER_CHILDREN":
+          op.payload.node.hooks.afterChildren!();
+          performer.queueRender("after children effect");
       }
     }
     if (Object.keys(ops).length === 0 && !performer.renderQueued) {
@@ -142,8 +153,14 @@ export function evaluateRenderOps(
       childPrevSibling,
     );
     Object.assign(ops, childOps);
-    if (childThreadId in childOps) {
+    if (
+      Object.values(childOps).find(
+        (op) => op.type === "CREATE" || op.type === "RESUME",
+      )
+    ) {
       node.childRenderCount += 1;
+    }
+    if (childThreadId in childOps) {
       return ops;
     }
     if (childPrevSibling) {
@@ -160,12 +177,13 @@ export function evaluateRenderOps(
     freeNode(childNode, node, true);
   }
 
-  if (node.childRenderCount > 0) {
-    if (node.hooks.afterChildren) {
-      node.hooks.afterChildren();
-    }
-    node.childRenderCount = 0;
+  if (node.childRenderCount > 0 && node.hooks.afterChildren) {
+    ops[threadId] = {
+      type: "AFTER_CHILDREN",
+      payload: { node },
+    };
   }
+  node.childRenderCount = 0;
 
   return ops;
 }
