@@ -22,7 +22,10 @@ export function App() {
   ];
   return () => (
     <>
-      <system>Your are an AI enabled juice vending machine. Be funny!</system>
+      <system>
+        You are an AI enabled juice vending machine. Be funny and use emojis! Be
+        helpful.
+      </system>
       <Router routes={routes}></Router>
     </>
   );

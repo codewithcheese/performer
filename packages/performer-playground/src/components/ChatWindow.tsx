@@ -5,9 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs.js";
 import { MessageList } from "./MessageList.js";
 import { useScroll } from "../hooks/use-scroll.js";
 import { createContext, useEffect } from "react";
+import { PerformerOptions } from "@performer/core";
 
 export function ChatWindow({ App }: { App: Component<any> }) {
-  const { events, sendMessage, state } = usePerformerClient(App);
+  const options: PerformerOptions = {
+    logLevel: import.meta.env["VITE_LOGLEVEL"] || "info",
+  };
+  const { events, sendMessage, state } = usePerformerClient(App, options);
 
   const {
     messagesStartRef,

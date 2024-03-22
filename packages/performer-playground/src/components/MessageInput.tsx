@@ -36,6 +36,12 @@ export function MessageInput({
     }
   };
 
+  useEffect(() => {
+    if (textAreaRef.current && state === "listening") {
+      textAreaRef.current.focus();
+    }
+  }, [state]);
+
   return (
     <>
       <form
@@ -53,7 +59,12 @@ export function MessageInput({
                 tabIndex={0}
                 data-id="root"
                 rows={1}
-                placeholder="Message Performer…"
+                disabled={state !== "listening"}
+                placeholder={
+                  state === "finished"
+                    ? "Performer has finished."
+                    : "Message Performer…"
+                }
                 className="m-0 w-full resize-none border-0 bg-transparent py-[10px] pl-3 pr-10 placeholder-black/50 focus:outline-0 focus:ring-0 focus-visible:ring-0 dark:bg-transparent dark:placeholder-white/50 md:py-3.5 md:pl-4 md:pr-12"
                 ref={textAreaRef}
                 value={text}
