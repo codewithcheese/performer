@@ -81,6 +81,8 @@ export function logEvent(event: PerformerEvent) {
     }
   } else if (event.type === "error") {
     pairs.push(["message", event.detail.message]);
+  } else if (event.type === "lifecycle") {
+    pairs.push(["state", event.detail.state]);
   }
 
   if (event.type === "delta") {

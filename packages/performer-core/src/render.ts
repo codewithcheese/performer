@@ -52,10 +52,17 @@ type PausedOp = {
   type: "PAUSED";
 };
 
-export type RenderOp = CreateOp | ResumeOp | PausedOp;
+type AfterChildrenOp = {
+  type: "AFTER_CHILDREN";
+  payload: {
+    node: PerformerNode;
+  };
+};
+
+export type RenderOp = CreateOp | ResumeOp | PausedOp | AfterChildrenOp;
 
 export async function render(performer: Performer) {
-  logger.debug("call=render");
+  logger.withTag("render").debug("start");
   try {
     const ops = evaluateRenderOps(
       "root",
@@ -72,6 +79,11 @@ export async function render(performer: Performer) {
           continue;
         case "RESUME":
           await performOp(performer, op);
+          continue;
+        case "AFTER_CHILDREN":
+          op.payload.node.hooks.afterChildren!();
+          // ensure that render is queue at least once if afterChildren has no effect
+          performer.queueRender("after children effect");
       }
     }
     if (Object.keys(ops).length === 0 && !performer.renderQueued) {
@@ -79,6 +91,8 @@ export async function render(performer: Performer) {
     }
   } catch (error) {
     performer.onError("root", error);
+  } finally {
+    logger.withTag("render").debug("finally");
   }
 }
 
@@ -140,8 +154,14 @@ export function evaluateRenderOps(
       childPrevSibling,
     );
     Object.assign(ops, childOps);
-    if (childThreadId in childOps) {
+    if (
+      Object.values(childOps).find(
+        (op) => op.type === "CREATE" || op.type === "RESUME",
+      )
+    ) {
       node.childRenderCount += 1;
+    }
+    if (childThreadId in childOps) {
       return ops;
     }
     if (childPrevSibling) {
@@ -158,12 +178,13 @@ export function evaluateRenderOps(
     freeNode(childNode, node, true);
   }
 
-  if (node.childRenderCount > 0) {
-    if (node.hooks.afterChildren) {
-      node.hooks.afterChildren();
-    }
-    node.childRenderCount = 0;
+  if (node.childRenderCount > 0 && node.hooks.afterChildren) {
+    ops[threadId] = {
+      type: "AFTER_CHILDREN",
+      payload: { node },
+    };
   }
+  node.childRenderCount = 0;
 
   return ops;
 }
@@ -228,7 +249,11 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     abortController: performer.abortController,
   });
   try {
-    view = node.type(node.props);
+    try {
+      view = node.type(node.props);
+    } finally {
+      clearRenderScope();
+    }
     if (typeof view !== "function") {
       const returnType = view instanceof Promise ? "Promise" : typeof view;
       throw Error(
@@ -236,8 +261,8 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
           `To make async calls in your component use the \`useResource\` hook`,
       );
     }
-    registerView(performer, node, view);
     node.status = "RESOLVED";
+    registerView(performer, node, view);
   } catch (e) {
     if (e instanceof DeferResource) {
       node.status = "PAUSED";
@@ -255,8 +280,6 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     } else {
       throw e;
     }
-  } finally {
-    clearRenderScope();
   }
 }
 

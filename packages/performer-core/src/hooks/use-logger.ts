@@ -6,7 +6,7 @@ type Pairs = [string, any][];
 export function useLogger() {
   const scope = useRenderScope();
   const format = (message: string | Pairs) => {
-    const pairs: [string, any][] = [["component", scope.node._typeName]];
+    const pairs: [string, any][] = [];
     if (Array.isArray(message)) {
       pairs.push(...message);
     } else {
@@ -17,19 +17,19 @@ export function useLogger() {
   };
   return {
     trace(message: string | Pairs) {
-      logger.trace(format(message));
+      logger.withTag(scope.node._typeName).trace(format(message));
     },
     debug(message: string | Pairs) {
-      logger.debug(format(message));
+      logger.withTag(scope.node._typeName).debug(format(message));
     },
     info(message: string | Pairs) {
-      logger.info(format(message));
+      logger.withTag(scope.node._typeName).info(format(message));
     },
     error(message: string | Pairs) {
-      logger.error(format(message));
+      logger.withTag(scope.node._typeName).error(format(message));
     },
     warn(message: string | Pairs) {
-      logger.warn(format(message));
+      logger.withTag(scope.node._typeName).warn(format(message));
     },
   };
 }
