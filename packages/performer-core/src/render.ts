@@ -82,6 +82,7 @@ export async function render(performer: Performer) {
           continue;
         case "AFTER_CHILDREN":
           op.payload.node.hooks.afterChildren!();
+          // ensure that render is queue at least once if afterChildren has no effect
           performer.queueRender("after children effect");
       }
     }
