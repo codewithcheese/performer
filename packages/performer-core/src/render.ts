@@ -154,6 +154,7 @@ export function evaluateRenderOps(
       childPrevSibling,
     );
     Object.assign(ops, childOps);
+    // increment childRenderCount if render op
     if (
       Object.values(childOps).find(
         (op) => op.type === "CREATE" || op.type === "RESUME",
@@ -161,6 +162,7 @@ export function evaluateRenderOps(
     ) {
       node.childRenderCount += 1;
     }
+    // return if op for current thread otherwise continue
     if (childThreadId in childOps) {
       return ops;
     }
