@@ -38,11 +38,11 @@ test("should serialize when listening, for input and accept input when hydrated"
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilListening();
+  await performer.waitUntilSettled();
   expect(performer.root?.child).toEqual(undefined);
   const hydratedPerformer = await testHydration(performer);
   hydratedPerformer.start();
-  await hydratedPerformer.waitUntilListening();
+  await hydratedPerformer.waitUntilSettled();
   const userMessage: UserMessage = {
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
@@ -65,7 +65,7 @@ test("should use hydrated input instead of listening again", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilListening();
+  await performer.waitUntilSettled();
   const userMessage: UserMessage = {
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],

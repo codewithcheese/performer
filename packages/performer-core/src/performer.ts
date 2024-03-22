@@ -18,7 +18,7 @@ export type PerformerOptions = {
   logLevel?: LogType;
 };
 
-export type PerformerState = "pending" | "settled" | "rendering" | "listening";
+export type PerformerState = "pending" | "settled" | "rendering";
 
 export class Performer {
   #uid: string;
@@ -91,11 +91,6 @@ export class Performer {
     this.dispatchEvent(createLifecycleEvent("root", { state: "rendering" }));
   }
 
-  setListening() {
-    this.state = "listening";
-    this.dispatchEvent(createLifecycleEvent("root", { state: "listening" }));
-  }
-
   get aborted() {
     return this.abortController.signal.aborted;
   }
@@ -147,7 +142,6 @@ export class Performer {
       this.queueRender("input fulfilled");
     } else {
       this.inputNode = inputNode;
-      this.setListening();
     }
   }
 
@@ -172,19 +166,6 @@ export class Performer {
     return new Promise<void>((resolve) => {
       this.addEventListener("lifecycle", (event) => {
         if (event.detail.state === "settled") {
-          resolve();
-        }
-      });
-    });
-  }
-
-  async waitUntilListening() {
-    if (this.state === "listening") {
-      return;
-    }
-    return new Promise<void>((resolve) => {
-      this.addEventListener("lifecycle", (event) => {
-        if (event.detail.state === "listening") {
           resolve();
         }
       });

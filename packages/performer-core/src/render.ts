@@ -53,7 +53,6 @@ type PausedOp = {
 };
 
 // like paused by explicitly marked as requiring external input to continue
-// when render returns only listening ops then performer state set to listening.
 type ListeningOp = {
   type: "LISTENING";
 };
@@ -72,11 +71,11 @@ export type RenderOp =
   | AfterChildrenOp
   | ListeningOp;
 
-function haveOps(
-  ops: Record<string, RenderOp>,
-  filter?: (op: RenderOp) => boolean,
-) {
-  return Object.values(ops).filter(filter || Boolean).length > 0;
+// if no ops after filtering out listing
+function noOpsOrListening(ops: Record<string, RenderOp>) {
+  return (
+    Object.values(ops).filter((op) => op.type !== "LISTENING").length === 0
+  );
 }
 
 export async function render(performer: Performer) {
@@ -104,13 +103,8 @@ export async function render(performer: Performer) {
           performer.queueRender("after children effect");
       }
     }
-    if (!haveOps(ops) && !performer.renderQueued) {
+    if (noOpsOrListening(ops) && !performer.renderQueued) {
       performer.setSettled();
-    } else if (
-      !haveOps(ops, (op) => op.type !== "LISTENING") &&
-      !performer.renderQueued
-    ) {
-      performer.setListening();
     }
   } catch (error) {
     performer.onError("root", error);
