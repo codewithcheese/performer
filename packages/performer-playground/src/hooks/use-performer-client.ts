@@ -6,6 +6,7 @@ import {
   PerformerDeltaEvent,
   PerformerEvent,
   PerformerOptions,
+  PerformerState,
 } from "@performer/core";
 import { jsx } from "@performer/core/jsx-runtime";
 import consola from "consola";
@@ -18,6 +19,7 @@ export function usePerformerClient(
 ) {
   const [events, setEvents] = useState<PerformerEvent[]>([]);
   const [performer, setPerformer] = useState<Performer | null>(null);
+  const [state, setState] = useState<PerformerState>("pending");
 
   function sendMessage(text: string) {
     if (!performer) {
@@ -36,6 +38,7 @@ export function usePerformerClient(
       setPerformer(performer);
 
       performer.addEventListener("*", (event) => {
+        setState(performer.state);
         if (event.type === "message") {
           setEvents((prevEvents) => {
             const previous = prevEvents.findLast(
@@ -68,7 +71,7 @@ export function usePerformerClient(
     }
   }, [app]);
 
-  return { events, sendMessage };
+  return { events, sendMessage, state };
 }
 
 function applyDeltaEvent(

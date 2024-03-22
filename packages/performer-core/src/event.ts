@@ -77,13 +77,13 @@ export function createDeltaEvent(
 export interface PerformerLifecycleEvent extends PerformerEventBase {
   type: "lifecycle";
   detail: {
-    state: "settled" | "aborted" | "listening" | "rendering";
+    state: "finished" | "aborted" | "listening" | "rendering";
   };
 }
 
 export function createLifecycleEvent(
   threadId: string,
-  detail: { state: "settled" | "aborted" | "listening" | "rendering" },
+  detail: { state: "finished" | "aborted" | "listening" | "rendering" },
 ): PerformerLifecycleEvent {
   return {
     type: "lifecycle",

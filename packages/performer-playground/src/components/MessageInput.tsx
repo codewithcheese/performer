@@ -1,15 +1,16 @@
 import { KeyboardEventHandler, useEffect, useRef, useState } from "react";
+import { PerformerState } from "@performer/core";
 
 export type MessageInputProps = {
   disclaimer?: string;
-  disabled?: boolean;
   onSubmit: (text: string) => void;
+  state: PerformerState;
 };
 
 export function MessageInput({
   disclaimer,
-  disabled = false,
   onSubmit,
+  state,
 }: MessageInputProps) {
   const [text, setText] = useState("");
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -62,7 +63,7 @@ export function MessageInput({
               ></textarea>
               <button
                 ref={submitBtnRef}
-                disabled={disabled}
+                disabled={state !== "listening"}
                 className="absolute bottom-1.5 right-2 rounded-lg border border-black p-0.5 text-white transition-colors enabled:bg-black disabled:bg-black disabled:text-gray-400 disabled:opacity-10 dark:border-white dark:bg-white dark:hover:bg-gray-900 dark:disabled:bg-white dark:disabled:hover:bg-transparent md:bottom-3 md:right-3"
                 data-testid="send-button"
               >

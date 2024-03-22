@@ -42,7 +42,7 @@ test("should support nested repeat", async () => {
     eventMessages.push(event.detail.message),
   );
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   let messages = performer.getAllMessages();
   // compare order of events (render order) with order of messages (tree order)
   expect(messages).toEqual(eventMessages);
@@ -71,7 +71,7 @@ test("node after repeat should not render until repeat is complete", async () =>
     eventMessages.push(event.detail.message),
   );
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   let messages = performer.getAllMessages();
   // compare order of events (render order) with order of messages (tree order)
   expect(messages).toEqual(eventMessages);
@@ -101,7 +101,7 @@ test("should repeat until times prop is reached", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   let messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1 + 1 * 3 + 1 + 2 * 3 + 1);
   await testHydration(performer);
@@ -134,7 +134,7 @@ test("should stop repeating using stop prop", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages.length).toEqual(1 + 3 * 4 + 2);
   await testHydration(performer);

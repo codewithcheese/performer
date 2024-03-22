@@ -25,7 +25,7 @@ test("should render and resolve intrinsic element", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   expect(messages[0].role).toEqual("system");
@@ -56,7 +56,7 @@ test("should render view", async () => {
   const app = <AComponent />;
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   await testHydration(performer);
 });
 
@@ -83,7 +83,7 @@ test("should update prop when signal changes", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   await testHydration(performer);
 });
 
@@ -103,14 +103,14 @@ test("should update and run message actions when state changes", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   let messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
 
   performer.root!.child!.nextSibling!.hooks["state-0"].value = true;
   performer.start();
 
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   await testHydration(performer);
@@ -136,7 +136,7 @@ test("should update links when elements are reordered", async () => {
   );
   const performer = new Performer(app, { logLevel: "trace" });
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
 
   let messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(3);
@@ -145,7 +145,7 @@ test("should update links when elements are reordered", async () => {
   offset!.value += 1;
   performer.start();
 
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(3);
   await testHydration(performer);
@@ -163,7 +163,7 @@ test("should render new elements when dynamically added or removed", async () =>
   );
   let performer = new Performer(app, { logLevel: "trace" });
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   let messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(1);
 
@@ -174,7 +174,7 @@ test("should render new elements when dynamically added or removed", async () =>
   times.value += 4;
   performer.start();
   // second run
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(5);
 
@@ -185,7 +185,7 @@ test("should render new elements when dynamically added or removed", async () =>
   times.value -= 2;
   performer.start();
   // third run
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(3);
 
@@ -196,7 +196,7 @@ test("should render new elements when dynamically added or removed", async () =>
   times.value -= 1;
   performer.start();
   // fourth run
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   messages = resolveMessages(performer.root, undefined);
   expect(messages).toHaveLength(2);
   // final hydration test
@@ -222,7 +222,7 @@ test("should unlink messages when removed by conditional", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   let messages = resolveMessages(performer.root, undefined);
   expect(
     messages.length,
@@ -233,7 +233,7 @@ test("should unlink messages when removed by conditional", async () => {
   predicate.value = false;
   performer.start();
 
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   messages = resolveMessages(performer.root, undefined);
   expect(
     messages.length,
@@ -260,7 +260,7 @@ test("should wait for async message actions", async () => {
   const performer = new Performer(app);
   console.time("Render");
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   console.timeEnd("Render");
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
@@ -307,7 +307,7 @@ test("should render tree", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const root = performer.root!;
   expect(root.parent).toBeUndefined();
   expect(root.nextSibling).toBeUndefined();
@@ -341,7 +341,7 @@ test("should catch sync component that throws", async () => {
   performer.addEventListener("error", (event) => {
     events.push(event);
   });
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(events).toHaveLength(1);
 });
 
@@ -357,7 +357,7 @@ test("should catch resumed component that throws", async () => {
   performer.addEventListener("error", (event) => {
     errors.push(event);
   });
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(errors).toHaveLength(1);
 });
 
@@ -368,7 +368,7 @@ test("should throw if component is async function", async () => {
   // @ts-ignore
   const performer = new Performer(<App />, { throwOnError: false });
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.errors).toHaveLength(1);
 });
 
@@ -385,7 +385,7 @@ test("should cast non-string message children", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages[0].content).toEqual(
     "Message with 1 and 0 and true and false and null and undefined [object Object]",

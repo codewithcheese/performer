@@ -35,7 +35,7 @@ test("should use tool with callback", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   expect(messages[0].role).toEqual("system");
@@ -63,7 +63,7 @@ test("should use tool without callback", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   assert(isToolMessage(messages[2]));
@@ -107,6 +107,6 @@ test("should use multiple tools", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(callCount).toBeGreaterThan(0);
 });

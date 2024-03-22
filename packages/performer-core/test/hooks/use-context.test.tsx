@@ -30,7 +30,7 @@ test("should use context from provider", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.root?.type).toEqual(Provider);
   expect(
     (performer.root?.hooks["context-first"] as Signal<string>).value,

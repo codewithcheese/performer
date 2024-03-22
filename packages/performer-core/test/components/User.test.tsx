@@ -21,7 +21,7 @@ test("should accept user input", async () => {
     console.log(`Event ${event.type}`),
   );
   performer.input(userMessage);
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   assert(performer.root?.type instanceof Function);
   expect(performer.root?.type.name).toEqual("User");
   const messages = resolveMessages(performer.root);

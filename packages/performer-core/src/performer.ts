@@ -18,7 +18,7 @@ export type PerformerOptions = {
   logLevel?: LogType;
 };
 
-export type PerformerState = "pending" | "settled" | "rendering";
+export type PerformerState = "pending" | "listening" | "rendering" | "finished";
 
 export class Performer {
   #uid: string;
@@ -81,14 +81,19 @@ export class Performer {
     // this.finish();
   }
 
-  setSettled() {
-    this.state = "settled";
-    this.dispatchEvent(createLifecycleEvent("root", { state: "settled" }));
+  setFinished() {
+    this.state = "finished";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
   }
 
   setRendering() {
     this.state = "rendering";
     this.dispatchEvent(createLifecycleEvent("root", { state: "rendering" }));
+  }
+
+  setListening() {
+    this.state = "listening";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "listening" }));
   }
 
   get aborted() {
@@ -159,13 +164,26 @@ export class Performer {
     }
   }
 
-  async waitUntilSettled() {
-    if (this.state === "settled") {
+  async waitUntilFinished() {
+    if (this.state === "finished") {
       return;
     }
     return new Promise<void>((resolve) => {
       this.addEventListener("lifecycle", (event) => {
-        if (event.detail.state === "settled") {
+        if (event.detail.state === "finished") {
+          resolve();
+        }
+      });
+    });
+  }
+
+  async waitUntilListening() {
+    if (this.state === "listening") {
+      return;
+    }
+    return new Promise<void>((resolve) => {
+      this.addEventListener("lifecycle", (event) => {
+        if (event.detail.state === "listening") {
           resolve();
         }
       });
@@ -174,7 +192,7 @@ export class Performer {
 
   onError(threadId: string, error: unknown) {
     this.dispatchEvent(createErrorEvent(threadId, { error }));
-    this.setSettled();
+    this.setFinished();
     if (this.options.throwOnError) {
       throw error;
     }

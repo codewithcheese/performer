@@ -29,7 +29,7 @@ test("should load root route by default and then goto /second", async () => {
   const app = <Router routes={routes} />;
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   assert(performer.root?.type instanceof Function);
   expect(performer.root?.type.name).toEqual("Router");
   assert(performer.root?.child?.type instanceof Function);

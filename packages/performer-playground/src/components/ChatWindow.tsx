@@ -7,7 +7,7 @@ import { useScroll } from "../hooks/use-scroll.js";
 import { createContext, useEffect } from "react";
 
 export function ChatWindow({ App }: { App: Component<any> }) {
-  const { events, sendMessage } = usePerformerClient(App);
+  const { events, sendMessage, state } = usePerformerClient(App);
 
   const {
     messagesStartRef,
@@ -55,6 +55,7 @@ export function ChatWindow({ App }: { App: Component<any> }) {
       </div>
       <div className="w-full pt-2 dark:border-white/20 md:w-[calc(100%-.5rem)] md:border-transparent md:pt-0 md:dark:border-transparent">
         <MessageInput
+          state={state}
           disclaimer="AI can make mistakes. Consider checking important information."
           onSubmit={(text) => sendMessage(text)}
         />

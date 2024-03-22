@@ -71,11 +71,12 @@ export type RenderOp =
   | AfterChildrenOp
   | ListeningOp;
 
-// if no ops after filtering out listing
-function noOpsOrListening(ops: Record<string, RenderOp>) {
-  return (
-    Object.values(ops).filter((op) => op.type !== "LISTENING").length === 0
-  );
+function onlyListening(ops: Record<string, RenderOp>) {
+  return Object.values(ops).every((op) => op.type === "LISTENING");
+}
+
+function noOps(ops: Record<string, RenderOp>) {
+  return Object.keys(ops).length === 0;
 }
 
 export async function render(performer: Performer) {
@@ -103,8 +104,10 @@ export async function render(performer: Performer) {
           performer.queueRender("after children effect");
       }
     }
-    if (noOpsOrListening(ops) && !performer.renderQueued) {
-      performer.setSettled();
+    if (noOps(ops) && !performer.renderQueued) {
+      performer.setFinished();
+    } else if (onlyListening(ops) && !performer.renderQueued) {
+      performer.setListening();
     }
   } catch (error) {
     performer.onError("root", error);
