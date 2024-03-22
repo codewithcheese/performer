@@ -16,7 +16,7 @@ export type PerformerNode = {
   hooks: Record<string, unknown> & HookRecord;
   element: PerformerElement;
   childElements?: PerformerElement[] | undefined;
-  status: "PENDING" | "PAUSED" | "RESOLVED";
+  status: "PENDING" | "PAUSED" | "RESOLVED" | "LISTENING";
   disposeView?: () => void | undefined;
   isHydrating: boolean;
   childRenderCount: number;

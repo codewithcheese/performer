@@ -18,6 +18,8 @@ export type PerformerOptions = {
   logLevel?: LogType;
 };
 
+export type PerformerState = "pending" | "settled" | "rendering" | "listening";
+
 export class Performer {
   #uid: string;
 
@@ -25,8 +27,7 @@ export class Performer {
   root?: PerformerNode;
   options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
-
-  hasFinished: boolean = false;
+  state: PerformerState = "pending";
 
   // todo add deadline
   inputQueue: PerformerMessage[] = [];
@@ -62,6 +63,9 @@ export class Performer {
 
   start() {
     this.renderInProgress = true;
+    if (this.state !== "rendering") {
+      this.setRendering();
+    }
     render(this).finally(() => {
       this.renderInProgress = false;
       if (this.renderQueued) {
@@ -77,9 +81,19 @@ export class Performer {
     // this.finish();
   }
 
-  finish() {
-    this.hasFinished = true;
-    this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
+  setSettled() {
+    this.state = "settled";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "settled" }));
+  }
+
+  setRendering() {
+    this.state = "rendering";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "rendering" }));
+  }
+
+  setListening() {
+    this.state = "listening";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "listening" }));
   }
 
   get aborted() {
@@ -129,12 +143,11 @@ export class Performer {
         value: [...this.inputQueue],
       };
       inputNode.status = "PENDING";
+      this.inputQueue = [];
       this.queueRender("input fulfilled");
     } else {
       this.inputNode = inputNode;
-      this.dispatchEvent(
-        createLifecycleEvent(node.threadId, { state: "listening" }),
-      );
+      this.setListening();
     }
   }
 
@@ -153,18 +166,25 @@ export class Performer {
   }
 
   async waitUntilSettled() {
-    if (this.hasFinished) {
-      return;
-    }
-    if (this.inputNode) {
+    if (this.state === "settled") {
       return;
     }
     return new Promise<void>((resolve) => {
       this.addEventListener("lifecycle", (event) => {
-        if (
-          event.detail.state === "listening" ||
-          event.detail.state === "finished"
-        ) {
+        if (event.detail.state === "settled") {
+          resolve();
+        }
+      });
+    });
+  }
+
+  async waitUntilListening() {
+    if (this.state === "listening") {
+      return;
+    }
+    return new Promise<void>((resolve) => {
+      this.addEventListener("lifecycle", (event) => {
+        if (event.detail.state === "listening") {
           resolve();
         }
       });
@@ -173,7 +193,7 @@ export class Performer {
 
   onError(threadId: string, error: unknown) {
     this.dispatchEvent(createErrorEvent(threadId, { error }));
-    this.finish();
+    this.setSettled();
     if (this.options.throwOnError) {
       throw error;
     }

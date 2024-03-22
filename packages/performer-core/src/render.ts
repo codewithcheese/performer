@@ -52,6 +52,12 @@ type PausedOp = {
   type: "PAUSED";
 };
 
+// like paused by explicitly marked as requiring external input to continue
+// when render returns only listening ops then performer state set to listening.
+type ListeningOp = {
+  type: "LISTENING";
+};
+
 type AfterChildrenOp = {
   type: "AFTER_CHILDREN";
   payload: {
@@ -59,7 +65,19 @@ type AfterChildrenOp = {
   };
 };
 
-export type RenderOp = CreateOp | ResumeOp | PausedOp | AfterChildrenOp;
+export type RenderOp =
+  | CreateOp
+  | ResumeOp
+  | PausedOp
+  | AfterChildrenOp
+  | ListeningOp;
+
+function haveOps(
+  ops: Record<string, RenderOp>,
+  filter?: (op: RenderOp) => boolean,
+) {
+  return Object.values(ops).filter(filter || Boolean).length > 0;
+}
 
 export async function render(performer: Performer) {
   logger.withTag("render").debug("start");
@@ -86,8 +104,13 @@ export async function render(performer: Performer) {
           performer.queueRender("after children effect");
       }
     }
-    if (Object.keys(ops).length === 0 && !performer.renderQueued) {
-      performer.finish();
+    if (!haveOps(ops) && !performer.renderQueued) {
+      performer.setSettled();
+    } else if (
+      !haveOps(ops, (op) => op.type !== "LISTENING") &&
+      !performer.renderQueued
+    ) {
+      performer.setListening();
     }
   } catch (error) {
     performer.onError("root", error);
@@ -133,6 +156,10 @@ export function evaluateRenderOps(
         payload: { node },
       } satisfies ResumeOp,
     };
+  }
+
+  if (node.status === "LISTENING") {
+    return { [threadId]: { type: "LISTENING" } satisfies ListeningOp };
   }
 
   if (node.status === "PAUSED") {
@@ -276,9 +303,10 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
         })
         .catch((error) => performer.onError(node.threadId, error));
     } else if (e instanceof DeferInput) {
-      node.status = "PAUSED";
+      node.status = "LISTENING";
       logPaused(node, "resource");
       performer.setInputNode(node);
+      performer.queueRender("set input");
     } else {
       throw e;
     }
