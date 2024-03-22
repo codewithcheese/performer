@@ -20,7 +20,7 @@ export function App() {
       <Assistant />
       <Repeat stop={stopped}>
         <User />
-        <Assistant tools={[tool]} model="gpt-4" />
+        <Assistant tools={[tool]} />
       </Repeat>
       <system>
         Say goodbye to the user with a joke related to the conversation. Use
