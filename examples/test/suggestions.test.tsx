@@ -5,7 +5,7 @@ import { App } from "../src/suggestions/index.js";
 test("should suggest tasks and questions", async () => {
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilListening();
   performer.input({
     role: "user",
     content: [
@@ -15,5 +15,5 @@ test("should suggest tasks and questions", async () => {
       },
     ],
   });
-  await performer.waitUntilSettled();
+  await performer.waitUntilListening();
 }, 60_000);
