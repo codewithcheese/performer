@@ -27,7 +27,7 @@ test("should serialize hooks", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   await testHydration(performer);
 });
 
@@ -38,20 +38,17 @@ test("should serialize when listening, for input and accept input when hydrated"
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilListening();
   expect(performer.root?.child).toEqual(undefined);
-  expect(performer.hasFinished).toEqual(false);
   const hydratedPerformer = await testHydration(performer);
   hydratedPerformer.start();
-  await hydratedPerformer.waitUntilSettled();
-  expect(hydratedPerformer.hasFinished).toEqual(false);
+  await hydratedPerformer.waitUntilListening();
   const userMessage: UserMessage = {
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
   hydratedPerformer.input(userMessage);
-  await hydratedPerformer.waitUntilSettled();
-  expect(hydratedPerformer.hasFinished).toEqual(true);
+  await hydratedPerformer.waitUntilFinished();
   // expect original performer node still undefined
   expect(performer.root?.child).toEqual(undefined);
   expect(hydratedPerformer.root?.child?.type).toEqual("user");
@@ -68,19 +65,17 @@ test("should use hydrated input instead of listening again", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilListening();
   const userMessage: UserMessage = {
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
   performer.input(userMessage);
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.root?.child?.type).toEqual("user");
-  expect(performer.hasFinished).toEqual(true);
   const hydratedPerformer = await testHydration(performer);
   hydratedPerformer.start();
-  await hydratedPerformer.waitUntilSettled();
-  expect(hydratedPerformer.hasFinished).toEqual(true);
+  await hydratedPerformer.waitUntilFinished();
   expect(hydratedPerformer.root?.child?.type).toEqual("user");
   assert(isTextContent(hydratedPerformer.root?.child?.props.content[0]));
   expect(hydratedPerformer.root?.child?.props.content[0].text).toEqual(

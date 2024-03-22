@@ -63,7 +63,7 @@ test("should accept empty array", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.errors).toHaveLength(0);
   await testHydration(performer);
 });
@@ -82,7 +82,7 @@ test("should accept array of children", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.errors).toHaveLength(0);
   const messages = performer.getAllMessages();
   expect(messages).toHaveLength(5);
@@ -117,7 +117,7 @@ test("message element should resolve stream into message object", async () => {
     messageEventValue = event;
   });
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = performer.getAllMessages();
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual(userMessage);
@@ -136,7 +136,7 @@ test("message element should accept message object without stream", async () => 
   const app = <App />;
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = performer.getAllMessages();
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual(userMessage);

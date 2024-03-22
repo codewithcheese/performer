@@ -34,7 +34,7 @@ test("should use tool to set signal", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
   assert(isAssistantMessage(messages[0]));

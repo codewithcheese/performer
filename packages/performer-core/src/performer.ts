@@ -18,6 +18,8 @@ export type PerformerOptions = {
   logLevel?: LogType;
 };
 
+export type PerformerState = "pending" | "listening" | "rendering" | "finished";
+
 export class Performer {
   #uid: string;
 
@@ -25,8 +27,7 @@ export class Performer {
   root?: PerformerNode;
   options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
-
-  hasFinished: boolean = false;
+  state: PerformerState = "pending";
 
   // todo add deadline
   inputQueue: PerformerMessage[] = [];
@@ -46,9 +47,11 @@ export class Performer {
     this.app = app;
     this.options = options;
     const logLevel: LogType =
-      (getEnv("LOGLEVEL") as LogType) || options.logLevel || getEnv("VITEST")
-        ? "debug"
-        : "info";
+      (getEnv("LOGLEVEL") as LogType) ||
+      options.logLevel ||
+      (getEnv("VITEST") && "info") ||
+      "info";
+
     logger.level = LogLevels[logLevel];
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
@@ -62,6 +65,9 @@ export class Performer {
 
   start() {
     this.renderInProgress = true;
+    if (this.state !== "rendering") {
+      this.setRendering();
+    }
     render(this).finally(() => {
       this.renderInProgress = false;
       if (this.renderQueued) {
@@ -77,9 +83,19 @@ export class Performer {
     // this.finish();
   }
 
-  finish() {
-    this.hasFinished = true;
+  setFinished() {
+    this.state = "finished";
     this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
+  }
+
+  setRendering() {
+    this.state = "rendering";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "rendering" }));
+  }
+
+  setListening() {
+    this.state = "listening";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "listening" }));
   }
 
   get aborted() {
@@ -129,12 +145,10 @@ export class Performer {
         value: [...this.inputQueue],
       };
       inputNode.status = "PENDING";
+      this.inputQueue = [];
       this.queueRender("input fulfilled");
     } else {
       this.inputNode = inputNode;
-      this.dispatchEvent(
-        createLifecycleEvent(node.threadId, { state: "listening" }),
-      );
     }
   }
 
@@ -152,28 +166,54 @@ export class Performer {
     }
   }
 
-  async waitUntilSettled() {
-    if (this.hasFinished) {
-      return;
-    }
-    if (this.inputNode) {
+  async waitUntilFinished(signal?: AbortSignal) {
+    if (this.state === "finished") {
       return;
     }
     return new Promise<void>((resolve) => {
       this.addEventListener("lifecycle", (event) => {
-        if (
-          event.detail.state === "listening" ||
-          event.detail.state === "finished"
-        ) {
+        if (event.detail.state === "finished") {
           resolve();
+        }
+      });
+      if (signal) {
+        signal.addEventListener("abort", () => resolve());
+      }
+    });
+  }
+
+  async waitUntilListening(signal?: AbortSignal) {
+    if (this.state === "listening") {
+      return;
+    }
+    return new Promise<void>((resolve) => {
+      this.addEventListener("lifecycle", (event) => {
+        if (event.detail.state === "listening") {
+          resolve();
+        }
+        if (signal) {
+          signal.addEventListener("abort", () => resolve());
         }
       });
     });
   }
 
+  /**
+   * Wait for listening or finished state.
+   *
+   * Useful for tests when the final state is not controllable due to flakey model
+   */
+  async waitUntilSettled() {
+    const controller = new AbortController();
+    return Promise.race([
+      this.waitUntilListening(controller.signal),
+      this.waitUntilFinished(controller.signal),
+    ]).then(() => controller.abort());
+  }
+
   onError(threadId: string, error: unknown) {
     this.dispatchEvent(createErrorEvent(threadId, { error }));
-    this.finish();
+    this.setFinished();
     if (this.options.throwOnError) {
       throw error;
     }

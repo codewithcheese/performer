@@ -52,6 +52,11 @@ type PausedOp = {
   type: "PAUSED";
 };
 
+// like paused by explicitly marked as requiring external input to continue
+type ListeningOp = {
+  type: "LISTENING";
+};
+
 type AfterChildrenOp = {
   type: "AFTER_CHILDREN";
   payload: {
@@ -59,7 +64,20 @@ type AfterChildrenOp = {
   };
 };
 
-export type RenderOp = CreateOp | ResumeOp | PausedOp | AfterChildrenOp;
+export type RenderOp =
+  | CreateOp
+  | ResumeOp
+  | PausedOp
+  | AfterChildrenOp
+  | ListeningOp;
+
+function onlyListening(ops: Record<string, RenderOp>) {
+  return Object.values(ops).every((op) => op.type === "LISTENING");
+}
+
+function noOps(ops: Record<string, RenderOp>) {
+  return Object.keys(ops).length === 0;
+}
 
 export async function render(performer: Performer) {
   logger.withTag("render").debug("start");
@@ -86,8 +104,10 @@ export async function render(performer: Performer) {
           performer.queueRender("after children effect");
       }
     }
-    if (Object.keys(ops).length === 0 && !performer.renderQueued) {
-      performer.finish();
+    if (noOps(ops) && !performer.renderQueued) {
+      performer.setFinished();
+    } else if (onlyListening(ops) && !performer.renderQueued) {
+      performer.setListening();
     }
   } catch (error) {
     performer.onError("root", error);
@@ -135,6 +155,10 @@ export function evaluateRenderOps(
     };
   }
 
+  if (node.status === "LISTENING") {
+    return { [threadId]: { type: "LISTENING" } satisfies ListeningOp };
+  }
+
   if (node.status === "PAUSED") {
     return { [threadId]: { type: "PAUSED" } satisfies PausedOp };
   }
@@ -154,6 +178,7 @@ export function evaluateRenderOps(
       childPrevSibling,
     );
     Object.assign(ops, childOps);
+    // increment childRenderCount if render op
     if (
       Object.values(childOps).find(
         (op) => op.type === "CREATE" || op.type === "RESUME",
@@ -161,6 +186,7 @@ export function evaluateRenderOps(
     ) {
       node.childRenderCount += 1;
     }
+    // return if op for current thread otherwise continue
     if (childThreadId in childOps) {
       return ops;
     }
@@ -274,9 +300,10 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
         })
         .catch((error) => performer.onError(node.threadId, error));
     } else if (e instanceof DeferInput) {
-      node.status = "PAUSED";
+      node.status = "LISTENING";
       logPaused(node, "resource");
       performer.setInputNode(node);
+      performer.queueRender("set input");
     } else {
       throw e;
     }
