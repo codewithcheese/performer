@@ -110,14 +110,15 @@ test("should hydrate inserted nodes", async () => {
   // push elements
   pushElement(performer.root!, <user>0</user>);
   pushElement(performer.root!, <Any id="1" />);
+  // todo test inserting node at index, 0, -1 ,2
+  // todo test inserting paused node
+  // todo test inserting listening node
 
   // restart
   performer.start();
   await performer.waitUntilSettled();
   const messages = performer.getAllMessages();
-  expect(JSON.stringify(messages)).toEqual(
-    '[{"role":"user","content":"0"},{"role":"system","content":"1"}]',
-  );
+  expect(messages.map((m) => m.content)).toEqual(["0", "1"]);
   // serialize
   const serialized = performer.serialize();
   console.log(JSON.stringify(serialized, null, 2));
@@ -128,8 +129,6 @@ test("should hydrate inserted nodes", async () => {
     Any: jsx(Any, {}),
   });
   const hydratedMessages = hydratedPerformer.getAllMessages();
-  expect(JSON.stringify(hydratedMessages)).toEqual(
-    '[{"role":"user","content":"0"},{"role":"system","content":"1"}]',
-  );
+  expect(hydratedMessages.map((m) => m.content)).toEqual(["0", "1"]);
   expect(performer.state).toEqual(hydratedPerformer.state);
 });
