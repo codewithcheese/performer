@@ -21,7 +21,7 @@ test("should retain state across async contexts", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.root?.hooks["resource-0"]).toEqual({
     type: "value",
     value: 42,
@@ -60,7 +60,7 @@ test("should write stream chunks to hook state", async () => {
 
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.root?.child?.type).toEqual("raw");
   expect(performer.root?.hooks["resource-0"]).toEqual({
     type: "stream",
@@ -79,6 +79,6 @@ test("should pass additional arguments", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(args).toEqual([1, "2", three]);
 });

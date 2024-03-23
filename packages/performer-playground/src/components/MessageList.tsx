@@ -28,7 +28,9 @@ function exclude(filter: FilterType, event: PerformerEvent) {
       event.type === "delta" &&
       !event.detail.delta.content) ||
     // exclude non-root threads from chat view
-    (filter === "chat" && event.threadId != "root")
+    (filter === "chat" && event.threadId != "root") ||
+    // exclude life cycle events from chat view
+    (filter === "chat" && event.type === "lifecycle")
   );
 }
 

@@ -14,7 +14,7 @@ test("should render and resolve intrinsic element", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(3);
   expect(messages[0].role).toEqual("system");

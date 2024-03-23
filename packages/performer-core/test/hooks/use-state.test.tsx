@@ -14,7 +14,7 @@ test("should create state signals using initial values", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
   expect(messages[0]).toEqual({
@@ -40,7 +40,7 @@ test("should throw when mutating state object property value", async () => {
   }
   const performer = new Performer(<App />, { throwOnError: false });
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages[0]).toEqual({
     role: "system",
@@ -65,7 +65,7 @@ test("should update when re-assigning state object value", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages[0]).toEqual({
     role: "system",

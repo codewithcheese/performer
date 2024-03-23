@@ -1,20 +1,19 @@
-import { Assistant, Repeat, User, useToolData } from "@performer/core";
-import { computed } from "@preact/signals-core";
+import { Assistant, createTool, Repeat, User, useState } from "@performer/core";
 import { z } from "zod";
 
 export const name = "Chat until goodbye";
 
-const ChatStateSchema = z
-  .object({
-    hasEnded: z.boolean().default(false),
-  })
+const ByeSchema = z
+  .object({})
   .describe(
-    "When the the conversation ends, when the user says goodbye or asks to end the chat",
+    "When the the conversation naturally ends, for example when the user says goodbye or asks to end the chat",
   );
 
 export function App() {
-  const [chatState, tool] = useToolData("chatState", ChatStateSchema);
-  const stopped = computed(() => chatState.value.hasEnded);
+  const stopped = useState(false);
+  const tool = createTool("endOfConversation", ByeSchema, () => {
+    stopped.value = true;
+  });
   return () => (
     <>
       <system>Greet the user.</system>
@@ -23,7 +22,10 @@ export function App() {
         <User />
         <Assistant tools={[tool]} />
       </Repeat>
-      <system>Thanks the user for their time, wish them a good day</system>
+      <system>
+        Say goodbye to the user with a joke related to the conversation. Use
+        emojis.
+      </system>
       <Assistant />
     </>
   );

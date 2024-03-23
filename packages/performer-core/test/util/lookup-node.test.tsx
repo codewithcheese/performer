@@ -21,7 +21,7 @@ test("should lookup node", async () => {
 
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
 
   const lookup = createLookup(performer.root!);
   // explicit index

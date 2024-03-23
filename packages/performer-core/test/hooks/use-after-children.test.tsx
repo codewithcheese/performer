@@ -21,7 +21,7 @@ test("should run once only if callback does not cause child rerender", async () 
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.root?.child?.child?.hooks["state-0"].value).toEqual(1);
   expect(
     performer.root?.child?.child?.nextSibling?.hooks["state-0"].value,
@@ -50,7 +50,7 @@ test("should re-run if callback causes child rerender", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.root?.child?.child?.hooks["state-0"].value).toEqual(3);
   expect(
     performer.root?.child?.child?.nextSibling?.hooks["state-0"].value,

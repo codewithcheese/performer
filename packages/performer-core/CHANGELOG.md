@@ -1,5 +1,12 @@
 # @performer/core
 
+## 0.0.39
+
+### Patch Changes
+
+- fc10871: Fix render progress/queue logic
+- dbba314: Add state property to Performer class to replace hasFinished logic
+
 ## 0.0.38
 
 ### Patch Changes

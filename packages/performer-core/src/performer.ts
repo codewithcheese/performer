@@ -19,7 +19,7 @@ export type PerformerOptions = {
   logLevel?: LogType;
 };
 
-type PerformerState = "pending" | "running" | "settled";
+export type PerformerState = "pending" | "listening" | "rendering" | "finished";
 
 export class Performer {
   #uid: string;
@@ -37,7 +37,7 @@ export class Performer {
   abortController = new AbortController();
 
   renderQueued = false;
-  renderPromised: ReturnType<typeof render> | null = null;
+  renderInProgress: boolean = false;
 
   threadNonce = 0;
 
@@ -48,7 +48,11 @@ export class Performer {
     this.app = app;
     this.options = options;
     const logLevel: LogType =
-      (getEnv("LOGLEVEL") as LogType) || options.logLevel || "info";
+      (getEnv("LOGLEVEL") as LogType) ||
+      options.logLevel ||
+      (getEnv("VITEST") && "info") ||
+      "info";
+
     logger.level = LogLevels[logLevel];
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
@@ -61,7 +65,17 @@ export class Performer {
   }
 
   start() {
-    this.renderPromised = render(this);
+    this.renderInProgress = true;
+    if (this.state !== "rendering") {
+      this.setRendering();
+    }
+    render(this).finally(() => {
+      this.renderInProgress = false;
+      if (this.renderQueued) {
+        this.renderQueued = false;
+        this.start();
+      }
+    });
   }
 
   abort() {
@@ -70,12 +84,19 @@ export class Performer {
     this.abortController.abort();
   }
 
-  setState(state: PerformerState) {
-    if (state === "settled") {
-      // todo update lifecycle event to be consistent for all states
-      this.dispatchEvent(createLifecycleEvent("root", { state: "settled" }));
-    }
-    this.state = state;
+  setFinished() {
+    this.state = "finished";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
+  }
+
+  setRendering() {
+    this.state = "rendering";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "rendering" }));
+  }
+
+  setListening() {
+    this.state = "listening";
+    this.dispatchEvent(createLifecycleEvent("root", { state: "listening" }));
   }
 
   get aborted() {
@@ -93,21 +114,10 @@ export class Performer {
         ["reason", reason],
       ]),
     );
-    if (this.renderQueued) {
-      return;
-    }
-    if (this.renderPromised) {
-      this.renderQueued = true;
-      this.renderPromised.finally(() => {
-        this.renderQueued = false;
-        this.renderPromised = render(this);
-      });
+    if (!this.renderInProgress) {
+      this.start();
     } else {
       this.renderQueued = true;
-      Promise.resolve().then(() => {
-        this.renderQueued = false;
-        this.renderPromised = render(this);
-      });
     }
   }
 
@@ -136,13 +146,10 @@ export class Performer {
         value: [...this.inputQueue],
       };
       inputNode.status = "PENDING";
+      this.inputQueue = [];
       this.queueRender("input fulfilled");
     } else {
       this.inputNode = inputNode;
-      this.state = "settled";
-      this.dispatchEvent(
-        createLifecycleEvent(node.threadId, { state: "listening" }),
-      );
     }
   }
 
@@ -160,31 +167,54 @@ export class Performer {
     }
   }
 
-  async waitUntilSettled() {
-    // if (this.hasFinished) {
-    //   return;
-    // }
-    // if (this.inputNode) {
-    //   return;
-    // }
-    if (this.state === "settled") {
-      return true;
+  async waitUntilFinished(signal?: AbortSignal) {
+    if (this.state === "finished") {
+      return;
     }
     return new Promise<void>((resolve) => {
       this.addEventListener("lifecycle", (event) => {
-        if (
-          event.detail.state === "listening" ||
-          event.detail.state === "settled"
-        ) {
+        if (event.detail.state === "finished") {
           resolve();
+        }
+      });
+      if (signal) {
+        signal.addEventListener("abort", () => resolve());
+      }
+    });
+  }
+
+  async waitUntilListening(signal?: AbortSignal) {
+    if (this.state === "listening") {
+      return;
+    }
+    return new Promise<void>((resolve) => {
+      this.addEventListener("lifecycle", (event) => {
+        if (event.detail.state === "listening") {
+          resolve();
+        }
+        if (signal) {
+          signal.addEventListener("abort", () => resolve());
         }
       });
     });
   }
 
+  /**
+   * Wait for listening or finished state.
+   *
+   * Useful for tests when the final state is not controllable due to flakey model
+   */
+  async waitUntilSettled() {
+    const controller = new AbortController();
+    return Promise.race([
+      this.waitUntilListening(controller.signal),
+      this.waitUntilFinished(controller.signal),
+    ]).then(() => controller.abort());
+  }
+
   onError(threadId: string, error: unknown) {
     this.dispatchEvent(createErrorEvent(threadId, { error }));
-    this.setState("settled");
+    this.setFinished();
     if (this.options.throwOnError) {
       throw error;
     }

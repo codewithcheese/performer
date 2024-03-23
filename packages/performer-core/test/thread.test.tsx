@@ -45,7 +45,7 @@ test("should resolve different threads concurrently, same thread in serial", asy
 
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(order).toEqual(["A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"]);
 });
 
@@ -89,7 +89,7 @@ test("should exclude messages from sub-threads", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   // get `users` nodes and verify their content matches their thread
   const users: PerformerNode[] = [];
   walk(performer.root!, (node) =>
@@ -109,7 +109,7 @@ test("should call onSettled when thread children rendered", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(performer.root?.hooks["state-0"].value).toEqual(true);
 });
 
@@ -154,7 +154,7 @@ test("should await all thread before continuing", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(order).toEqual([
     "first",
     "2",
@@ -194,7 +194,7 @@ test("should isolate thread from parent thread messages", async () => {
 
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = performer.getAllMessages();
   expect(messages.map((m) => m.content)).toEqual(["1", "2", "3", "4"]);
 });

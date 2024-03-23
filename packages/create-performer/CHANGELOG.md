@@ -1,5 +1,11 @@
 # create-performer
 
+## 0.0.39
+
+### Patch Changes
+
+- dbba314: Add state property to Performer class to replace hasFinished logic
+
 ## 0.0.38
 
 ## 0.0.37

@@ -23,7 +23,7 @@ test("should call model with messages", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const lookup = createLookup(performer.root!);
 
   expect(lookup("system").type).toEqual("system");
@@ -63,7 +63,7 @@ test("should call onMessage event handler after assistant response", async () =>
   }
   const performer = new Performer(<App />);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   const messages = performer.getAllMessages();
   expect(messages).toHaveLength(3);
   expect(messages[2]).toEqual({ role: "user", content: "Thank you" });
@@ -93,7 +93,7 @@ test("should include tool message before resolving", async () => {
   );
   const performer = new Performer(app);
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   testHydration(performer);
 });
 
@@ -123,7 +123,7 @@ test("should emit error event when apiKey is incorrect", async () => {
   });
 
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(hasErrorEvent, "Expected error").toEqual(true);
 }, 10_000);
 
@@ -151,7 +151,7 @@ test.skipIf(!process.env.OPENROUTER_API_KEY)(
     }
     const performer = new Performer(<App />);
     performer.start();
-    await performer.waitUntilSettled();
+    await performer.waitUntilFinished();
     const message = resolveMessages(performer.root!);
     console.log(message);
   },
@@ -181,7 +181,7 @@ test.skipIf(!process.env.PERPLEXITY_API_KEY)(
     }
     const performer = new Performer(<App />);
     performer.start();
-    await performer.waitUntilSettled();
+    await performer.waitUntilFinished();
     const messages = performer.getAllMessages();
     expect(messages).toHaveLength(2);
     expect(messages[0].role).toEqual("user");
@@ -212,7 +212,7 @@ test.skipIf(process.env.USE_OLLAMA !== "true")(
     }
     const performer = new Performer(<App />);
     performer.start();
-    await performer.waitUntilSettled();
+    await performer.waitUntilFinished();
     const message = resolveMessages(performer.root!);
     console.log(message);
   },

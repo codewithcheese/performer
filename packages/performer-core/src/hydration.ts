@@ -85,7 +85,7 @@ export async function hydrate({
     let hasFinished = true;
     walk(node, () => (hasFinished = node.status === "RESOLVED"));
     if (hasFinished) {
-      performer.setState("settled");
+      performer.setFinished();
     }
   }
 

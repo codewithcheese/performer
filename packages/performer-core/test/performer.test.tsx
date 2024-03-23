@@ -13,13 +13,13 @@ test("should wait for input before performer is finished", async () => {
   const performer = new Performer(app);
   console.time("Render");
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilListening();
   expect(performer.inputNode).toBeDefined();
   performer.input({
     role: "user",
     content: [{ type: "text", text: "Hold me close" }],
   });
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
 });
 
 test("should wait for multiple inputs", async () => {
@@ -33,22 +33,22 @@ test("should wait for multiple inputs", async () => {
   const performer = new Performer(app);
   console.time("Render");
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilListening();
   performer.input({
     role: "user",
-    content: [{ type: "text", text: "Hold me close" }],
+    content: [{ type: "text", text: "One" }],
   });
-  await performer.waitUntilSettled();
+  await performer.waitUntilListening();
   performer.input({
     role: "user",
-    content: [{ type: "text", text: "Hold me close" }],
+    content: [{ type: "text", text: "Two" }],
   });
-  await performer.waitUntilSettled();
+  await performer.waitUntilListening();
   performer.input({
     role: "user",
-    content: [{ type: "text", text: "Hold me close" }],
+    content: [{ type: "text", text: "Three" }],
   });
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
 });
 
 test("should abort assistant response", async () => {
@@ -65,7 +65,7 @@ test("should abort assistant response", async () => {
   });
   performer.start();
   performer.abort();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   await sleep(1000);
   // expect(events).toHaveLength(1);
 });

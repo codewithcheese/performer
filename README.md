@@ -30,19 +30,39 @@ npm create performer@latest
 A simple chat application.
 
 ```jsx
-import { Assistant, User, Repeat } from "@performer/core";
+import { Assistant, createTool, Repeat, User, useState } from "@performer/core";
+import { z } from "zod";
+
+export const name = "Chat until goodbye";
+
+const ByeSchema = z
+  .object({})
+  .describe(
+    "When the the conversation naturally ends, for example when the user says goodbye or asks to end the chat",
+  );
 
 export function App() {
+  const stopped = useState(false);
+  const tool = createTool("endOfConversation", ByeSchema, () => {
+    stopped.value = true;
+  });
   return () => (
     <>
-      <system>Help the user. Be funny</system>
-      <Repeat>
+      <system>Greet the user.</system>
+      <Assistant />
+      <Repeat stop={stopped}>
         <User />
-        <Assistant />
+        <Assistant tools={[tool]} model="gpt-4" />
       </Repeat>
+      <system>
+        Say goodbye to the user with a joke related to the conversation. Use
+        emojis.
+      </system>
+      <Assistant />
     </>
   );
 }
+
 ```
 
 Start the playground to chat with your app.
@@ -50,6 +70,8 @@ Start the playground to chat with your app.
 ```sh
 pnpm run playground
 ```
+
+![Chat until goodbye](assets/chat-until-goodbye.png)
 
 ## Table of Contents
 - [Performer class](#performer-class)

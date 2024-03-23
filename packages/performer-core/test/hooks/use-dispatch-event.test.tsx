@@ -32,6 +32,6 @@ test("should dispatch event from component", async () => {
     if ("value" in evt.detail) eventValues.push(evt.detail.value);
   });
   performer.start();
-  await performer.waitUntilSettled();
+  await performer.waitUntilFinished();
   expect(eventValues).toEqual([1337]);
 });

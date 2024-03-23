@@ -12,6 +12,6 @@ test.skipIf(!process.env.VITE_TEST_HAS_CHINOOK_DB)(
       role: "user",
       content: [{ type: "text", text: "How many employees are there?" }],
     });
-    await performer.waitUntilSettled();
+    await performer.waitUntilFinished();
   },
 );
