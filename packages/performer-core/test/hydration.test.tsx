@@ -30,7 +30,8 @@ test("should serialize hooks", async () => {
   const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilFinished();
-  await testHydration(performer);
+  const hydratedPerformer = await testHydration(performer);
+  expect(performer.state).toEqual(hydratedPerformer.state);
 });
 
 test("should serialize when listening, for input and accept input when hydrated", async () => {
@@ -42,6 +43,7 @@ test("should serialize when listening, for input and accept input when hydrated"
   performer.start();
   await performer.waitUntilListening();
   expect(performer.root?.child).toEqual(undefined);
+  expect(performer.state).toEqual("listening");
   const hydratedPerformer = await testHydration(performer);
   hydratedPerformer.start();
   await hydratedPerformer.waitUntilListening();
@@ -58,6 +60,7 @@ test("should serialize when listening, for input and accept input when hydrated"
   expect(hydratedPerformer.root?.child?.props.content[0].text).toEqual(
     "Hello, world!",
   );
+  expect(hydratedPerformer.state).toEqual("finished");
 });
 
 test("should use hydrated input instead of listening again", async () => {
@@ -83,6 +86,7 @@ test("should use hydrated input instead of listening again", async () => {
   expect(hydratedPerformer.root?.child?.props.content[0].text).toEqual(
     "Hello, world!",
   );
+  expect(performer.state).toEqual(hydratedPerformer.state);
 });
 
 test("should mark pushed element as transplant", async () => {
@@ -111,18 +115,21 @@ test("should hydrate inserted nodes", async () => {
   performer.start();
   await performer.waitUntilSettled();
   const messages = performer.getAllMessages();
-  expect(JSON.stringify(messages)).toEqual('[{"role":"user","content":"0"}]');
+  expect(JSON.stringify(messages)).toEqual(
+    '[{"role":"user","content":"0"},{"role":"system","content":"1"}]',
+  );
   // serialize
   const serialized = performer.serialize();
   console.log(JSON.stringify(serialized, null, 2));
   // hydrate new performer
-  const hydrated = new Performer(<></>);
-  await hydrated.hydrate(serialized, {
+  const hydratedPerformer = new Performer(<></>);
+  await hydratedPerformer.hydrate(serialized, {
     user: jsx("user", {}),
     Any: jsx(Any, {}),
   });
-  const hydratedMessages = hydrated.getAllMessages();
+  const hydratedMessages = hydratedPerformer.getAllMessages();
   expect(JSON.stringify(hydratedMessages)).toEqual(
-    '[{"role":"user","content":"0"}]',
+    '[{"role":"user","content":"0"},{"role":"system","content":"1"}]',
   );
+  expect(performer.state).toEqual(hydratedPerformer.state);
 });
