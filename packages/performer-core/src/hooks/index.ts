@@ -1,3 +1,5 @@
+import { PerformerMessage } from "../message.js";
+
 export * from "./use-after-children.js";
 export * from "./use-resource.js";
 export * from "./use-context.js";
@@ -19,10 +21,17 @@ import { ContextHookRecord, ProviderHookRecord } from "./use-context.js";
 import { UseResourceHookRecord } from "./use-resource.js";
 import { ThreadHookRecord } from "./use-thread.js";
 
+export type FlagHookRecord = {
+  flag?:
+    | { type: "deleted" }
+    | { type: "edited"; edits: Partial<PerformerMessage> };
+};
+
 export type HookRecord = AfterChildrenHookRecord &
   InputHookRecord &
   StateHookRecord &
   ContextHookRecord &
   ProviderHookRecord &
   ThreadHookRecord &
-  UseResourceHookRecord;
+  UseResourceHookRecord &
+  FlagHookRecord;

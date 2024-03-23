@@ -1,9 +1,12 @@
 import { sleep } from "../src/util/sleep.js";
 import { expect, test } from "vitest";
 import {
+  flagAsDeleted,
+  flagAsEdited,
   Performer,
   PerformerErrorEvent,
   PerformerMessage,
+  pushElement,
   resolveMessages,
   useResource,
   useState,
@@ -390,6 +393,48 @@ test("should cast non-string message children", async () => {
   expect(messages[0].content).toEqual(
     "Message with 1 and 0 and true and false and null and undefined [object Object]",
   );
+});
+
+test("should push and render element onto root", async () => {
+  function App() {
+    return () => <system>0</system>;
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  pushElement(performer.root!, <user>1</user>);
+  performer.start();
+  await performer.waitUntilSettled();
+  const messages = performer.getAllMessages();
+  expect(JSON.stringify(messages)).toEqual(
+    `[{"role":"system","content":"0"},{"role":"user","content":"1"}]`,
+  );
+});
+
+test("should mark a message as deleted and be excluded from messages", async () => {
+  // todo test all message types, raw(message), raw(stream), system, user, assistant, tool
+  function App() {
+    return () => <system>0</system>;
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  flagAsDeleted(performer.root!.child!);
+  const messages = performer.getAllMessages();
+  expect(JSON.stringify(messages)).toEqual("[]");
+});
+
+test("should mark a message as edited and edits apply to final messages", async () => {
+  // todo test all message types, raw(message), raw(stream), system, user, assistant, tool
+  function App() {
+    return () => <system>0</system>;
+  }
+  const performer = new Performer(<App />);
+  performer.start();
+  await performer.waitUntilSettled();
+  flagAsEdited(performer.root!.child!, { content: "1" });
+  const messages = performer.getAllMessages();
+  expect(JSON.stringify(messages)).toEqual(`[{"role":"system","content":"1"}]`);
 });
 
 // fixme: correctly handle exception

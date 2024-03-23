@@ -1,5 +1,5 @@
 import type { PerformerElement } from "./element.js";
-import type { PerformerNode } from "./node.js";
+import type { PerformerNode, SerializedNode } from "./node.js";
 import { render, resolveMessages } from "./render.js";
 import {
   createErrorEvent,
@@ -12,6 +12,7 @@ import { logEvent, logger, nodeToStr, toLogFmt } from "./util/log.js";
 import { getEnv } from "./util/env.js";
 import { LogLevels, type LogType } from "consola";
 import Emittery from "emittery";
+import { hydrate, serialize } from "./hydration.js";
 
 export type PerformerOptions = {
   throwOnError?: boolean;
@@ -79,8 +80,8 @@ export class Performer {
 
   abort() {
     this.dispatchEvent(createLifecycleEvent("root", { state: "aborted" }));
+    // abort should result in settled state
     this.abortController.abort();
-    // this.finish();
   }
 
   setFinished() {
@@ -237,5 +238,26 @@ export class Performer {
 
   dispatchEvent(event: PerformerEventMap[keyof PerformerEventMap]) {
     this.emitter.emit(event.type as keyof PerformerEventMap, event);
+  }
+
+  /* Hydration */
+
+  async hydrate(
+    serialized: SerializedNode,
+    elementMap: Record<string, PerformerElement> = {},
+  ) {
+    await hydrate({
+      performer: this,
+      element: this.app,
+      serialized: serialized,
+      elementMap,
+    });
+  }
+
+  serialize() {
+    if (!this.root) {
+      throw Error("Cannot serialize before Performer started.");
+    }
+    return serialize(this.root);
   }
 }
