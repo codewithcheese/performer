@@ -8,16 +8,17 @@ import { nodeToStr } from "./util/log.js";
 import { Fragment } from "./jsx/index.js";
 
 export type PerformerNode = {
-  threadId: string;
+  // threadId: string;
   uid: string;
-  type: Component<any> | PerformerMessage["role"] | "raw";
-  _typeName: string;
+  type: Component<any> /* | PerformerMessage["role"] | "raw";*/;
+  // _typeName: string;
   props: Record<string, any>;
-  hooks: Record<string, unknown> & HookRecord;
+  state: { stream?: ReadableStream; messages?: PerformerMessage[] };
+  // hooks: Record<string, unknown> & HookRecord;
   element: PerformerElement;
-  childElements?: PerformerElement[] | undefined;
+  // childElements?: PerformerElement[] | undefined;
   status: "PENDING" | "PAUSED" | "RESOLVED" | "LISTENING";
-  disposeView?: () => void | undefined;
+  // disposeView?: () => void | undefined;
   isHydrating: boolean;
   childRenderCount: number;
 
@@ -35,18 +36,18 @@ export type SerializedNode = {
   children: SerializedNode[];
 };
 
-export function isRawNode(node: PerformerNode): node is RawNode {
-  return node.type === "raw";
-}
+// export function isRawNode(node: PerformerNode): node is RawNode {
+//   return node.type === "raw";
+// }
 
-export interface RawNode extends PerformerNode {
-  type: "raw";
-  props: {
-    stream?: ReadableStream<MessageDelta>;
-    message?: PerformerMessage;
-    onResolved?: (message: PerformerMessage) => Promise<void>;
-  };
-}
+// export interface RawNode extends PerformerNode {
+//   type: "raw";
+//   props: {
+//     stream?: ReadableStream<MessageDelta>;
+//     message?: PerformerMessage;
+//     onResolved?: (message: PerformerMessage) => Promise<void>;
+//   };
+// }
 
 function validateElement(element: unknown, parent?: PerformerNode) {
   if (!(typeof element === "object")) {
@@ -57,14 +58,14 @@ function validateElement(element: unknown, parent?: PerformerNode) {
 }
 
 export function createNode({
-  threadId,
+  // threadId,
   element,
   parent,
   prevSibling,
   child,
   serialized,
 }: {
-  threadId: string;
+  // threadId: string;
   element: PerformerElement;
   parent?: PerformerNode;
   prevSibling?: PerformerNode;
@@ -73,15 +74,16 @@ export function createNode({
 }): PerformerNode {
   validateElement(element, parent);
   // React compat Fragment type is Symbol(react.fragment)
-  const type = typeof element.type === "symbol" ? Fragment : element.type;
+  // const type = typeof element.type === "symbol" ? Fragment : element.type;
   return {
-    _typeName: typeof type === "string" ? type : type.name,
-    threadId,
+    // _typeName: typeof type === "string" ? type : type.name,
+    // threadId,
     uid: serialized ? serialized.uid : nanoid(),
-    type,
+    type: element.type,
     props: element.props,
     element,
-    hooks: serialized ? hydrateHooks(serialized.hooks) : {},
+    state: {},
+    // hooks: serialized ? hydrateHooks(serialized.hooks) : {},
     status: "PENDING",
     isHydrating: !!serialized,
     childRenderCount: 0,

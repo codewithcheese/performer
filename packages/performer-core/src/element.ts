@@ -2,8 +2,16 @@ import type { Component } from "./component.js";
 import { PerformerMessage } from "./message.js";
 
 export type PerformerElement = {
-  type: Component<any> | PerformerMessage["role"] | "raw";
+  id: string;
+  // ref: HTMLElement;
+  type: Component<any> /*| PerformerMessage["role"] | "raw"*/;
   props: Record<string, any>;
+
+  notify?: () => void;
+
+  parent?: PerformerElement;
+  child?: PerformerElement;
+  sibling?: PerformerElement;
 };
 
 export function Fragment(props: any) {

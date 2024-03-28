@@ -104,9 +104,9 @@ export function logOp(threadId: string, op: RenderOp) {
     if (op.payload.parent) {
       pairs.push(["parent", nodeToStr(op.payload.parent)]);
     }
-    if (typeof op.payload.element.props.children === "string") {
-      pairs.push(["content", op.payload.element.props.children]);
-    }
+    // if (typeof op.payload.element.props.children === "string") {
+    //   pairs.push(["content", op.payload.element.props.children]);
+    // }
   } else if (op.type === "RESUME") {
     pairs.push(["node", op.payload.node._typeName]);
     if (op.payload.node.parent) {

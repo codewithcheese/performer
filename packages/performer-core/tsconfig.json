@@ -15,13 +15,13 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": false,
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
 
     "jsx": "react-jsx",
-    "jsxImportSource": "@performer/core",
-    "paths": {
-      "@performer/core/jsx-runtime": ["./src/jsx/index.ts"]
-    }
+//    "jsxImportSource": "@performer/core",
+//    "paths": {
+//      "@performer/core/jsx-runtime": ["./src/jsx/index.ts"]
+//    }
   },
   "include": [
     "test",

@@ -10,12 +10,13 @@ import type { Performer } from "./performer.js";
 import {
   AssistantMessage,
   concatDelta,
+  isMessage,
   isMessageDelta,
   MessageDelta,
   PerformerMessage,
 } from "./message.js";
 import { isEqualWith } from "lodash-es";
-import { ComponentReturn } from "./component.js";
+// import { ComponentReturn } from "./component.js";
 import { effect } from "@preact/signals-core";
 import {
   logger,
@@ -28,11 +29,12 @@ import {
 import { createDeltaEvent, createMessageEvent } from "./event.js";
 import { Fragment } from "./jsx/index.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
+import { nanoid } from "nanoid";
 
 type CreateOp = {
   type: "CREATE";
   payload: {
-    threadId: string;
+    // threadId: string;
     element: PerformerElement;
     parent?: PerformerNode;
     prevSibling?: PerformerNode;
@@ -80,11 +82,14 @@ function noOps(ops: Record<string, RenderOp>) {
 }
 
 export async function render(performer: Performer) {
+  if (!performer.app) {
+    throw Error("Cannot render before app is assigned");
+  }
   logger.withTag("render").debug("start");
   try {
     const ops = evaluateRenderOps(
-      "root",
-      performer.app,
+      // "root",
+      performer.app!,
       performer.root,
       undefined,
       undefined,
@@ -99,9 +104,10 @@ export async function render(performer: Performer) {
           await performOp(performer, op);
           continue;
         case "AFTER_CHILDREN":
-          op.payload.node.hooks.afterChildren!();
+          // op.payload.node.hooks.afterChildren!();
           // ensure that render is queue at least once if afterChildren has no effect
-          performer.queueRender("after children effect");
+          // performer.queueRender("after children effect");
+          console.error("AFTER_CHILDREN not implemented");
       }
     }
     if (noOps(ops) && !performer.renderQueued) {
@@ -120,17 +126,18 @@ export async function render(performer: Performer) {
  *
  */
 export function evaluateRenderOps(
-  threadId: string,
+  // threadId: string,
   element: PerformerElement,
   node?: PerformerNode,
   parent?: PerformerNode,
   prevSibling?: PerformerNode,
 ): Record<string, RenderOp> {
+  // todo when does a node need to be re-created
   if (!node || !nodeMatchesElement(node, element)) {
     const op: CreateOp = {
       type: "CREATE",
       payload: {
-        threadId,
+        // threadId,
         element,
         parent: parent,
         prevSibling: prevSibling,
@@ -143,12 +150,12 @@ export function evaluateRenderOps(
       // re-evaluated on next renders
       freeNode(node, parent, false);
     }
-    return { [threadId]: op };
+    return { ["root"]: op };
   }
 
   if (node.status === "PENDING") {
     return {
-      [threadId]: {
+      ["root"]: {
         type: "RESUME",
         payload: { node },
       } satisfies ResumeOp,
@@ -156,22 +163,25 @@ export function evaluateRenderOps(
   }
 
   if (node.status === "LISTENING") {
-    return { [threadId]: { type: "LISTENING" } satisfies ListeningOp };
+    return { ["root"]: { type: "LISTENING" } satisfies ListeningOp };
   }
 
   if (node.status === "PAUSED") {
-    return { [threadId]: { type: "PAUSED" } satisfies PausedOp };
+    return { ["root"]: { type: "PAUSED" } satisfies PausedOp };
   }
   let ops: Record<string, RenderOp> = {};
   let index = 0;
-  let childThreadId = node.hooks.thread?.id ? node.hooks.thread.id : threadId;
+  // let childThreadId = node.hooks.thread?.id ? node.hooks.thread.id : threadId;
   let childNode: PerformerNode | undefined = node.child;
   let childPrevSibling: PerformerNode | undefined = undefined;
-  const childElements = node.childElements || [];
-  while (index < childElements.length) {
-    const childElement = childElements[index];
+  let childElement: PerformerElement | undefined = element.child;
+  while (childElement || childNode) {
+    if (!childElement) {
+      // todo handle orphans not return
+      return {};
+    }
     const childOps = evaluateRenderOps(
-      childThreadId,
+      // childThreadId,
       childElement,
       childNode,
       node,
@@ -187,7 +197,8 @@ export function evaluateRenderOps(
       node.childRenderCount += 1;
     }
     // return if op for current thread otherwise continue
-    if (childThreadId in childOps) {
+    // if (childThreadId in childOps) {
+    if (Object.keys(childOps).length) {
       return ops;
     }
     if (childPrevSibling) {
@@ -195,6 +206,7 @@ export function evaluateRenderOps(
     }
     childPrevSibling = childNode;
     childNode = childNode?.nextSibling;
+    childElement = childElement?.sibling;
 
     index += 1;
   }
@@ -204,12 +216,13 @@ export function evaluateRenderOps(
     freeNode(childNode, node, true);
   }
 
-  if (node.childRenderCount > 0 && node.hooks.afterChildren) {
-    ops[threadId] = {
-      type: "AFTER_CHILDREN",
-      payload: { node },
-    };
-  }
+  // todo rethink afterChildren for Repeat
+  // if (node.childRenderCount > 0 && node.hooks.afterChildren) {
+  //   ops[threadId] = {
+  //     type: "AFTER_CHILDREN",
+  //     payload: { node },
+  //   };
+  // }
   node.childRenderCount = 0;
 
   return ops;
@@ -222,10 +235,9 @@ export async function performOp(
 ): Promise<PerformerNode> {
   let node;
   if (op.type === "CREATE") {
-    const { threadId, element, parent, prevSibling, nextSibling, child } =
-      op.payload;
+    const { element, parent, prevSibling, nextSibling, child } = op.payload;
     node = createNode({
-      threadId,
+      // threadId,
       element,
       parent,
       prevSibling,
@@ -252,11 +264,12 @@ export async function performOp(
   } else {
     node = op.payload.node;
   }
-  if (node.type instanceof Function) {
-    await renderComponent(performer, node);
-  } else {
-    await renderIntrinsic(performer, node);
-  }
+  await renderComponent(performer, node);
+  // if (node.type instanceof Function) {
+  //   await renderComponent(performer, node);
+  // } else {
+  //   await renderIntrinsic(performer, node);
+  // }
   return node;
 }
 
@@ -267,28 +280,91 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     );
   }
   // call component and get view function
-  let view: unknown;
-  setRenderScope({
-    performer,
-    node,
-    nonce: 0,
-    abortController: performer.abortController,
-  });
+  // let view: unknown;
+  // setRenderScope({
+  //   performer,
+  //   node,
+  //   nonce: 0,
+  //   abortController: performer.abortController,
+  // });
   try {
-    try {
-      view = node.type(node.props);
-    } finally {
-      clearRenderScope();
+    // try {
+    let results = node.type(node.props);
+    if (results instanceof ReadableStream) {
+      node.state.stream = results;
+      node.status = "PAUSED";
+      const messagePromised = consumeDeltaStream(
+        performer,
+        node,
+        node.state.stream,
+      )
+        .then(async (message) => {
+          node.state.messages = [message];
+          if (node.props.onResolved) {
+            await node.props.onResolved(message);
+          }
+          node.status = "RESOLVED";
+          node.element.notify && node.element.notify();
+          performer.queueRender("stream resolved");
+        })
+        .catch((error) => performer.onError("root", error));
+
+      // process stream
+      if (node.isHydrating) {
+        await messagePromised;
+      }
+    } else if (results && typeof results === "object") {
+      if (!Array.isArray(results)) {
+        results = [results];
+      }
+      if (!results.every(isMessage)) {
+        throw Error(
+          `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(results)}.`,
+        );
+      }
+      node.state.messages = results;
+      node.status = "RESOLVED";
+      node.element.notify && node.element.notify();
+      performer.queueRender("resolved node");
+    } else {
+      node.status = "RESOLVED";
+      node.element.notify && node.element.notify();
+      performer.queueRender("resolved node");
     }
-    if (typeof view !== "function") {
-      const returnType = view instanceof Promise ? "Promise" : typeof view;
-      throw Error(
-        `Component "${nodeToStr(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
-          `To make async calls in your component use the \`useResource\` hook`,
-      );
-    }
-    node.status = "RESOLVED";
-    registerView(performer, node, view);
+
+    // if (!Array.isArray(results)) {
+    //   results = [results];
+    // }
+    // let previous: { id: string; type: "parent" | "sibling" } = {
+    //   id: node.element.id,
+    //   type: "parent",
+    // };
+    //
+    // if (results !== null) {
+    //   for (const result of results) {
+    //     const id = nanoid();
+    //     performer.insert({
+    //       id,
+    //       type: result.role,
+    //       props: result,
+    //       previous,
+    //     });
+    //     previous = { id, type: "sibling" };
+    //   }
+    // }
+    // } finally {
+    // clearRenderScope();
+    // }
+    // if (typeof view !== "function") {
+    //   const returnType = view instanceof Promise ? "Promise" : typeof view;
+    //   throw Error(
+    //     `Component "${nodeToStr(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
+    //       `To make async calls in your component use the \`useResource\` hook`,
+    //   );
+    // }
+    // todo what do components now return?
+
+    // registerView(performer, node, view);
   } catch (e) {
     if (e instanceof DeferResource) {
       node.status = "PAUSED";
@@ -298,7 +374,7 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
           node.status = "PENDING";
           performer.queueRender("deferred resolved");
         })
-        .catch((error) => performer.onError(node.threadId, error));
+        .catch((error) => performer.onError("root", error));
     } else if (e instanceof DeferInput) {
       node.status = "LISTENING";
       logPaused(node, "resource");
@@ -310,97 +386,97 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   }
 }
 
-async function renderIntrinsic(performer: Performer, node: PerformerNode) {
-  if (typeof node.type !== "string") {
-    throw new Error(
-      `Invalid node type: renderIntrinsic() expects 'node.type' to be a string`,
-    );
-  }
+// async function renderIntrinsic(performer: Performer, node: PerformerNode) {
+//   if (typeof node.type !== "string") {
+//     throw new Error(
+//       `Invalid node type: renderIntrinsic() expects 'node.type' to be a string`,
+//     );
+//   }
+//
+//   if (!isRawNode(node)) {
+//     node.status = "RESOLVED";
+//     logMessageResolved(node);
+//     if (!node.isHydrating) {
+//       dispatchMessageElement(performer, node);
+//       performer.queueRender("message resolved");
+//     }
+//     return;
+//   }
+//
+//   if (!node.props.stream && !node.props.message) {
+//     throw Error("`raw` element requires `stream` OR `message` prop");
+//   }
+//
+//   if (node.props.message != null) {
+//     node.status = "RESOLVED";
+//     logMessageResolved(node);
+//     if (!node.isHydrating) {
+//       dispatchMessageElement(performer, node);
+//       performer.queueRender("raw resolved");
+//     }
+//     return;
+//   }
+//
+//   if (node.props.stream != null) {
+//     node.status = "PAUSED";
+//     const messagePromised = consumeDeltaStream(
+//       performer,
+//       node,
+//       node.props.stream,
+//     )
+//       .then(async (message) => {
+//         node.hooks.message = message;
+//         if (node.props.onResolved) {
+//           await node.props.onResolved(message);
+//         }
+//         node.status = "RESOLVED";
+//         logMessageResolved(node);
+//         if (!node.isHydrating) {
+//           dispatchMessageElement(performer, node, message);
+//           performer.queueRender("raw stream resolved");
+//         }
+//       })
+//       .catch((error) => performer.onError(node.threadId, error));
+//
+//     // process stream
+//     if (node.isHydrating) {
+//       await messagePromised;
+//     }
+//   }
+// }
 
-  if (!isRawNode(node)) {
-    node.status = "RESOLVED";
-    logMessageResolved(node);
-    if (!node.isHydrating) {
-      dispatchMessageElement(performer, node);
-      performer.queueRender("message resolved");
-    }
-    return;
-  }
+// function registerView(
+//   performer: Performer,
+//   node: PerformerNode,
+//   view: Function,
+// ) {
+//   node.disposeView = effect(() => {
+//     const viewUpdate = view();
+//     node.childElements = normalizeChildren(viewUpdate);
+//     if (!node.isHydrating) {
+//       performer.queueRender("view updated");
+//     }
+//   });
+// }
 
-  if (!node.props.stream && !node.props.message) {
-    throw Error("`raw` element requires `stream` OR `message` prop");
-  }
-
-  if (node.props.message != null) {
-    node.status = "RESOLVED";
-    logMessageResolved(node);
-    if (!node.isHydrating) {
-      dispatchMessageElement(performer, node);
-      performer.queueRender("raw resolved");
-    }
-    return;
-  }
-
-  if (node.props.stream != null) {
-    node.status = "PAUSED";
-    const messagePromised = consumeDeltaStream(
-      performer,
-      node,
-      node.props.stream,
-    )
-      .then(async (message) => {
-        node.hooks.message = message;
-        if (node.props.onResolved) {
-          await node.props.onResolved(message);
-        }
-        node.status = "RESOLVED";
-        logMessageResolved(node);
-        if (!node.isHydrating) {
-          dispatchMessageElement(performer, node, message);
-          performer.queueRender("raw stream resolved");
-        }
-      })
-      .catch((error) => performer.onError(node.threadId, error));
-
-    // process stream
-    if (node.isHydrating) {
-      await messagePromised;
-    }
-  }
-}
-
-function registerView(
-  performer: Performer,
-  node: PerformerNode,
-  view: Function,
-) {
-  node.disposeView = effect(() => {
-    const viewUpdate = view();
-    node.childElements = normalizeChildren(viewUpdate);
-    if (!node.isHydrating) {
-      performer.queueRender("view updated");
-    }
-  });
-}
-
-function dispatchMessageElement(
-  performer: Performer,
-  node: PerformerNode,
-  message?: PerformerMessage,
-) {
-  if (!message) {
-    message = nodeToMessage(node);
-  }
-  performer.dispatchEvent(
-    createMessageEvent(node.threadId, {
-      uid: node.uid,
-      message: structuredClone(message),
-    }),
-  );
-  if (node.props.onMessage && node.props.onMessage instanceof Function) {
-    node.props.onMessage(message);
-  }
-}
+// function dispatchMessageElement(
+//   performer: Performer,
+//   node: PerformerNode,
+//   message?: PerformerMessage,
+// ) {
+//   if (!message) {
+//     message = nodeToMessage(node);
+//   }
+//   performer.dispatchEvent(
+//     createMessageEvent(node.threadId, {
+//       uid: node.uid,
+//       message: structuredClone(message),
+//     }),
+//   );
+//   if (node.props.onMessage && node.props.onMessage instanceof Function) {
+//     node.props.onMessage(message);
+//   }
+// }
 
 async function consumeDeltaStream(
   performer: Performer,
@@ -416,7 +492,7 @@ async function consumeDeltaStream(
     }
     performer.dispatchEvent(
       // clone chunk so event consumers mutations don't modify this chunk
-      createDeltaEvent(node.threadId, {
+      createDeltaEvent("root", {
         uid: node.uid,
         delta: structuredClone(chunk),
       }),
@@ -448,14 +524,14 @@ function freeNode(
     logger.debug(
       toLogFmt([
         ["free", "node"],
-        ["threadId", node.threadId],
+        ["threadId", "root"],
         ["node", nodeToStr(node)],
       ]),
     );
     // dispose view so that its no longer reactive
-    if (node.disposeView) {
-      node.disposeView();
-    }
+    // if (node.disposeView) {
+    //   node.disposeView();
+    // }
     if (!freeRemaining) {
       return;
     }
@@ -504,17 +580,20 @@ export function resolveMessages(
     // log.debug(toLogFmt(pairs));
 
     // clear all messages if `to` belongs to cursor thread, and thread is isolated
-    if (
-      to &&
-      cursor.hooks.thread &&
-      to.threadId === cursor.hooks.thread.id &&
-      cursor.hooks.thread.isolated
-    ) {
-      messages = [];
-    }
+    // if (
+    //   to &&
+    //   cursor.hooks.thread &&
+    //   to.threadId === cursor.hooks.thread.id &&
+    //   cursor.hooks.thread.isolated
+    // ) {
+    //   messages = [];
+    // }
 
-    if (typeof cursor.type === "string") {
-      messages.push(nodeToMessage(cursor));
+    // if (typeof cursor.type === "string") {
+    //   messages.push(nodeToMessage(cursor));
+    // }
+    if (cursor.state.messages) {
+      messages.push(...cursor.state.messages);
     }
 
     const exit = to && cursor === to;
@@ -526,15 +605,17 @@ export function resolveMessages(
     // e.g. root/0 is parent of root/0/1, root/0 is not a parent of root/2/3
     // to.threadId.includes(cursor.child.threadId))
     // checks if child belongs to `to` thread or its parent
-    if (cursor.child && (!to || to.threadId.includes(cursor.child.threadId))) {
+    if (
+      cursor.child /* && (!to || to.threadId.includes(cursor.child.threadId))*/
+    ) {
       cursor = cursor.child;
       continue;
     }
 
     while (cursor) {
       if (
-        cursor.nextSibling &&
-        (!to || to.threadId.includes(cursor.nextSibling.threadId))
+        cursor.nextSibling // &&
+        // (!to || to.threadId.includes(cursor.nextSibling.threadId))
       ) {
         cursor = cursor.nextSibling;
         break;
@@ -546,47 +627,47 @@ export function resolveMessages(
   return messages;
 }
 
-export function nodeToMessage(node: PerformerNode): PerformerMessage {
-  if (typeof node.type !== "string") {
-    throw Error(
-      "Cannot convert component to messages, must use intrinsic elements to represent messages",
-    );
-  }
-  if (node.type === "raw") {
-    if (!node.hooks.message && !node.props.message) {
-      throw Error("`message` element not resolved.");
-    }
-    return node.hooks.message || node.props.message;
-  }
-  // fixme refactor without branching
-  else if (node.type === "tool") {
-    return {
-      tool_call_id: node.props.tool_call_id,
-      role: node.type,
-      content: childrenToContent(node.props.children) || node.props.content,
-    };
-  } else if (node.type === "assistant") {
-    return {
-      role: node.type,
-      content: childrenToContent(node.props.children) || node.props.content,
-      ...(node.props.tool_calls ? { tool_calls: node.props.tool_calls } : {}),
-      ...(node.props.function_call
-        ? { function_call: node.props.function_call }
-        : {}),
-    };
-  } else if (node.type === "system") {
-    return {
-      role: node.type,
-      content: childrenToContent(node.props.children) || node.props.content,
-    };
-  } else if (node.type === "user") {
-    return {
-      role: node.type,
-      content: childrenToContent(node.props.children) || node.props.content,
-    };
-  }
-  throw Error(`Unexpected message element ${node.type}`);
-}
+// export function nodeToMessage(node: PerformerNode): PerformerMessage {
+//   if (typeof node.type !== "string") {
+//     throw Error(
+//       "Cannot convert component to messages, must use intrinsic elements to represent messages",
+//     );
+//   }
+//   if (node.type === "raw") {
+//     if (!node.hooks.message && !node.props.message) {
+//       throw Error("`message` element not resolved.");
+//     }
+//     return node.hooks.message || node.props.message;
+//   }
+//   // fixme refactor without branching
+//   else if (node.type === "tool") {
+//     return {
+//       tool_call_id: node.props.tool_call_id,
+//       role: node.type,
+//       content: childrenToContent(node.props.children) || node.props.content,
+//     };
+//   } else if (node.type === "assistant") {
+//     return {
+//       role: node.type,
+//       content: childrenToContent(node.props.children) || node.props.content,
+//       ...(node.props.tool_calls ? { tool_calls: node.props.tool_calls } : {}),
+//       ...(node.props.function_call
+//         ? { function_call: node.props.function_call }
+//         : {}),
+//     };
+//   } else if (node.type === "system") {
+//     return {
+//       role: node.type,
+//       content: childrenToContent(node.props.children) || node.props.content,
+//     };
+//   } else if (node.type === "user") {
+//     return {
+//       role: node.type,
+//       content: childrenToContent(node.props.children) || node.props.content,
+//     };
+//   }
+//   throw Error(`Unexpected message element ${node.type}`);
+// }
 
 function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
   // todo create test cases for when nodes should be recreated
@@ -611,29 +692,29 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
   // React compat Fragment type is Symbol(react.fragment)
   return (
     (node.element.type === element.type ||
-      (typeof element.type === "symbol" && node.type === Fragment)) &&
+      typeof element.type === "symbol") /*&& node.type === Fragment*/ &&
     isEqualWith(node.element.props, element.props, functionComparison)
   );
 }
 
-function childrenToContent(children: unknown): string {
-  if (!children) {
-    return "";
-  } else if (Array.isArray(children)) {
-    return children.flat(99).map(String).join("");
-  } else {
-    return String(children);
-  }
-}
-
-function normalizeChildren(
-  children: ReturnType<ComponentReturn>,
-): PerformerElement[] {
-  if (!children || typeof children === "string") {
-    return [];
-  } else if (Array.isArray(children)) {
-    return children.flat(10).filter(Boolean);
-  } else {
-    return [children];
-  }
-}
+// function childrenToContent(children: unknown): string {
+//   if (!children) {
+//     return "";
+//   } else if (Array.isArray(children)) {
+//     return children.flat(99).map(String).join("");
+//   } else {
+//     return String(children);
+//   }
+// }
+//
+// function normalizeChildren(
+//   children: ReturnType<ComponentReturn>,
+// ): PerformerElement[] {
+//   if (!children || typeof children === "string") {
+//     return [];
+//   } else if (Array.isArray(children)) {
+//     return children.flat(10).filter(Boolean);
+//   } else {
+//     return [children];
+//   }
+// }

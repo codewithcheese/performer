@@ -1,5 +1,5 @@
 import type { PerformerElement } from "./element.js";
-import type { PerformerNode } from "./node.js";
+import { PerformerNode } from "./node.js";
 import { render, resolveMessages } from "./render.js";
 import {
   createErrorEvent,
@@ -12,6 +12,7 @@ import { logEvent, logger, nodeToStr, toLogFmt } from "./util/log.js";
 import { getEnv } from "./util/env.js";
 import { LogLevels, type LogType } from "consola";
 import Emittery from "emittery";
+import type { Component } from "./component.js";
 
 export type PerformerOptions = {
   throwOnError?: boolean;
@@ -23,11 +24,13 @@ export type PerformerState = "pending" | "listening" | "rendering" | "finished";
 export class Performer {
   #uid: string;
 
-  app: PerformerElement;
+  app: PerformerElement = { id: "root", type: () => {}, props: {} };
   root?: PerformerNode;
   options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
   state: PerformerState = "pending";
+
+  elementMap: Map<string, PerformerElement> = new Map();
 
   // todo add deadline
   inputQueue: PerformerMessage[] = [];
@@ -42,9 +45,9 @@ export class Performer {
 
   emitter = new Emittery<PerformerEventMap>();
 
-  constructor(app: PerformerElement, options: PerformerOptions = {}) {
+  constructor(options: PerformerOptions = {}) {
     this.#uid = crypto.randomUUID();
-    this.app = app;
+    // this.app = app;
     this.options = options;
     const logLevel: LogType =
       (getEnv("LOGLEVEL") as LogType) ||
@@ -75,6 +78,61 @@ export class Performer {
         this.start();
       }
     });
+  }
+
+  insert({
+    id,
+    type,
+    props = {},
+    previous,
+    notify,
+  }: {
+    id: string;
+    props?: Record<string, any>;
+    type: Component<any>;
+    previous: { id: string; type: "parent" | "sibling" } | null;
+    notify?: () => void;
+  }) {
+    const element: PerformerElement = {
+      id,
+      type,
+      props,
+      notify,
+    };
+
+    if (!previous) {
+      // no previous assign as first child of root
+      const parent = this.app;
+      element.parent = this.app;
+      parent.child = element;
+    } else if (previous.type === "parent") {
+      const parent = this.elementMap.get(previous.id);
+      if (!parent) {
+        throw Error(
+          "Failed to insert Performer element. Parent not registered",
+        );
+      }
+      element.parent = parent;
+      parent.child = element;
+    } else {
+      const sibling = this.elementMap.get(previous.id);
+      if (!sibling) {
+        throw Error(
+          "Failed to insert Performer element. Sibling not registered",
+        );
+      }
+      sibling.sibling = element;
+    }
+    // register
+    this.elementMap.set(id, element);
+    // render
+    this.queueRender("new element");
+    return notify;
+  }
+
+  remove(id: string) {
+    // remove from node map
+    // unlink
   }
 
   abort() {
@@ -114,7 +172,7 @@ export class Performer {
       ]),
     );
     if (!this.renderInProgress) {
-      this.start();
+      requestIdleCallback(() => this.start());
     } else {
       this.renderQueued = true;
     }
@@ -124,6 +182,7 @@ export class Performer {
    * Inputs
    */
 
+  // todo how to set input?
   setInputNode(node: PerformerNode) {
     logger.debug(
       toLogFmt([
