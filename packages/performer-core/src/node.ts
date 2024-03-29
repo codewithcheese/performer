@@ -6,21 +6,25 @@ import { hydrateHooks } from "./hydration.js";
 import { nanoid } from "nanoid";
 import { nodeToStr } from "./util/log.js";
 import { Fragment } from "./jsx/index.js";
+import { Action } from "./action.js";
 
 export type PerformerNode = {
   // threadId: string;
   uid: string;
-  type: Component<any> /* | PerformerMessage["role"] | "raw";*/;
+  action: Action /* | PerformerMessage["role"] | "raw";*/;
   // _typeName: string;
   props: Record<string, any>;
-  state: { stream?: ReadableStream; messages?: PerformerMessage[] };
+  state: {
+    stream?: ReadableStream;
+    messages?: PerformerMessage[];
+    childRenderCount: number;
+  };
   // hooks: Record<string, unknown> & HookRecord;
   element: PerformerElement;
   // childElements?: PerformerElement[] | undefined;
-  status: "PENDING" | "PAUSED" | "RESOLVED" | "LISTENING";
+  status: "PENDING" | "PAUSED" | "FINALISING" | "RESOLVED" | "LISTENING";
   // disposeView?: () => void | undefined;
   isHydrating: boolean;
-  childRenderCount: number;
 
   // linked tree
   parent: PerformerNode | undefined;
@@ -49,13 +53,13 @@ export type SerializedNode = {
 //   };
 // }
 
-function validateElement(element: unknown, parent?: PerformerNode) {
-  if (!(typeof element === "object")) {
-    throw Error(
-      `Invalid Child Type - The ${parent && nodeToStr(parent)} component has child of type "${typeof element}" with value: "${element}".\nComponent children must be other components or elements, not primitive values.\nOnly message elements (system, user, assistant) elements support non-object children values.`,
-    );
-  }
-}
+// function validateElement(element: unknown, parent?: PerformerNode) {
+//   if (!(typeof element === "object")) {
+//     throw Error(
+//       `Invalid Child Type - The ${parent && nodeToStr(parent)} component has child of type "${typeof element}" with value: "${element}".\nComponent children must be other components or elements, not primitive values.\nOnly message elements (system, user, assistant) elements support non-object children values.`,
+//     );
+//   }
+// }
 
 export function createNode({
   // threadId,
@@ -72,21 +76,22 @@ export function createNode({
   child?: PerformerNode;
   serialized?: SerializedNode;
 }): PerformerNode {
-  validateElement(element, parent);
+  // validateElement(element, parent);
   // React compat Fragment type is Symbol(react.fragment)
   // const type = typeof element.type === "symbol" ? Fragment : element.type;
   return {
     // _typeName: typeof type === "string" ? type : type.name,
     // threadId,
     uid: serialized ? serialized.uid : nanoid(),
-    type: element.type,
+    action: element.action,
     props: element.props,
     element,
-    state: {},
+    state: {
+      childRenderCount: 0,
+    },
     // hooks: serialized ? hydrateHooks(serialized.hooks) : {},
     status: "PENDING",
     isHydrating: !!serialized,
-    childRenderCount: 0,
     parent,
     child,
     prevSibling,
@@ -94,16 +99,16 @@ export function createNode({
   };
 }
 
-export function getNearestParent(
-  node: PerformerNode,
-  predicate: (parent: PerformerNode) => boolean,
-) {
-  let parent: PerformerNode | undefined = node.parent;
-  while (parent) {
-    if (predicate(parent)) {
-      return parent;
-    }
-    parent = parent.parent;
-  }
-  return parent;
-}
+// export function getNearestParent(
+//   node: PerformerNode,
+//   predicate: (parent: PerformerNode) => boolean,
+// ) {
+//   let parent: PerformerNode | undefined = node.parent;
+//   while (parent) {
+//     if (predicate(parent)) {
+//       return parent;
+//     }
+//     parent = parent.parent;
+//   }
+//   return parent;
+// }

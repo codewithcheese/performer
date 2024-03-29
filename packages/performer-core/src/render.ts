@@ -1,11 +1,5 @@
 import { type PerformerElement } from "./element.js";
-import {
-  createNode,
-  isRawNode,
-  type PerformerNode,
-  SerializedNode,
-} from "./node.js";
-import { clearRenderScope, setRenderScope } from "./hooks/use-render-scope.js";
+import { createNode, type PerformerNode, SerializedNode } from "./node.js";
 import type { Performer } from "./performer.js";
 import {
   AssistantMessage,
@@ -16,20 +10,15 @@ import {
   PerformerMessage,
 } from "./message.js";
 import { isEqualWith } from "lodash-es";
-// import { ComponentReturn } from "./component.js";
-import { effect } from "@preact/signals-core";
 import {
-  logger,
-  logMessageResolved,
+  getLogger,
   logOp,
   logPaused,
   nodeToStr,
   toLogFmt,
 } from "./util/log.js";
-import { createDeltaEvent, createMessageEvent } from "./event.js";
-import { Fragment } from "./jsx/index.js";
+import { createDeltaEvent } from "./event.js";
 import { DeferInput, DeferResource } from "./util/defer.js";
-import { nanoid } from "nanoid";
 
 type CreateOp = {
   type: "CREATE";
@@ -52,11 +41,17 @@ type ResumeOp = {
 
 type PausedOp = {
   type: "PAUSED";
+  payload: {
+    node: PerformerNode;
+  };
 };
 
 // like paused by explicitly marked as requiring external input to continue
 type ListeningOp = {
   type: "LISTENING";
+  payload: {
+    node: PerformerNode;
+  };
 };
 
 type AfterChildrenOp = {
@@ -81,11 +76,11 @@ function noOps(ops: Record<string, RenderOp>) {
   return Object.keys(ops).length === 0;
 }
 
-export async function render(performer: Performer) {
+export async function render(performer: Performer, reason: string) {
   if (!performer.app) {
     throw Error("Cannot render before app is assigned");
   }
-  logger.withTag("render").debug("start");
+  getLogger("render").debug(`start reason=${reason}`);
   try {
     const ops = evaluateRenderOps(
       // "root",
@@ -104,10 +99,10 @@ export async function render(performer: Performer) {
           await performOp(performer, op);
           continue;
         case "AFTER_CHILDREN":
-          // op.payload.node.hooks.afterChildren!();
+          op.payload.node.element.props.afterChildren!();
+          op.payload.node.status = "FINALISING";
           // ensure that render is queue at least once if afterChildren has no effect
-          // performer.queueRender("after children effect");
-          console.error("AFTER_CHILDREN not implemented");
+          performer.queueRender("after children effect");
       }
     }
     if (noOps(ops) && !performer.renderQueued) {
@@ -118,7 +113,7 @@ export async function render(performer: Performer) {
   } catch (error) {
     performer.onError("root", error);
   } finally {
-    logger.withTag("render").debug("finally");
+    getLogger("render").debug("finally");
   }
 }
 
@@ -163,12 +158,23 @@ export function evaluateRenderOps(
   }
 
   if (node.status === "LISTENING") {
-    return { ["root"]: { type: "LISTENING" } satisfies ListeningOp };
+    return {
+      ["root"]: { type: "LISTENING", payload: { node } } satisfies ListeningOp,
+    };
   }
 
   if (node.status === "PAUSED") {
-    return { ["root"]: { type: "PAUSED" } satisfies PausedOp };
+    return {
+      ["root"]: { type: "PAUSED", payload: { node } } satisfies PausedOp,
+    };
   }
+
+  if (node.status === "FINALISING") {
+    return {
+      ["root"]: { type: "PAUSED", payload: { node } } satisfies PausedOp,
+    };
+  }
+
   let ops: Record<string, RenderOp> = {};
   let index = 0;
   // let childThreadId = node.hooks.thread?.id ? node.hooks.thread.id : threadId;
@@ -194,7 +200,7 @@ export function evaluateRenderOps(
         (op) => op.type === "CREATE" || op.type === "RESUME",
       )
     ) {
-      node.childRenderCount += 1;
+      node.state.childRenderCount += 1;
     }
     // return if op for current thread otherwise continue
     // if (childThreadId in childOps) {
@@ -217,13 +223,13 @@ export function evaluateRenderOps(
   }
 
   // todo rethink afterChildren for Repeat
-  // if (node.childRenderCount > 0 && node.hooks.afterChildren) {
-  //   ops[threadId] = {
-  //     type: "AFTER_CHILDREN",
-  //     payload: { node },
-  //   };
-  // }
-  node.childRenderCount = 0;
+  if (node.state.childRenderCount > 0 && node.element.props.afterChildren) {
+    ops["root"] = {
+      type: "AFTER_CHILDREN",
+      payload: { node },
+    };
+  }
+  node.state.childRenderCount = 0;
 
   return ops;
 }
@@ -261,6 +267,7 @@ export async function performOp(
     if (child) {
       child.parent = node;
     }
+    element.node = node;
   } else {
     node = op.payload.node;
   }
@@ -274,11 +281,12 @@ export async function performOp(
 }
 
 async function renderComponent(performer: Performer, node: PerformerNode) {
-  if (!(node.type instanceof Function)) {
+  if (!(node.action instanceof Function)) {
     throw new Error(
-      `Invalid node type: renderComponent() expects 'node.type' to be a function`,
+      `Invalid node type: renderComponent() expects 'node.action' to be a function`,
     );
   }
+  const logger = getLogger("render:renderComponent");
   // call component and get view function
   // let view: unknown;
   // setRenderScope({
@@ -289,7 +297,11 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   // });
   try {
     // try {
-    let results = node.type(node.props);
+    const messages = resolveMessages(performer.root, node);
+    let results = await node.action({
+      messages,
+      signal: performer.abortController.signal,
+    });
     if (results instanceof ReadableStream) {
       node.state.stream = results;
       node.status = "PAUSED";
@@ -303,7 +315,10 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
           if (node.props.onResolved) {
             await node.props.onResolved(message);
           }
-          node.status = "RESOLVED";
+          node.status = "FINALISING";
+          logger.debug(
+            `${node.element.id} stream resolved. status=${node.status}`,
+          );
           node.element.notify && node.element.notify();
           performer.queueRender("stream resolved");
         })
@@ -323,13 +338,22 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
         );
       }
       node.state.messages = results;
-      node.status = "RESOLVED";
+      node.status = "FINALISING";
+      logger.debug(
+        `${node.element.id} messages resolved. status=${node.status}`,
+      );
       node.element.notify && node.element.notify();
-      performer.queueRender("resolved node");
     } else {
-      node.status = "RESOLVED";
-      node.element.notify && node.element.notify();
-      performer.queueRender("resolved node");
+      if (!node.element.notify) {
+        node.status = "RESOLVED";
+        logger.debug(
+          `${node.element.id} resolved without notify. status=${node.status}`,
+        );
+      } else {
+        node.status = "FINALISING";
+        logger.debug(`${node.element.id} resolved. status=${node.status}`);
+        node.element.notify();
+      }
     }
 
     // if (!Array.isArray(results)) {
@@ -521,7 +545,7 @@ function freeNode(
   freeRemaining: boolean = false,
 ) {
   try {
-    logger.debug(
+    getLogger("render:freeNode").debug(
       toLogFmt([
         ["free", "node"],
         ["threadId", "root"],
@@ -557,6 +581,7 @@ function freeNode(
     node.prevSibling = undefined;
     node.child = undefined;
     node.nextSibling = undefined;
+    node.element.node = undefined;
   }
 }
 
@@ -691,8 +716,8 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
   };
   // React compat Fragment type is Symbol(react.fragment)
   return (
-    (node.element.type === element.type ||
-      typeof element.type === "symbol") /*&& node.type === Fragment*/ &&
+    (node.element.action === element.action ||
+      typeof element.action === "symbol") /*&& node.type === Fragment*/ &&
     isEqualWith(node.element.props, element.props, functionComparison)
   );
 }

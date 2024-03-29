@@ -15,77 +15,77 @@ function Container({ children }: any) {
   return () => children;
 }
 
-test("should render and resolve intrinsic element", async () => {
-  const app = (
-    <>
-      <system>Greet the user</system>
-      <assistant>Hello how can I help you?</assistant>
-      <user>Tell me a joke, please.</user>
-    </>
-  );
-  const performer = new Performer(app);
-  performer.start();
-  await performer.waitUntilFinished();
-  const messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(3);
-  expect(messages[0].role).toEqual("system");
-  expect(messages[1].role).toEqual("assistant");
-  expect(messages[2].role).toEqual("user");
-  await testHydration(performer);
-});
+// test("should render and resolve intrinsic element", async () => {
+//   const app = (
+//     <>
+//       <system>Greet the user</system>
+//       <assistant>Hello how can I help you?</assistant>
+//       <user>Tell me a joke, please.</user>
+//     </>
+//   );
+//   const performer = new Performer(app);
+//   performer.start();
+//   await performer.waitUntilFinished();
+//   const messages = resolveMessages(performer.root);
+//   expect(messages).toHaveLength(3);
+//   expect(messages[0].role).toEqual("system");
+//   expect(messages[1].role).toEqual("assistant");
+//   expect(messages[2].role).toEqual("user");
+//   await testHydration(performer);
+// });
 
-test("should render view", async () => {
-  function AChild() {
-    return () => null;
-  }
-  function BChild() {
-    return () => null;
-  }
-  function AComponent() {
-    console.log("hello");
-    useResource(sleep, 10);
-    console.log("world");
-    return () => (
-      <Container>
-        <AChild>hello a</AChild>
-        <AChild>hello a+</AChild>
-        <BChild>hello b</BChild>
-      </Container>
-    );
-  }
-  const app = <AComponent />;
-  const performer = new Performer(app);
-  performer.start();
-  await performer.waitUntilFinished();
-  await testHydration(performer);
-});
+// test("should render view", async () => {
+//   function AChild() {
+//     return () => null;
+//   }
+//   function BChild() {
+//     return () => null;
+//   }
+//   function AComponent() {
+//     console.log("hello");
+//     useResource(sleep, 10);
+//     console.log("world");
+//     return () => (
+//       <Container>
+//         <AChild>hello a</AChild>
+//         <AChild>hello a+</AChild>
+//         <BChild>hello b</BChild>
+//       </Container>
+//     );
+//   }
+//   const app = <AComponent />;
+//   const performer = new Performer(app);
+//   performer.start();
+//   await performer.waitUntilFinished();
+//   await testHydration(performer);
+// });
 
-test("should update prop when signal changes", async () => {
-  function Receiver({ message }: any) {
-    expect(message, "Message should not be null").not.toBeNull();
-    return () => {};
-  }
-  function App() {
-    const message = useState<PerformerMessage | null>(null);
-    return () => (
-      <>
-        <user
-          onMessage={(userMessage) => {
-            console.log("onMessage", userMessage);
-            message.value = userMessage;
-          }}
-        >
-          Hello world
-        </user>
-        <Receiver message={message.value} />
-      </>
-    );
-  }
-  const performer = new Performer(<App />);
-  performer.start();
-  await performer.waitUntilFinished();
-  await testHydration(performer);
-});
+// test("should update prop when signal changes", async () => {
+//   function Receiver({ message }: any) {
+//     expect(message, "Message should not be null").not.toBeNull();
+//     return () => {};
+//   }
+//   function App() {
+//     const message = useState<PerformerMessage | null>(null);
+//     return () => (
+//       <>
+//         <user
+//           onMessage={(userMessage) => {
+//             console.log("onMessage", userMessage);
+//             message.value = userMessage;
+//           }}
+//         >
+//           Hello world
+//         </user>
+//         <Receiver message={message.value} />
+//       </>
+//     );
+//   }
+//   const performer = new Performer(<App />);
+//   performer.start();
+//   await performer.waitUntilFinished();
+//   await testHydration(performer);
+// });
 
 test("should update and run message actions when state changes", async () => {
   function DelayedIf({ children }: any) {

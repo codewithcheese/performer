@@ -90,7 +90,7 @@ export function jsxProd(
   }
 
   return {
-    type,
+    action: type,
     // @ts-expect-error for debugging
     _typeName: type?.name,
     props,

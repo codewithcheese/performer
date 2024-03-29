@@ -34,7 +34,7 @@ test("should retain state across async contexts", async () => {
     type: "value",
     value: 1337,
   });
-  expect(performer.root?.child?.child?.type).toEqual("system");
+  expect(performer.root?.child?.child?.action).toEqual("system");
   expect(performer.root?.child?.child?.props?.children).toEqual("42");
 });
 
@@ -61,7 +61,7 @@ test("should write stream chunks to hook state", async () => {
   const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilFinished();
-  expect(performer.root?.child?.type).toEqual("raw");
+  expect(performer.root?.child?.action).toEqual("raw");
   expect(performer.root?.hooks["resource-0"]).toEqual({
     type: "stream",
     chunks: [userMessage],

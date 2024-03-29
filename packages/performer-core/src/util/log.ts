@@ -1,48 +1,48 @@
 import {
   isAssistantMessage,
-  nodeToMessage,
+  // nodeToMessage,
   PerformerEvent,
   PerformerNode,
   RenderOp,
 } from "../index.js";
-import { createConsola } from "consola";
+import { createConsola, LogLevels, LogType } from "consola";
 import { isImageContent, isTextContent } from "../message.js";
 
 export const logger = createConsola({});
 
-export function logMessageResolved(node: PerformerNode) {
-  const message = nodeToMessage(node);
-  const pairs: [string, any][] = [];
-  pairs.push(["message", "resolved"]);
-  pairs.push(["role", message.role]);
-  if (typeof message.content === "string") {
-    pairs.push(["content", message.content]);
-  } else {
-    if (typeof message.content === "string") {
-      pairs.push(["content", message.content]);
-    } else if (message.content) {
-      for (const content of message.content) {
-        if (isTextContent(content)) {
-          pairs.push(["text", content.text]);
-        } else if (isImageContent(content)) {
-          pairs.push(["image_url", content.image_url.url]);
-        }
-      }
-    }
-  }
-  if (isAssistantMessage(message) && message.tool_calls) {
-    for (const toolCall of message.tool_calls) {
-      pairs.push(["tool_call.name", toolCall.function.name]);
-      pairs.push(["tool_call.arguments", toolCall.function.arguments]);
-    }
-  }
-  if (isAssistantMessage(message) && message.function_call) {
-    pairs.push(["function_call.name", message.function_call.name]);
-    pairs.push(["function_call.arguments", message.function_call.arguments]);
-  }
-  pairs.push(["node", nodeToStr(node)]);
-  logger.info(toLogFmt(pairs));
-}
+// export function logMessageResolved(node: PerformerNode) {
+//   const message = nodeToMessage(node);
+//   const pairs: [string, any][] = [];
+//   pairs.push(["message", "resolved"]);
+//   pairs.push(["role", message.role]);
+//   if (typeof message.content === "string") {
+//     pairs.push(["content", message.content]);
+//   } else {
+//     if (typeof message.content === "string") {
+//       pairs.push(["content", message.content]);
+//     } else if (message.content) {
+//       for (const content of message.content) {
+//         if (isTextContent(content)) {
+//           pairs.push(["text", content.text]);
+//         } else if (isImageContent(content)) {
+//           pairs.push(["image_url", content.image_url.url]);
+//         }
+//       }
+//     }
+//   }
+//   if (isAssistantMessage(message) && message.tool_calls) {
+//     for (const toolCall of message.tool_calls) {
+//       pairs.push(["tool_call.name", toolCall.function.name]);
+//       pairs.push(["tool_call.arguments", toolCall.function.arguments]);
+//     }
+//   }
+//   if (isAssistantMessage(message) && message.function_call) {
+//     pairs.push(["function_call.name", message.function_call.name]);
+//     pairs.push(["function_call.arguments", message.function_call.arguments]);
+//   }
+//   pairs.push(["node", nodeToStr(node)]);
+//   logger.info(toLogFmt(pairs));
+// }
 
 export function logEvent(event: PerformerEvent) {
   const pairs: [string, any][] = [["event", event.type]];
@@ -95,12 +95,7 @@ export function logEvent(event: PerformerEvent) {
 export function logOp(threadId: string, op: RenderOp) {
   const pairs: [string, any][] = [["op", op.type]];
   if (op.type === "CREATE") {
-    pairs.push([
-      "element",
-      op.payload.element.type instanceof Function
-        ? op.payload.element.type.name
-        : op.payload.element.type,
-    ]);
+    pairs.push(["element", op.payload.element.id]);
     if (op.payload.parent) {
       pairs.push(["parent", nodeToStr(op.payload.parent)]);
     }
@@ -108,14 +103,17 @@ export function logOp(threadId: string, op: RenderOp) {
     //   pairs.push(["content", op.payload.element.props.children]);
     // }
   } else if (op.type === "RESUME") {
-    pairs.push(["node", op.payload.node._typeName]);
+    pairs.push(
+      ["node", op.payload.node.element.id],
+      ["status", op.payload.node.status],
+    );
     if (op.payload.node.parent) {
       pairs.push(["parent", nodeToStr(op.payload.node.parent)]);
     }
   }
 
-  pairs.push(["threadId", threadId]);
   if (op.type === "PAUSED") {
+    pairs.push(["id", op.payload.node.element.id]);
     logger.debug(toLogFmt(pairs));
   } else {
     logger.info(toLogFmt(pairs));
@@ -129,7 +127,7 @@ export function nodeToStr(node: PerformerNode) {
 function getHierarchy(node: PerformerNode) {
   const names: string[] = [];
   if (node.parent) names.push(...getHierarchy(node.parent));
-  names.push(typeof node.type === "string" ? node.type : node.type.name);
+  names.push(typeof node.action === "string" ? node.action : node.action.name);
   return names;
 }
 
@@ -154,7 +152,15 @@ export function logPaused(node: PerformerNode, pending: string) {
       ["node", "paused"],
       ["pending", pending],
       ["node", nodeToStr(node)],
-      ["threadId", node.threadId],
+      // ["threadId", node.threadId],
     ]),
   );
+}
+
+export function getLogger(tag: string) {
+  return logger.withTag(tag);
+}
+
+export function setLogLevel(level: LogType) {
+  logger.level = LogLevels[level];
 }

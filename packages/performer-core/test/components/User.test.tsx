@@ -22,8 +22,8 @@ test("should accept user input", async () => {
   );
   performer.input(userMessage);
   await performer.waitUntilFinished();
-  assert(performer.root?.type instanceof Function);
-  expect(performer.root?.type.name).toEqual("User");
+  assert(performer.root?.action instanceof Function);
+  expect(performer.root?.action.name).toEqual("User");
   const messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1);
   expect(messages[0].role).toEqual("user");

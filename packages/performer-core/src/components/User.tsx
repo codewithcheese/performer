@@ -1,10 +1,11 @@
-import type { Component } from "../component.js";
-import { useInput } from "../hooks/index.js";
-import { messagesToElements, PerformerMessage } from "../message.js";
+import { ReactNode } from "react";
+import { useGenerative } from "../hooks/use-generative.js";
 
-export const User: Component<{
-  onMessage?: (message: PerformerMessage) => void;
-}> = function ({ onMessage = () => {} }) {
-  const messages = useInput();
-  return () => messagesToElements(messages, onMessage);
-};
+export function User({ children }: { children: ReactNode }) {
+  const { id, ref } = useGenerative(() => {});
+  return (
+    <div data-performer-id={id} ref={ref}>
+      {children}
+    </div>
+  );
+}

@@ -13,7 +13,7 @@ test("should accept input before waitUntilSettled()", async () => {
     content: [{ type: "text", text: "Hold me close" }],
   });
   await performer.waitUntilFinished();
-  expect(performer.root?.child?.type).toEqual("raw");
+  expect(performer.root?.child?.action).toEqual("raw");
 });
 
 test("should accept input after waitUntilSettled", async () => {
@@ -24,11 +24,11 @@ test("should accept input after waitUntilSettled", async () => {
   const performer = new Performer(<App />);
   performer.start();
   await performer.waitUntilListening();
-  expect(performer.inputNode?.type).toEqual(App);
+  expect(performer.inputNode?.action).toEqual(App);
   performer.input({
     role: "user",
     content: [{ type: "text", text: "Hold me close" }],
   });
   await performer.waitUntilFinished();
-  expect(performer.root?.child?.type).toEqual("raw");
+  expect(performer.root?.child?.action).toEqual("raw");
 });

@@ -8,11 +8,17 @@ import {
   PerformerEventMap,
 } from "./event.js";
 import type { PerformerMessage } from "./message.js";
-import { logEvent, logger, nodeToStr, toLogFmt } from "./util/log.js";
+import {
+  getLogger,
+  logEvent,
+  nodeToStr,
+  setLogLevel,
+  toLogFmt,
+} from "./util/log.js";
 import { getEnv } from "./util/env.js";
 import { LogLevels, type LogType } from "consola";
 import Emittery from "emittery";
-import type { Component } from "./component.js";
+import { Action } from "./action.js";
 
 export type PerformerOptions = {
   throwOnError?: boolean;
@@ -24,7 +30,7 @@ export type PerformerState = "pending" | "listening" | "rendering" | "finished";
 export class Performer {
   #uid: string;
 
-  app: PerformerElement = { id: "root", type: () => {}, props: {} };
+  app: PerformerElement = { id: "root", action: () => {}, props: {} };
   root?: PerformerNode;
   options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
@@ -39,6 +45,7 @@ export class Performer {
   abortController = new AbortController();
 
   renderQueued = false;
+  renderQueuedReason: string = "";
   renderInProgress: boolean = false;
 
   threadNonce = 0;
@@ -54,8 +61,8 @@ export class Performer {
       options.logLevel ||
       (getEnv("VITEST") && "info") ||
       "info";
-
-    logger.level = LogLevels[logLevel];
+    const logger = getLogger("Performer");
+    setLogLevel(logLevel);
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
     }
@@ -66,36 +73,37 @@ export class Performer {
     });
   }
 
-  start() {
+  start(reason: string) {
     this.renderInProgress = true;
     if (this.state !== "rendering") {
       this.setRendering();
     }
-    render(this).finally(() => {
+    render(this, reason).finally(() => {
       this.renderInProgress = false;
       if (this.renderQueued) {
         this.renderQueued = false;
-        this.start();
+        this.start(this.renderQueuedReason);
       }
     });
   }
 
   insert({
     id,
-    type,
+    action,
     props = {},
     previous,
     notify,
   }: {
     id: string;
     props?: Record<string, any>;
-    type: Component<any>;
+    action: Action;
     previous: { id: string; type: "parent" | "sibling" } | null;
     notify?: () => void;
   }) {
+    const logger = getLogger("Performer:insert");
     const element: PerformerElement = {
       id,
-      type,
+      action,
       props,
       notify,
     };
@@ -105,34 +113,69 @@ export class Performer {
       const parent = this.app;
       element.parent = this.app;
       parent.child = element;
+      logger.info(`Insert child ${id} on root.`);
     } else if (previous.type === "parent") {
       const parent = this.elementMap.get(previous.id);
       if (!parent) {
         throw Error(
-          "Failed to insert Performer element. Parent not registered",
+          `Failed to insert Performer element ${id}. Parent not registered`,
         );
       }
       element.parent = parent;
       parent.child = element;
+      logger.info(`Insert child ${id} on ${parent.id}`);
     } else {
       const sibling = this.elementMap.get(previous.id);
       if (!sibling) {
         throw Error(
-          "Failed to insert Performer element. Sibling not registered",
+          `Failed to insert Performer element ${id}. Sibling not registered`,
         );
       }
       sibling.sibling = element;
+      logger.info(`Insert sibling ${id} on ${sibling.id}`);
     }
     // register
     this.elementMap.set(id, element);
     // render
     this.queueRender("new element");
-    return notify;
+    return element;
+  }
+
+  finalize(id: string) {
+    const element = this.elementMap.get(id);
+    if (!element?.node) {
+      throw Error(
+        `Invalid attempt to finalize element ${id}. No corresponding node found.`,
+      );
+    }
+    element.node.status = "RESOLVED";
+    this.queueRender(`node ${id} finalized`);
   }
 
   remove(id: string) {
     // remove from node map
     // unlink
+  }
+
+  getElement(id: string) {
+    let cursor: PerformerElement | undefined = this.app;
+    while (cursor) {
+      if (cursor.id === id) {
+        return cursor;
+      }
+      if (cursor.child) {
+        cursor = cursor.child;
+        continue;
+      }
+      while (cursor) {
+        if (cursor.sibling) {
+          cursor = cursor.sibling;
+          break;
+        }
+        cursor = cursor.parent;
+      }
+    }
+    return null;
   }
 
   abort() {
@@ -165,16 +208,18 @@ export class Performer {
   }
 
   queueRender(reason: string) {
-    logger.debug(
+    getLogger("Performer:queueRender").debug(
       toLogFmt([
         ["call", "queueRender"],
         ["reason", reason],
       ]),
     );
     if (!this.renderInProgress) {
-      requestIdleCallback(() => this.start());
+      this.renderInProgress = true;
+      requestIdleCallback(() => this.start(reason));
     } else {
       this.renderQueued = true;
+      this.renderQueuedReason = reason;
     }
   }
 

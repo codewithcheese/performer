@@ -31,14 +31,14 @@ test("should use context from provider", async () => {
   const performer = new Performer(app);
   performer.start();
   await performer.waitUntilFinished();
-  expect(performer.root?.type).toEqual(Provider);
+  expect(performer.root?.action).toEqual(Provider);
   expect(
     (performer.root?.hooks["context-first"] as Signal<string>).value,
   ).toEqual("Hello world");
   expect(
     (performer.root?.hooks["context-second"] as Signal<string>).value,
   ).toEqual("Good night");
-  expect(performer.root?.child?.type).toEqual(Consumer);
+  expect(performer.root?.child?.action).toEqual(Consumer);
   expect(performer.root?.child?.hooks["provider-first"]?.type).toEqual(
     Provider,
   );

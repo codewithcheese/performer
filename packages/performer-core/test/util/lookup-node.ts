@@ -57,9 +57,9 @@ function gatherSiblingsOfType(
   let siblings: PerformerNode[] = [];
   while (node) {
     if (
-      typeof node.type === "string"
-        ? node.type === type
-        : node.type.name === type
+      typeof node.action === "string"
+        ? node.action === type
+        : node.action.name === type
     ) {
       siblings.push(node);
     }

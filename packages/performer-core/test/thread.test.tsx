@@ -93,7 +93,7 @@ test("should exclude messages from sub-threads", async () => {
   // get `users` nodes and verify their content matches their thread
   const users: PerformerNode[] = [];
   walk(performer.root!, (node) =>
-    node.type === "user" ? !!users.push(node) : false,
+    node.action === "user" ? !!users.push(node) : false,
   );
   users.forEach((user) => expect(user.props.children).toEqual(user.threadId));
 });

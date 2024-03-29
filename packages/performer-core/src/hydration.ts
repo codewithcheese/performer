@@ -75,7 +75,7 @@ export async function hydrate({
 export function serialize(node: PerformerNode): SerializedNode {
   const serializedNode: SerializedNode = {
     uid: node.uid,
-    type: typeof node.type === "string" ? node.type : node.type.name,
+    type: typeof node.action === "string" ? node.action : node.action.name,
     hooks: {},
     children: [],
   };

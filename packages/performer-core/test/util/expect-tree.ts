@@ -18,7 +18,7 @@ export function expectTree(
   }
 
   const actualType =
-    typeof actual.type === "function" ? actual.type.name : actual.type;
+    typeof actual.action === "function" ? actual.action.name : actual.action;
   const expectedType =
     typeof expected.type === "function" ? expected.type.name : expected.type;
 

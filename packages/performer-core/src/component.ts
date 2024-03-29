@@ -1,16 +1,19 @@
 import type { PerformerElement } from "./element.js";
-import { PerformerMessage } from "./message.js";
+import { MessageDelta, PerformerMessage } from "./message.js";
 
 export type Props = Record<string, any>;
 
 export type ComponentReturn =
+  | ReadableStream<MessageDelta>
   | PerformerMessage[]
   | PerformerMessage
   | void
   | null
   | undefined
   | false
-  | string;
+  | string
+  | Promise<ComponentReturn>;
+
 //
 // export type Component<
 //   P extends Props,

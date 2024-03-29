@@ -1,17 +1,17 @@
-import type { Component } from "./component.js";
-import { PerformerMessage } from "./message.js";
+import { Action } from "./action.js";
+import { PerformerNode } from "./node.js";
 
 export type PerformerElement = {
   id: string;
-  // ref: HTMLElement;
-  type: Component<any> /*| PerformerMessage["role"] | "raw"*/;
-  props: Record<string, any>;
+  action: Action;
+  props: { afterChildren?: () => void };
 
   notify?: () => void;
 
   parent?: PerformerElement;
   child?: PerformerElement;
   sibling?: PerformerElement;
+  node?: PerformerNode;
 };
 
 export function Fragment(props: any) {

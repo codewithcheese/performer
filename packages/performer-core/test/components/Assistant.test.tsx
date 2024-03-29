@@ -26,20 +26,20 @@ test("should call model with messages", async () => {
   await performer.waitUntilFinished();
   const lookup = createLookup(performer.root!);
 
-  expect(lookup("system").type).toEqual("system");
+  expect(lookup("system").action).toEqual("system");
   expect(lookup("system").props.children).toEqual(
     "Hello world in Javascript. Code only.",
   );
   const assistant = lookup("Assistant");
-  assert(assistant.type instanceof Function);
-  expect(assistant.type.name).toEqual("Assistant");
+  assert(assistant.action instanceof Function);
+  expect(assistant.action.name).toEqual("Assistant");
 
   const fragment = lookup("Assistant->Fragment");
-  assert(fragment.type instanceof Function);
-  expect(fragment.type.name).toEqual("Fragment");
+  assert(fragment.action instanceof Function);
+  expect(fragment.action.name).toEqual("Fragment");
 
   const raw = lookup("Assistant->Fragment->raw");
-  expect(raw.type).toEqual("raw");
+  expect(raw.action).toEqual("raw");
   expect(
     raw.hooks.message,
     "Expect raw element message hook to be defined.",

@@ -1,31 +1,67 @@
-import type { Component } from "../component.js";
-import { useAfterChildren, useState } from "../hooks/index.js";
-import { Signal } from "@preact/signals-core";
-import { useLogger } from "../hooks/index.js";
+import { useAfterChildren } from "../hooks/index.js";
+import {
+  Children,
+  cloneElement,
+  Fragment,
+  ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { useGenerative } from "../hooks/use-generative.js";
+import { getLogger } from "../util/log.js";
+
+const logger = getLogger("Repeat");
+
+type RepeatProps = {
+  limit: number;
+  children: ReactNode;
+};
 
 /**
- *	Repeat the children indefinitely unless limited using times prop or stopped with a signal.
- *
- *  Signal is used for stop instead of a boolean so that changing the stop does not cause Repeat to be recreated.
- *  If Repeat was recreated the `n` state would be lost.
+ *	Repeat the children indefinitely or until limit is reached if set.
  */
-export const Repeat: Component<{ times?: number; stop?: Signal<boolean> }> = ({
-  children,
-  times = Infinity,
-  stop = new Signal(false),
-}) => {
-  const logger = useLogger();
-  const n = useState(1);
-  useAfterChildren(() => {
-    logger.debug([
-      ["stopped", stop.peek()],
-      ["n", n.peek()],
-      ["times", times],
-      ["continue", !stop.peek() && n.peek() < times],
-    ]);
-    if (!stop.peek() && n.peek() < times) {
-      n.value += 1;
-    }
+export function Repeat({ limit = 1, children }: RepeatProps) {
+  const { id, ref, element, isPending } = useGenerative(() => {});
+  const [iteration, setIteration] = useState(1);
+
+  const renderCount = useRef(0);
+  useEffect(() => {
+    renderCount.current++;
   });
-  return () => Array(n.value).fill(children).flat();
-};
+  logger.debug(
+    `Repeat id=${id} iteration=${iteration} isPending=${isPending} renderCount=${renderCount.current}`,
+    Array(iteration).map((_, index) => index),
+  );
+
+  useAfterChildren(element, () => {
+    setIteration((i) => {
+      if (i < limit) {
+        logger.debug(
+          `Repeat:useAfterChildren before=${i} after=${i + 1} limit=${limit}`,
+        );
+        return i + 1;
+      } else {
+        logger.debug(`Repeat:useAfterChildren i=${i} limit=${limit}`);
+        return i;
+      }
+    });
+  });
+
+  return (
+    <div ref={ref} data-performer-id={id}>
+      {!isPending &&
+        Array(iteration)
+          .fill(true)
+          .map((_, index) => {
+            logger.debug(`JSX iteration=${index}`);
+            return (
+              <Fragment key={index}>
+                {children}
+                {/*{Children.map(children, (child) => cloneElement(child))}*/}
+              </Fragment>
+            );
+          })}
+    </div>
+  );
+}
