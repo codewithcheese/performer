@@ -7,9 +7,10 @@ import {
   useState,
 } from "react";
 import { PerformerElement } from "../element.js";
-import { GenerativeContext } from "../components/GenerativeProvider.js";
+import { GenerativeContext } from "../components/Generative.js";
 import { Action } from "../action.js";
 import { getLogger } from "../util/log.js";
+import { PerformerMessage } from "../message.js";
 
 const logger = getLogger("useGenerative");
 
@@ -41,7 +42,7 @@ export function findPreviousElement(
   return null;
 }
 
-export function useGenerative(action: Action): {
+export function useGenerative(type: PerformerElement["type"]): {
   id: string;
   ref: MutableRefObject<any>;
   isPending: boolean;
@@ -69,7 +70,7 @@ export function useGenerative(action: Action): {
     const previous = findPreviousElement(ref.current);
     const element = performer.insert({
       id,
-      action,
+      type,
       previous,
       notify: () => {
         setFinalize(true);

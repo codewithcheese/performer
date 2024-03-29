@@ -30,7 +30,7 @@ export type PerformerState = "pending" | "listening" | "rendering" | "finished";
 export class Performer {
   #uid: string;
 
-  app: PerformerElement = { id: "root", action: () => {}, props: {} };
+  app: PerformerElement = { id: "root", type: "NOOP", props: {} };
   root?: PerformerNode;
   options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
@@ -89,21 +89,21 @@ export class Performer {
 
   insert({
     id,
-    action,
+    type,
     props = {},
     previous,
     notify,
   }: {
     id: string;
+    type: PerformerElement["type"];
     props?: Record<string, any>;
-    action: Action;
     previous: { id: string; type: "parent" | "sibling" } | null;
     notify?: () => void;
   }) {
     const logger = getLogger("Performer:insert");
     const element: PerformerElement = {
       id,
-      action,
+      type,
       props,
       notify,
     };
@@ -228,46 +228,37 @@ export class Performer {
    */
 
   // todo how to set input?
-  setInputNode(node: PerformerNode) {
-    logger.debug(
-      toLogFmt([
-        ["input", "pending"],
-        ["node", nodeToStr(node)],
-      ]),
-    );
-    // if input already queue then deliver to node immediately
-    const inputNode = node;
-    if (!inputNode.hooks.input) {
-      throw Error("Unable to set input node. Node does not have input hook.");
-    }
-    if (inputNode.hooks.input.state !== "pending") {
-      throw Error("Unable to set input node. Input hook state not pending.");
-    }
-    if (this.inputQueue.length) {
-      inputNode.hooks.input = {
-        state: "fulfilled",
-        value: [...this.inputQueue],
-      };
-      inputNode.status = "PENDING";
-      this.inputQueue = [];
-      this.queueRender("input fulfilled");
-    } else {
-      this.inputNode = inputNode;
-    }
-  }
+  // setInputNode(node: PerformerNode) {
+  //   logger.debug(
+  //     toLogFmt([
+  //       ["input", "pending"],
+  //       ["node", nodeToStr(node)],
+  //     ]),
+  //   );
+  //   // if input already queue then deliver to node immediately
+  //   const inputNode = node;
+  //   if (!inputNode.hooks.input) {
+  //     throw Error("Unable to set input node. Node does not have input hook.");
+  //   }
+  //   if (inputNode.hooks.input.state !== "pending") {
+  //     throw Error("Unable to set input node. Input hook state not pending.");
+  //   }
+  //   if (this.inputQueue.length) {
+  //     inputNode.hooks.input = {
+  //       state: "fulfilled",
+  //       value: [...this.inputQueue],
+  //     };
+  //     inputNode.status = "PENDING";
+  //     this.inputQueue = [];
+  //     this.queueRender("input fulfilled");
+  //   } else {
+  //     this.inputNode = inputNode;
+  //   }
+  // }
 
-  input(message: PerformerMessage) {
-    if (this.inputNode) {
-      this.inputNode.hooks.input = {
-        state: "fulfilled",
-        value: [message],
-      };
-      this.inputNode.status = "PENDING";
-      this.inputNode = undefined;
-      this.queueRender("input fulfilled");
-    } else {
-      this.inputQueue.push(message);
-    }
+  submit(message: PerformerMessage) {
+    this.inputQueue.push(message);
+    this.queueRender("input fulfilled");
   }
 
   async waitUntilFinished(signal?: AbortSignal) {

@@ -3,7 +3,7 @@ import { ClientOptions, OpenAI } from "openai";
 import { isEmptyObject } from "../util/is-empty-object.js";
 import "../util/readable-stream-polyfill.js";
 import { ReactNode, useCallback } from "react";
-import { Generative } from "./Generative.js";
+import { Action } from "./Action.js";
 import { Action } from "../action.js";
 
 export function Assistant({
@@ -20,7 +20,7 @@ export function Assistant({
       fetchCompletion({ model, messages, signal, clientOptions }),
     [],
   );
-  return <Generative action={action}>{children}</Generative>;
+  return <Action action={action}>{children}</Action>;
 }
 
 async function fetchCompletion({

@@ -8,7 +8,7 @@ test("should accept input before waitUntilSettled()", async () => {
   }
   const performer = new Performer(<App />);
   performer.start();
-  performer.input({
+  performer.submit({
     role: "user",
     content: [{ type: "text", text: "Hold me close" }],
   });
@@ -25,7 +25,7 @@ test("should accept input after waitUntilSettled", async () => {
   performer.start();
   await performer.waitUntilListening();
   expect(performer.inputNode?.action).toEqual(App);
-  performer.input({
+  performer.submit({
     role: "user",
     content: [{ type: "text", text: "Hold me close" }],
   });

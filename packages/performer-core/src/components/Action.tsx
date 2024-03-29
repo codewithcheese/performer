@@ -1,14 +1,17 @@
 import { ReactNode } from "react";
 import { useGenerative } from "../hooks/use-generative.js";
+import { Action } from "../action.js";
 
-export function User({
-  children,
+export function Action({
+  action,
   className,
+  children,
 }: {
-  children?: ReactNode;
   className?: string;
+  action: Action;
+  children?: ReactNode;
 }) {
-  const { id, ref, isPending } = useGenerative("LISTENER");
+  const { id, ref, isPending } = useGenerative(action);
 
   // const renderCount = useRef(0);
   // useEffect(() => {

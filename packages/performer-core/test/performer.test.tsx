@@ -15,7 +15,7 @@ test("should wait for input before performer is finished", async () => {
   performer.start();
   await performer.waitUntilListening();
   expect(performer.inputNode).toBeDefined();
-  performer.input({
+  performer.submit({
     role: "user",
     content: [{ type: "text", text: "Hold me close" }],
   });
@@ -34,17 +34,17 @@ test("should wait for multiple inputs", async () => {
   console.time("Render");
   performer.start();
   await performer.waitUntilListening();
-  performer.input({
+  performer.submit({
     role: "user",
     content: [{ type: "text", text: "One" }],
   });
   await performer.waitUntilListening();
-  performer.input({
+  performer.submit({
     role: "user",
     content: [{ type: "text", text: "Two" }],
   });
   await performer.waitUntilListening();
-  performer.input({
+  performer.submit({
     role: "user",
     content: [{ type: "text", text: "Three" }],
   });

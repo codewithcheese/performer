@@ -6,27 +6,35 @@ import {
   UserMessage,
 } from "../../src/index.js";
 import { testHydration } from "../util/test-hydration.js";
+import { render } from "@testing-library/react";
+import { Generative } from "../../src/components/Generative.js";
+import { Action } from "../../src/components/Action.js";
+import { useSubmit } from "../../src/hooks/use-submit.js";
+import { useEffect } from "react";
 
 test("should accept user input", async () => {
-  const userMessage: UserMessage = {
-    role: "user",
-    content: "Hello, world!",
-  };
-  const app = (
-    <User onMessage={(message) => expect(message).toEqual(userMessage)} />
+  let siblingActioned = false;
+  function UserInput() {
+    const submit = useSubmit();
+    useEffect(() => {
+      submit("A");
+    }, []);
+    return null;
+  }
+  const { findByText } = render(
+    <Generative options={{ logLevel: "debug" }}>
+      <User />
+      <Action
+        action={({ messages }) => {
+          siblingActioned = true;
+          expect(messages).toEqual([{ role: "user", content: "A" }]);
+        }}
+      >
+        Done
+      </Action>
+      <UserInput />
+    </Generative>,
   );
-  const performer = new Performer(app);
-  performer.start();
-  performer.addEventListener("*", (event) =>
-    console.log(`Event ${event.type}`),
-  );
-  performer.input(userMessage);
-  await performer.waitUntilFinished();
-  assert(performer.root?.action instanceof Function);
-  expect(performer.root?.action.name).toEqual("User");
-  const messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(1);
-  expect(messages[0].role).toEqual("user");
-  expect(messages[0].content).toEqual("Hello, world!");
-  await testHydration(performer);
+  await findByText("Done");
+  expect(siblingActioned).toEqual(true);
 });

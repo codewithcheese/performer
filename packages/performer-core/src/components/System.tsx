@@ -1,4 +1,4 @@
-import { Generative } from "./Generative.js";
+import { Action } from "./Action.js";
 import { ReactNode } from "react";
 
 export function System({
@@ -9,8 +9,6 @@ export function System({
   children?: ReactNode;
 }) {
   return (
-    <Generative action={() => ({ role: "system", content })}>
-      {children}
-    </Generative>
+    <Action action={() => ({ role: "system", content })}>{children}</Action>
   );
 }

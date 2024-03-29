@@ -1,6 +1,6 @@
 import { PerformerElement } from "../element.js";
 import { useContext, useEffect, useState } from "react";
-import { GenerativeContext } from "../components/GenerativeProvider.js";
+import { GenerativeContext } from "../components/Generative.js";
 
 export function useAfterChildren(
   element: PerformerElement | null,

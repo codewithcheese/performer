@@ -3,11 +3,10 @@ import { PerformerNode } from "./node.js";
 
 export type PerformerElement = {
   id: string;
-  action: Action;
+  type: Action | "LISTENER" | "NOOP";
   props: { afterChildren?: () => void };
-
   notify?: () => void;
-
+  // links
   parent?: PerformerElement;
   child?: PerformerElement;
   sibling?: PerformerElement;

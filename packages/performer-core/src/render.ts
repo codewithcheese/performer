@@ -98,9 +98,16 @@ export async function render(performer: Performer, reason: string) {
         case "RESUME":
           await performOp(performer, op);
           continue;
+        case "LISTENING":
+          if (performer.inputQueue.length) {
+            op.payload.node.state.messages = performer.inputQueue;
+            performer.inputQueue = [];
+            op.payload.node.status = "FINALISE";
+          }
+          continue;
         case "AFTER_CHILDREN":
           op.payload.node.element.props.afterChildren!();
-          op.payload.node.status = "FINALISING";
+          op.payload.node.status = "FINALISE";
           // ensure that render is queue at least once if afterChildren has no effect
           performer.queueRender("after children effect");
       }
@@ -169,7 +176,7 @@ export function evaluateRenderOps(
     };
   }
 
-  if (node.status === "FINALISING") {
+  if (node.status === "FINALISE") {
     return {
       ["root"]: { type: "PAUSED", payload: { node } } satisfies PausedOp,
     };
@@ -281,11 +288,11 @@ export async function performOp(
 }
 
 async function renderComponent(performer: Performer, node: PerformerNode) {
-  if (!(node.action instanceof Function)) {
-    throw new Error(
-      `Invalid node type: renderComponent() expects 'node.action' to be a function`,
-    );
-  }
+  // if (!(node.action instanceof Function)) {
+  //   throw new Error(
+  //     `Invalid node type: renderComponent() expects 'node.action' to be a function`,
+  //   );
+  // }
   const logger = getLogger("render:renderComponent");
   // call component and get view function
   // let view: unknown;
@@ -296,63 +303,75 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   //   abortController: performer.abortController,
   // });
   try {
+    const type = node.element.type;
     // try {
-    const messages = resolveMessages(performer.root, node);
-    let results = await node.action({
-      messages,
-      signal: performer.abortController.signal,
-    });
-    if (results instanceof ReadableStream) {
-      node.state.stream = results;
-      node.status = "PAUSED";
-      const messagePromised = consumeDeltaStream(
-        performer,
-        node,
-        node.state.stream,
-      )
-        .then(async (message) => {
-          node.state.messages = [message];
-          if (node.props.onResolved) {
-            await node.props.onResolved(message);
-          }
-          node.status = "FINALISING";
-          logger.debug(
-            `${node.element.id} stream resolved. status=${node.status}`,
-          );
-          node.element.notify && node.element.notify();
-          performer.queueRender("stream resolved");
-        })
-        .catch((error) => performer.onError("root", error));
+    if (type instanceof Function) {
+      const messages = resolveMessages(performer.root, node);
+      let results = await type({
+        messages,
+        signal: performer.abortController.signal,
+      });
+      if (results instanceof ReadableStream) {
+        node.state.stream = results;
+        node.status = "PAUSED";
+        const messagePromised = consumeDeltaStream(
+          performer,
+          node,
+          node.state.stream,
+        )
+          .then(async (message) => {
+            node.state.messages = [message];
+            if (node.props.onResolved) {
+              await node.props.onResolved(message);
+            }
+            node.status = "FINALISE";
+            logger.debug(
+              `${node.element.id} stream resolved. status=${node.status}`,
+            );
+            node.element.notify && node.element.notify();
+            performer.queueRender("stream resolved");
+          })
+          .catch((error) => performer.onError("root", error));
 
-      // process stream
-      if (node.isHydrating) {
-        await messagePromised;
-      }
-    } else if (results && typeof results === "object") {
-      if (!Array.isArray(results)) {
-        results = [results];
-      }
-      if (!results.every(isMessage)) {
-        throw Error(
-          `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(results)}.`,
-        );
-      }
-      node.state.messages = results;
-      node.status = "FINALISING";
-      logger.debug(
-        `${node.element.id} messages resolved. status=${node.status}`,
-      );
-      node.element.notify && node.element.notify();
-    } else {
-      if (!node.element.notify) {
-        node.status = "RESOLVED";
+        // process stream
+        if (node.isHydrating) {
+          await messagePromised;
+        }
+      } else if (results && typeof results === "object") {
+        if (!Array.isArray(results)) {
+          results = [results];
+        }
+        if (!results.every(isMessage)) {
+          throw Error(
+            `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(results)}.`,
+          );
+        }
+        node.state.messages = results;
+        node.status = "FINALISE";
         logger.debug(
-          `${node.element.id} resolved without notify. status=${node.status}`,
+          `${node.element.id} messages resolved. status=${node.status}`,
         );
+        node.element.notify && node.element.notify();
       } else {
-        node.status = "FINALISING";
-        logger.debug(`${node.element.id} resolved. status=${node.status}`);
-        node.element.notify();
+        if (!node.element.notify) {
+          node.status = "RESOLVED";
+          logger.debug(
+            `${node.element.id} resolved without notify. status=${node.status}`,
+          );
+        } else {
+          node.status = "FINALISE";
+          logger.debug(`${node.element.id} resolved. status=${node.status}`);
+          node.element.notify();
+        }
+      }
+    } else if (type === "LISTENER") {
+      if (performer.inputQueue.length) {
+        node.state.messages = performer.inputQueue;
+        performer.inputQueue = [];
+        node.status = "FINALISE";
+      } else {
+        node.status = "LISTENING";
+        logger.debug(`${node.element.id} listening.`);
       }
     }
 
@@ -716,8 +735,8 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
   };
   // React compat Fragment type is Symbol(react.fragment)
   return (
-    (node.element.action === element.action ||
-      typeof element.action === "symbol") /*&& node.type === Fragment*/ &&
+    (node.element.type === element.type ||
+      typeof element.type === "symbol") /*&& node.type === Fragment*/ &&
     isEqualWith(node.element.props, element.props, functionComparison)
   );
 }

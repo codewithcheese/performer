@@ -2,19 +2,17 @@
 import { expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { Repeat, System } from "../src/index.js";
-import { GenerativeProvider } from "../src/components/GenerativeProvider.js";
 import { Generative } from "../src/components/Generative.js";
+import { Action } from "../src/components/Action.js";
 
 it("should call actions depth first", async () => {
   let siblingActioned = false;
   const { findByText } = render(
-    <GenerativeProvider options={{ logLevel: "debug" }}>
-      <Generative action={() => ({ role: "user", content: "A" })}>
-        <Generative
-          action={() => ({ role: "assistant" as const, content: "B" })}
-        />
-      </Generative>
-      <Generative
+    <Generative options={{ logLevel: "debug" }}>
+      <Action action={() => ({ role: "user", content: "A" })}>
+        <Action action={() => ({ role: "assistant" as const, content: "B" })} />
+      </Action>
+      <Action
         action={({ messages }) => {
           siblingActioned = true;
           expect(messages).toEqual([
@@ -24,11 +22,10 @@ it("should call actions depth first", async () => {
         }}
       >
         Done
-      </Generative>
-    </GenerativeProvider>,
+      </Action>
+    </Generative>,
   );
   await findByText("Done");
-  // await sleep(500);
   expect(siblingActioned).toEqual(true);
 });
 
@@ -36,27 +33,26 @@ it("renders correctly", async () => {
   let testActioned = false;
   const TestMessages = () => {
     return (
-      <Generative
+      <Action
         action={({ messages, signal }) => {
           testActioned = true;
           expect(messages.map((m) => m.content)).toEqual(["1", "2", "1", "2"]);
         }}
       >
         3
-      </Generative>
+      </Action>
     );
   };
 
   const { findByText } = render(
-    <GenerativeProvider options={{ logLevel: "debug" }}>
+    <Generative options={{ logLevel: "debug" }}>
       <Repeat limit={2}>
         <System content="1">1</System>
         <System content="2">2</System>
       </Repeat>
       <TestMessages />
-    </GenerativeProvider>,
+    </Generative>,
   );
   await findByText("3");
-  console.log("Finished waiting");
   expect(testActioned).toEqual(true);
 }, 20_000);

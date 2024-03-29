@@ -1,29 +1,28 @@
-import { ReactNode } from "react";
-import { useGenerative } from "../hooks/use-generative.js";
-import { Action } from "../action.js";
+import { createContext, ReactNode, useContext, useState } from "react";
+import { Performer, PerformerOptions } from "../performer.js";
+
+type GenerativeContext = {
+  performer: Performer;
+  signal: AbortSignal;
+};
+
+export const GenerativeContext = createContext<GenerativeContext>(null!);
 
 export function Generative({
-  action,
-  className,
   children,
+  options = {},
 }: {
-  className?: string;
-  action: Action;
-  children?: ReactNode;
+  children: ReactNode;
+  options?: PerformerOptions;
 }) {
-  const { id, ref, isPending } = useGenerative(action);
-
-  // const renderCount = useRef(0);
-  // useEffect(() => {
-  //   renderCount.current++;
-  // });
-  // console.log(
-  //   `Generative id=${id} isPending=${isPending} renderCount=${renderCount.current}`,
-  // );
-
+  const [abortController] = useState(new AbortController());
+  const [context] = useState<GenerativeContext>({
+    performer: new Performer(options),
+    signal: abortController.signal,
+  });
   return (
-    <div data-performer-id={id} ref={ref} className={className}>
-      {!isPending && children}
-    </div>
+    <GenerativeContext.Provider value={context}>
+      {children}
+    </GenerativeContext.Provider>
   );
 }

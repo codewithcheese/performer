@@ -11,7 +11,6 @@ import { Action } from "./action.js";
 export type PerformerNode = {
   // threadId: string;
   uid: string;
-  action: Action /* | PerformerMessage["role"] | "raw";*/;
   // _typeName: string;
   props: Record<string, any>;
   state: {
@@ -22,7 +21,7 @@ export type PerformerNode = {
   // hooks: Record<string, unknown> & HookRecord;
   element: PerformerElement;
   // childElements?: PerformerElement[] | undefined;
-  status: "PENDING" | "PAUSED" | "FINALISING" | "RESOLVED" | "LISTENING";
+  status: "PENDING" | "PAUSED" | "FINALISE" | "RESOLVED" | "LISTENING";
   // disposeView?: () => void | undefined;
   isHydrating: boolean;
 
@@ -83,7 +82,6 @@ export function createNode({
     // _typeName: typeof type === "string" ? type : type.name,
     // threadId,
     uid: serialized ? serialized.uid : nanoid(),
-    action: element.action,
     props: element.props,
     element,
     state: {

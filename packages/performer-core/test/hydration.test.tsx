@@ -47,7 +47,7 @@ test("should serialize when listening, for input and accept input when hydrated"
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
-  hydratedPerformer.input(userMessage);
+  hydratedPerformer.submit(userMessage);
   await hydratedPerformer.waitUntilFinished();
   // expect original performer node still undefined
   expect(performer.root?.child).toEqual(undefined);
@@ -70,7 +70,7 @@ test("should use hydrated input instead of listening again", async () => {
     role: "user",
     content: [{ type: "text", text: "Hello, world!" }],
   };
-  performer.input(userMessage);
+  performer.submit(userMessage);
   await performer.waitUntilFinished();
   expect(performer.root?.child?.action).toEqual("user");
   const hydratedPerformer = await testHydration(performer);
