@@ -14,14 +14,14 @@ import { getLogger } from "../util/log.js";
 const logger = getLogger("Repeat");
 
 type RepeatProps = {
-  limit: number;
-  children: ReactNode;
+  limit?: number;
+  children?: ReactNode;
 };
 
 /**
  *	Repeat the children indefinitely or until limit is reached if set.
  */
-export function Repeat({ limit = 1, children }: RepeatProps) {
+export function Repeat({ limit, children }: RepeatProps) {
   const { id, ref, element, isPending } = useGenerative(() => {});
   const [iteration, setIteration] = useState(1);
 
@@ -36,6 +36,9 @@ export function Repeat({ limit = 1, children }: RepeatProps) {
 
   useAfterChildren(element, () => {
     setIteration((i) => {
+      if (!limit) {
+        return i + 1;
+      }
       if (i < limit) {
         logger.debug(
           `Repeat:useAfterChildren before=${i} after=${i + 1} limit=${limit}`,

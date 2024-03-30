@@ -8,13 +8,15 @@ import { Action } from "./Action.js";
 import { ChatCompletionCreateParamsStreaming } from "openai/resources/index";
 
 export function Assistant({
+  className,
   model = "gpt-3.5-turbo",
   children,
   requestOptions = {},
   clientOptions = {},
 }: {
+  className?: string;
   model?: string;
-  children?: ReactNode;
+  children?: ReactNode | ((message: PerformerMessage) => ReactNode);
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
 }) {
@@ -29,7 +31,11 @@ export function Assistant({
       }),
     [],
   );
-  return <Action action={action}>{children}</Action>;
+  return (
+    <Action className={className} action={action}>
+      {children}
+    </Action>
+  );
 }
 
 async function fetchCompletion({

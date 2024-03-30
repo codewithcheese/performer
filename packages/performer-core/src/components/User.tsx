@@ -1,26 +1,18 @@
 import { ReactNode } from "react";
 import { useGenerative } from "../hooks/use-generative.js";
+import { PerformerMessage } from "../message.js";
+import { Action } from "./Action.js";
 
 export function User({
   children,
   className,
 }: {
-  children?: ReactNode;
+  children?: ReactNode | ((message: PerformerMessage) => ReactNode);
   className?: string;
 }) {
-  const { id, ref, isPending } = useGenerative("LISTENER");
-
-  // const renderCount = useRef(0);
-  // useEffect(() => {
-  //   renderCount.current++;
-  // });
-  // console.log(
-  //   `Generative id=${id} isPending=${isPending} renderCount=${renderCount.current}`,
-  // );
-
   return (
-    <div data-performer-id={id} ref={ref} className={className}>
-      {!isPending && children}
-    </div>
+    <Action className={className} action="LISTENER">
+      {children}
+    </Action>
   );
 }
