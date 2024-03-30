@@ -18,7 +18,8 @@ import {
 import { getEnv } from "./util/env.js";
 import { LogLevels, type LogType } from "consola";
 import Emittery from "emittery";
-import { Action } from "./action.js";
+import { ActionType } from "./action.js";
+import { assertTrue, assertTruthy } from "./util/assert.js";
 
 export type PerformerOptions = {
   throwOnError?: boolean;
@@ -30,7 +31,7 @@ export type PerformerState = "pending" | "listening" | "rendering" | "finished";
 export class Performer {
   #uid: string;
 
-  app: PerformerElement = { id: "root", type: "NOOP", props: {} };
+  app: PerformerElement;
   root?: PerformerNode;
   options: PerformerOptions;
   errors: PerformerErrorEvent[] = [];
@@ -66,11 +67,20 @@ export class Performer {
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
     }
-    this.addEventListener("*", logEvent);
+    // this.addEventListener("*", logEvent);
     this.addEventListener("error", (error) => {
       logger.error(error.detail.message);
       this.errors.push(error);
     });
+    // insert a noop root
+    this.app = {
+      id: "root",
+      type: () => {},
+      props: {},
+      onFinalize: () => this.finalize("root"),
+      onStreaming: () => {},
+    };
+    this.elementMap.set("root", this.app);
   }
 
   start(reason: string) {
@@ -92,20 +102,23 @@ export class Performer {
     type,
     props = {},
     previous,
-    notify,
+    onFinalize,
+    onStreaming,
   }: {
     id: string;
     type: PerformerElement["type"];
     props?: Record<string, any>;
     previous: { id: string; type: "parent" | "sibling" } | null;
-    notify?: () => void;
+    onFinalize: () => void;
+    onStreaming: () => void;
   }) {
     const logger = getLogger("Performer:insert");
     const element: PerformerElement = {
       id,
       type,
       props,
-      notify,
+      onFinalize,
+      onStreaming,
     };
 
     if (!previous) {
@@ -141,20 +154,17 @@ export class Performer {
     return element;
   }
 
-  finalize(id: string) {
-    const element = this.elementMap.get(id);
-    if (!element?.node) {
-      throw Error(
-        `Invalid attempt to finalize element ${id}. No corresponding node found.`,
-      );
-    }
-    element.node.status = "RESOLVED";
-    this.queueRender(`node ${id} finalized`);
-  }
-
   remove(id: string) {
     // remove from node map
     // unlink
+  }
+
+  finalize(id: string) {
+    const element = this.elementMap.get(id);
+    assertTruthy(element, "Expect element when finalizing");
+    assertTruthy(element.node, "Expect element.node when finalizing");
+    element.node.status = "RESOLVED";
+    this.queueRender(`${id} finalized`);
   }
 
   getElement(id: string) {

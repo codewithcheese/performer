@@ -1,5 +1,6 @@
 import {
   isAssistantMessage,
+  PerformerElement,
   // nodeToMessage,
   PerformerEvent,
   PerformerNode,
@@ -97,7 +98,7 @@ export function logOp(threadId: string, op: RenderOp) {
   if (op.type === "CREATE") {
     pairs.push(["element", op.payload.element.id]);
     if (op.payload.parent) {
-      pairs.push(["parent", nodeToStr(op.payload.parent)]);
+      pairs.push(["parent", nodeToStr(op.payload.element)]);
     }
     // if (typeof op.payload.element.props.children === "string") {
     //   pairs.push(["content", op.payload.element.props.children]);
@@ -107,8 +108,8 @@ export function logOp(threadId: string, op: RenderOp) {
       ["node", op.payload.node.element.id],
       ["status", op.payload.node.status],
     );
-    if (op.payload.node.parent) {
-      pairs.push(["parent", nodeToStr(op.payload.node.parent)]);
+    if (op.payload.node.element) {
+      pairs.push(["parent", nodeToStr(op.payload.node.element)]);
     }
   }
 
@@ -120,14 +121,16 @@ export function logOp(threadId: string, op: RenderOp) {
   }
 }
 
-export function nodeToStr(node: PerformerNode) {
-  return getHierarchy(node).join("->");
+export function nodeToStr(element: PerformerElement) {
+  return getHierarchy(element).join("->");
 }
 
-function getHierarchy(node: PerformerNode) {
+function getHierarchy(element: PerformerElement) {
   const names: string[] = [];
-  if (node.parent) names.push(...getHierarchy(node.parent));
-  names.push(typeof node.action === "string" ? node.action : node.action.name);
+  if (element.parent) names.push(...getHierarchy(element.parent));
+  names.push(
+    typeof element.type === "string" ? element.type : element.type.name,
+  );
   return names;
 }
 
@@ -146,16 +149,16 @@ export function toLogFmt(pairs: [string, any][]): string {
   return pairs.map(([key, value]) => `${key}=${escapeValue(value)}`).join(" ");
 }
 
-export function logPaused(node: PerformerNode, pending: string) {
-  logger.info(
-    toLogFmt([
-      ["node", "paused"],
-      ["pending", pending],
-      ["node", nodeToStr(node)],
-      // ["threadId", node.threadId],
-    ]),
-  );
-}
+// export function logPaused(node: PerformerNode, pending: string) {
+//   logger.info(
+//     toLogFmt([
+//       ["node", "paused"],
+//       ["pending", pending],
+//       ["node", nodeToStr(node)],
+//       // ["threadId", node.threadId],
+//     ]),
+//   );
+// }
 
 export function getLogger(tag: string) {
   return logger.withTag(tag);

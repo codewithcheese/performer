@@ -11,7 +11,7 @@ export type ActionReturn =
   | undefined
   | Promise<ActionReturn>;
 
-export type Action = {
+export type ActionType = {
   ({
     messages,
     signal,

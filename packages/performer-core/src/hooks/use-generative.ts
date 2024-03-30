@@ -8,7 +8,6 @@ import {
 } from "react";
 import { PerformerElement } from "../element.js";
 import { GenerativeContext } from "../components/Generative.js";
-import { Action } from "../action.js";
 import { getLogger } from "../util/log.js";
 import { PerformerMessage } from "../message.js";
 
@@ -47,13 +46,22 @@ export function useGenerative(type: PerformerElement["type"]): {
   ref: MutableRefObject<any>;
   isPending: boolean;
   element: PerformerElement | null;
+  messages: PerformerMessage[];
 } {
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
   const [isPending, setIsPending] = useState(true);
   const [finalize, setFinalize] = useState(false);
   const [element, setElement] = useState<PerformerElement | null>(null);
-  const { performer } = useContext(GenerativeContext);
+  const [_, setNonce] = useState(0);
+  const [messages, setMessages] = useState<PerformerMessage[]>([]);
+  const context = useContext(GenerativeContext);
+  if (!context) {
+    throw Error(
+      "Generative context not set. Generative components must be wrapped with `<Generative>` provider.",
+    );
+  }
+  const { performer } = context;
 
   useEffect(() => {
     // setIsPending(true);
@@ -72,9 +80,26 @@ export function useGenerative(type: PerformerElement["type"]): {
       id,
       type,
       previous,
-      notify: () => {
+      onStreaming: () => {
+        if (element.node?.state.messages) {
+          setMessages(element.node.state.messages);
+        }
+        // complete pending before finalized
+        if (isPending) {
+          setIsPending(false);
+        }
+        // update nonce for rerender on each stream update
+        setNonce((n) => n + 1);
+      },
+      onFinalize: () => {
+        logger.info(`onFinalize=${id}`);
+        if (element.node?.state.messages) {
+          setMessages(element.node.state.messages);
+        }
+        if (isPending) {
+          setIsPending(false);
+        }
         setFinalize(true);
-        setIsPending(false);
       },
     });
     setElement(element);
@@ -91,5 +116,5 @@ export function useGenerative(type: PerformerElement["type"]): {
     }
   }, [finalize]);
 
-  return { id, ref, isPending, element };
+  return { id, ref, isPending, element, messages };
 }

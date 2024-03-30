@@ -3,21 +3,30 @@ import { ClientOptions, OpenAI } from "openai";
 import { isEmptyObject } from "../util/is-empty-object.js";
 import "../util/readable-stream-polyfill.js";
 import { ReactNode, useCallback } from "react";
+import { ActionType } from "../action.js";
 import { Action } from "./Action.js";
-import { Action } from "../action.js";
+import { ChatCompletionCreateParamsStreaming } from "openai/resources/index";
 
 export function Assistant({
   model = "gpt-3.5-turbo",
   children,
+  requestOptions = {},
   clientOptions = {},
 }: {
   model?: string;
   children?: ReactNode;
+  requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
 }) {
-  const action = useCallback<Action>(
+  const action = useCallback<ActionType>(
     async ({ messages, signal }) =>
-      fetchCompletion({ model, messages, signal, clientOptions }),
+      fetchCompletion({
+        model,
+        messages,
+        signal,
+        requestOptions,
+        clientOptions,
+      }),
     [],
   );
   return <Action action={action}>{children}</Action>;
@@ -27,19 +36,25 @@ async function fetchCompletion({
   model = "gpt-3.5-turbo",
   messages,
   signal,
+  requestOptions,
   clientOptions = {},
 }: {
   model?: string;
   messages: PerformerMessage[];
   signal: AbortSignal;
+  requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
 }) {
-  const openai = new OpenAI(clientOptions);
+  const openai = new OpenAI({
+    dangerouslyAllowBrowser: true,
+    ...clientOptions,
+  });
   const stream = await openai.chat.completions.create(
     {
       model,
       messages,
       stream: true,
+      ...requestOptions,
     },
     { signal },
   );

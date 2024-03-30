@@ -1,11 +1,6 @@
-import { assert, expect, test } from "vitest";
-import {
-  Performer,
-  resolveMessages,
-  User,
-  UserMessage,
-} from "../../src/index.js";
-import { testHydration } from "../util/test-hydration.js";
+/* @vitest-environment jsdom */
+import { expect, test } from "vitest";
+import { User } from "../../src/index.js";
 import { render } from "@testing-library/react";
 import { Generative } from "../../src/components/Generative.js";
 import { Action } from "../../src/components/Action.js";
@@ -14,11 +9,9 @@ import { useEffect } from "react";
 
 test("should accept user input", async () => {
   let siblingActioned = false;
-  function UserInput() {
+  function UserInput({ content }: { content: string }) {
     const submit = useSubmit();
-    useEffect(() => {
-      submit("A");
-    }, []);
+    submit("A");
     return null;
   }
   const { findByText } = render(
@@ -32,7 +25,7 @@ test("should accept user input", async () => {
       >
         Done
       </Action>
-      <UserInput />
+      <UserInput content="A" />
     </Generative>,
   );
   await findByText("Done");

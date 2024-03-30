@@ -1,5 +1,11 @@
 import { type PerformerElement } from "./element.js";
-import { createNode, type PerformerNode, SerializedNode } from "./node.js";
+import {
+  createNode,
+  type PerformerNode,
+  SerializedNode,
+  setNodeFinalize,
+  setNodeStreaming,
+} from "./node.js";
 import type { Performer } from "./performer.js";
 import {
   AssistantMessage,
@@ -10,15 +16,7 @@ import {
   PerformerMessage,
 } from "./message.js";
 import { isEqualWith } from "lodash-es";
-import {
-  getLogger,
-  logOp,
-  logPaused,
-  nodeToStr,
-  toLogFmt,
-} from "./util/log.js";
-import { createDeltaEvent } from "./event.js";
-import { DeferInput, DeferResource } from "./util/defer.js";
+import { getLogger, logOp, toLogFmt } from "./util/log.js";
 
 type CreateOp = {
   type: "CREATE";
@@ -76,11 +74,13 @@ function noOps(ops: Record<string, RenderOp>) {
   return Object.keys(ops).length === 0;
 }
 
+let renderCount = 0;
+
 export async function render(performer: Performer, reason: string) {
   if (!performer.app) {
     throw Error("Cannot render before app is assigned");
   }
-  getLogger("render").debug(`start reason=${reason}`);
+  getLogger("render").debug(`start count=${++renderCount} reason=${reason} `);
   try {
     const ops = evaluateRenderOps(
       // "root",
@@ -102,12 +102,12 @@ export async function render(performer: Performer, reason: string) {
           if (performer.inputQueue.length) {
             op.payload.node.state.messages = performer.inputQueue;
             performer.inputQueue = [];
-            op.payload.node.status = "FINALISE";
+            setNodeFinalize(op.payload.node);
           }
           continue;
         case "AFTER_CHILDREN":
           op.payload.node.element.props.afterChildren!();
-          op.payload.node.status = "FINALISE";
+          setNodeFinalize(op.payload.node);
           // ensure that render is queue at least once if afterChildren has no effect
           performer.queueRender("after children effect");
       }
@@ -120,7 +120,7 @@ export async function render(performer: Performer, reason: string) {
   } catch (error) {
     performer.onError("root", error);
   } finally {
-    getLogger("render").debug("finally");
+    getLogger("render").debug(`end count=${renderCount}`);
   }
 }
 
@@ -176,7 +176,7 @@ export function evaluateRenderOps(
     };
   }
 
-  if (node.status === "FINALISE") {
+  if (node.status === "FINALIZE") {
     return {
       ["root"]: { type: "PAUSED", payload: { node } } satisfies PausedOp,
     };
@@ -302,131 +302,107 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   //   nonce: 0,
   //   abortController: performer.abortController,
   // });
-  try {
-    const type = node.element.type;
-    // try {
-    if (type instanceof Function) {
-      const messages = resolveMessages(performer.root, node);
-      let results = await type({
-        messages,
-        signal: performer.abortController.signal,
-      });
-      if (results instanceof ReadableStream) {
-        node.state.stream = results;
-        node.status = "PAUSED";
-        const messagePromised = consumeDeltaStream(
-          performer,
-          node,
-          node.state.stream,
-        )
-          .then(async (message) => {
-            node.state.messages = [message];
-            if (node.props.onResolved) {
-              await node.props.onResolved(message);
-            }
-            node.status = "FINALISE";
-            logger.debug(
-              `${node.element.id} stream resolved. status=${node.status}`,
-            );
-            node.element.notify && node.element.notify();
-            performer.queueRender("stream resolved");
-          })
-          .catch((error) => performer.onError("root", error));
-
-        // process stream
-        if (node.isHydrating) {
-          await messagePromised;
-        }
-      } else if (results && typeof results === "object") {
-        if (!Array.isArray(results)) {
-          results = [results];
-        }
-        if (!results.every(isMessage)) {
-          throw Error(
-            `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(results)}.`,
-          );
-        }
-        node.state.messages = results;
-        node.status = "FINALISE";
-        logger.debug(
-          `${node.element.id} messages resolved. status=${node.status}`,
-        );
-        node.element.notify && node.element.notify();
-      } else {
-        if (!node.element.notify) {
-          node.status = "RESOLVED";
-          logger.debug(
-            `${node.element.id} resolved without notify. status=${node.status}`,
-          );
-        } else {
-          node.status = "FINALISE";
-          logger.debug(`${node.element.id} resolved. status=${node.status}`);
-          node.element.notify();
-        }
-      }
-    } else if (type === "LISTENER") {
-      if (performer.inputQueue.length) {
-        node.state.messages = performer.inputQueue;
-        performer.inputQueue = [];
-        node.status = "FINALISE";
-      } else {
-        node.status = "LISTENING";
-        logger.debug(`${node.element.id} listening.`);
-      }
-    }
-
-    // if (!Array.isArray(results)) {
-    //   results = [results];
-    // }
-    // let previous: { id: string; type: "parent" | "sibling" } = {
-    //   id: node.element.id,
-    //   type: "parent",
-    // };
-    //
-    // if (results !== null) {
-    //   for (const result of results) {
-    //     const id = nanoid();
-    //     performer.insert({
-    //       id,
-    //       type: result.role,
-    //       props: result,
-    //       previous,
-    //     });
-    //     previous = { id, type: "sibling" };
-    //   }
-    // }
-    // } finally {
-    // clearRenderScope();
-    // }
-    // if (typeof view !== "function") {
-    //   const returnType = view instanceof Promise ? "Promise" : typeof view;
-    //   throw Error(
-    //     `Component "${nodeToStr(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
-    //       `To make async calls in your component use the \`useResource\` hook`,
-    //   );
-    // }
-    // todo what do components now return?
-
-    // registerView(performer, node, view);
-  } catch (e) {
-    if (e instanceof DeferResource) {
+  // try {
+  const type = node.element.type;
+  // try {
+  if (type instanceof Function) {
+    const messages = resolveMessages(performer.root, node);
+    let results = await type({
+      messages,
+      signal: performer.abortController.signal,
+    });
+    if (results instanceof ReadableStream) {
+      node.state.stream = results;
       node.status = "PAUSED";
-      logPaused(node, "resource");
-      e.cause.promise
-        .then(() => {
-          node.status = "PENDING";
-          performer.queueRender("deferred resolved");
-        })
-        .catch((error) => performer.onError("root", error));
-    } else if (e instanceof DeferInput) {
-      node.status = "LISTENING";
-      logPaused(node, "resource");
-      performer.setInputNode(node);
-      performer.queueRender("set input");
+      const message = await consumeDeltaStream(
+        performer,
+        node,
+        node.state.stream,
+      );
+      node.state.messages = [message];
+      setNodeFinalize(node);
+      logger.debug(`${node.element.id} stream resolved. status=${node.status}`);
+      performer.queueRender("stream resolved");
+    } else if (results && typeof results === "object") {
+      if (!Array.isArray(results)) {
+        results = [results];
+      }
+      if (!results.every(isMessage)) {
+        throw Error(
+          `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(results)}.`,
+        );
+      }
+      node.state.messages = results;
+      setNodeFinalize(node);
+      logger.debug(
+        `${node.element.id} messages resolved. status=${node.status}`,
+      );
     } else {
-      throw e;
+      setNodeFinalize(node);
+      logger.debug(`${node.element.id} resolved. status=${node.status}`);
+    }
+  } else if (type === "LISTENER") {
+    if (performer.inputQueue.length) {
+      node.state.messages = performer.inputQueue;
+      performer.inputQueue = [];
+      setNodeFinalize(node);
+    } else {
+      node.status = "LISTENING";
+      logger.debug(`${node.element.id} listening.`);
     }
   }
+
+  // if (!Array.isArray(results)) {
+  //   results = [results];
+  // }
+  // let previous: { id: string; type: "parent" | "sibling" } = {
+  //   id: node.element.id,
+  //   type: "parent",
+  // };
+  //
+  // if (results !== null) {
+  //   for (const result of results) {
+  //     const id = nanoid();
+  //     performer.insert({
+  //       id,
+  //       type: result.role,
+  //       props: result,
+  //       previous,
+  //     });
+  //     previous = { id, type: "sibling" };
+  //   }
+  // }
+  // } finally {
+  // clearRenderScope();
+  // }
+  // if (typeof view !== "function") {
+  //   const returnType = view instanceof Promise ? "Promise" : typeof view;
+  //   throw Error(
+  //     `Component "${nodeToStr(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
+  //       `To make async calls in your component use the \`useResource\` hook`,
+  //   );
+  // }
+
+  // registerView(performer, node, view);
+  // } catch (e) {
+  //   if (e instanceof DeferResource) {
+  //     node.status = "PAUSED";
+  //     logPaused(node, "resource");
+  //     e.cause.promise
+  //       .then(() => {
+  //         node.status = "PENDING";
+  //         performer.queueRender("deferred resolved");
+  //       })
+  //       .catch((error) => performer.onError("root", error));
+  //   } else if (e instanceof DeferInput) {
+  //     node.status = "LISTENING";
+  //     logPaused(node, "resource");
+  //     performer.setInputNode(node);
+  //     performer.queueRender("set input");
+  //   } else {
+  //     throw e;
+  //   }
+  // }
 }
 
 // async function renderIntrinsic(performer: Performer, node: PerformerNode) {
@@ -526,35 +502,41 @@ async function consumeDeltaStream(
   node: PerformerNode,
   stream: ReadableStream<MessageDelta>,
 ): Promise<PerformerMessage> {
-  let chunks: MessageDelta[] = [];
+  // let chunks: MessageDelta[] = [];
+  const message: AssistantMessage = { role: "assistant", content: null };
   for await (const chunk of stream) {
     if (!isMessageDelta(chunk)) {
       throw Error(
         `Chunk in stream does not match message delta. ${JSON.stringify(chunk)}`,
       );
     }
-    performer.dispatchEvent(
-      // clone chunk so event consumers mutations don't modify this chunk
-      createDeltaEvent("root", {
-        uid: node.uid,
-        delta: structuredClone(chunk),
-      }),
-    );
-    chunks.push(chunk);
+    concatDelta(message as MessageDelta, chunk);
+    // rerender after each delta update
+    node.state.messages = [message];
+    setNodeStreaming(node);
+
+    // performer.dispatchEvent(
+    //   // clone chunk so event consumers mutations don't modify this chunk
+    //   createDeltaEvent("root", {
+    //     uid: node.uid,
+    //     delta: structuredClone(chunk),
+    //   }),
+    // );
+    // chunks.push(chunk);
   }
-  if (chunks.length === 0) {
-    throw Error("Message stream empty");
-  }
-  const message = structuredClone(chunks[0]) as AssistantMessage;
-  if (!message.role) {
-    throw Error("First chunk in stream does not contain message role.");
-  }
-  let index = 1;
-  while (index < chunks.length) {
-    const delta = chunks[index];
-    concatDelta(message as MessageDelta, delta);
-    index += 1;
-  }
+  // if (chunks.length === 0) {
+  //   throw Error("Message stream empty");
+  // }
+  // const message = structuredClone(chunks[0]) as AssistantMessage;
+  // if (!message.role) {
+  //   throw Error("First chunk in stream does not contain message role.");
+  // }
+  // let index = 1;
+  // while (index < chunks.length) {
+  //   const delta = chunks[index];
+  //   concatDelta(message as MessageDelta, delta);
+  //   index += 1;
+  // }
   return message;
 }
 
@@ -568,7 +550,7 @@ function freeNode(
       toLogFmt([
         ["free", "node"],
         ["threadId", "root"],
-        ["node", nodeToStr(node)],
+        // ["node", nodeToStr(node)],
       ]),
     );
     // dispose view so that its no longer reactive

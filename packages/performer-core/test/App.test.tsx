@@ -1,9 +1,10 @@
 /* @vitest-environment jsdom */
 import { expect, it } from "vitest";
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { Repeat, System } from "../src/index.js";
 import { Generative } from "../src/components/Generative.js";
 import { Action } from "../src/components/Action.js";
+import { sleep } from "openai/core";
 
 it("should call actions depth first", async () => {
   let siblingActioned = false;

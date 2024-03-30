@@ -6,13 +6,21 @@ import { hydrateHooks } from "./hydration.js";
 import { nanoid } from "nanoid";
 import { nodeToStr } from "./util/log.js";
 import { Fragment } from "./jsx/index.js";
-import { Action } from "./action.js";
+import { ActionType } from "./action.js";
+
+export type NodeStatus =
+  | "PENDING" // initial state
+  | "PAUSED" // ??
+  | "FINALIZE" // ready for ack from React before becoming resolved
+  | "RESOLVED" // done
+  | "LISTENING" // type LISTENER, transitions to FINALIZE once input queue is assigned to messages
+  | "STREAMING"; //
 
 export type PerformerNode = {
   // threadId: string;
   uid: string;
   // _typeName: string;
-  props: Record<string, any>;
+  // props: Record<string, any>;
   state: {
     stream?: ReadableStream;
     messages?: PerformerMessage[];
@@ -21,7 +29,7 @@ export type PerformerNode = {
   // hooks: Record<string, unknown> & HookRecord;
   element: PerformerElement;
   // childElements?: PerformerElement[] | undefined;
-  status: "PENDING" | "PAUSED" | "FINALISE" | "RESOLVED" | "LISTENING";
+  status: NodeStatus;
   // disposeView?: () => void | undefined;
   isHydrating: boolean;
 
@@ -31,6 +39,16 @@ export type PerformerNode = {
   prevSibling: PerformerNode | undefined;
   nextSibling: PerformerNode | undefined;
 };
+
+export function setNodeFinalize(node: PerformerNode) {
+  node.status = "FINALIZE";
+  node.element.onFinalize();
+}
+
+export function setNodeStreaming(node: PerformerNode) {
+  node.status = "STREAMING";
+  node.element.onStreaming();
+}
 
 export type SerializedNode = {
   uid: string;
@@ -82,7 +100,7 @@ export function createNode({
     // _typeName: typeof type === "string" ? type : type.name,
     // threadId,
     uid: serialized ? serialized.uid : nanoid(),
-    props: element.props,
+    // props: element.props,
     element,
     state: {
       childRenderCount: 0,

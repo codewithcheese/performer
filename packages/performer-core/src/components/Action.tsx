@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useGenerative } from "../hooks/use-generative.js";
-import { Action } from "../action.js";
+import { ActionType } from "../action.js";
+import { PerformerMessage } from "../message.js";
 
 export function Action({
   action,
@@ -8,10 +9,10 @@ export function Action({
   children,
 }: {
   className?: string;
-  action: Action;
-  children?: ReactNode;
+  action: ActionType;
+  children?: ReactNode | ((message: PerformerMessage) => ReactNode);
 }) {
-  const { id, ref, isPending } = useGenerative(action);
+  const { id, ref, isPending, messages } = useGenerative(action);
 
   // const renderCount = useRef(0);
   // useEffect(() => {
@@ -23,7 +24,8 @@ export function Action({
 
   return (
     <div data-performer-id={id} ref={ref} className={className}>
-      {!isPending && children}
+      {!isPending &&
+        (typeof children === "function" ? messages.map(children) : children)}
     </div>
   );
 }
