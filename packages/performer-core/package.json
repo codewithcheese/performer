@@ -23,18 +23,22 @@
   },
   "devDependencies": {
     "@testing-library/react": "^14.2.2",
+    "@types/deep-diff": "^1.0.5",
     "@types/lodash-es": "^4.17.12",
     "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.23",
+    "@vitejs/plugin-react": "^4.2.1",
     "dotenv": "^16.3.1",
     "prettier": "^3.0.3",
     "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tshy": "^1.8.2",
     "typescript": "^5.2.2",
-    "vitest": "0.34.6"
+    "vitest": "0.34.6",
+    "vite": "^5.0.8"
   },
   "dependencies": {
     "@preact/signals-core": "^1.5.1",
-    "@types/deep-diff": "^1.0.5",
     "chai": "^5.0.3",
     "consola": "^3.2.3",
     "deep-diff": "^1.0.2",

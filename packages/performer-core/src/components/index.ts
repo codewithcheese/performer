@@ -4,3 +4,4 @@ export * from "./Repeat.js";
 export * from "./User.js";
 // export * from "./Thread.js";
 export * from "./System.js";
+export * from "./Generative.js";

@@ -4,7 +4,16 @@ declare global {
   var __DEV__: boolean;
 }
 
-globalThis.__DEV__ = getEnv("NODE_ENV") === "development" || !!getEnv("VITEST");
+(function () {
+  if (typeof process !== "undefined" && process.env) {
+    globalThis.__DEV__ =
+      process.env.NODE_ENV === "development" || !!process.env.VITEST;
+  } else if (typeof import.meta !== "undefined" && import.meta.env) {
+    globalThis.__DEV__ = import.meta.env.DEV;
+  } else {
+    globalThis.__DEV__ = false;
+  }
+})();
 
 export * from "./component.js";
 export * from "./element.js";
