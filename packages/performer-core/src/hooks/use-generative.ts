@@ -1,13 +1,14 @@
 import {
+  DependencyList,
   MutableRefObject,
   useContext,
-  useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { PerformerElement } from "../element.js";
-import { GenerativeContext } from "../components/Generative.js";
+import { GenerativeContext } from "../index.js";
 import { getLogger } from "../util/log.js";
 import { PerformerMessage } from "../message.js";
 
@@ -41,7 +42,10 @@ export function findPreviousElement(
   return null;
 }
 
-export function useGenerative(type: PerformerElement["type"]): {
+export function useGenerative(
+  type: PerformerElement["type"],
+  deps: DependencyList = [],
+): {
   id: string;
   ref: MutableRefObject<any>;
   isPending: boolean;
@@ -63,8 +67,9 @@ export function useGenerative(type: PerformerElement["type"]): {
   }
   const { performer } = context;
 
-  useEffect(() => {
-    // setIsPending(true);
+  useLayoutEffect(() => {
+    setIsPending(true);
+    setFinalize(false);
     if (!ref.current) {
       throw Error("usePerformer: ref not set");
     }
@@ -85,9 +90,8 @@ export function useGenerative(type: PerformerElement["type"]): {
           setMessages(element.node.state.messages);
         }
         // complete pending before finalized
-        if (isPending) {
-          setIsPending(false);
-        }
+        setIsPending(false);
+
         // update nonce for rerender on each stream update
         setNonce((n) => n + 1);
       },
@@ -96,20 +100,18 @@ export function useGenerative(type: PerformerElement["type"]): {
         if (element.node?.state.messages) {
           setMessages(element.node.state.messages);
         }
-        if (isPending) {
-          setIsPending(false);
-        }
+        setIsPending(false);
         setFinalize(true);
       },
     });
     setElement(element);
     return () => {
-      // performer.remove();
+      performer.remove(id);
     };
-  }, []);
+  }, deps);
 
   // finalize after render
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (finalize) {
       performer.finalize(id);
       setFinalize(false);

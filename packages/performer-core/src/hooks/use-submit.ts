@@ -1,5 +1,5 @@
-import { useContext, useEffect, useState } from "react";
-import { GenerativeContext } from "../components/Generative.js";
+import { useContext } from "react";
+import { GenerativeContext } from "../index.js";
 
 export function useSubmit(role: "user" | "assistant" | "system" = "user") {
   const { performer } = useContext(GenerativeContext);

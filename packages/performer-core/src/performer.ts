@@ -1,6 +1,6 @@
 import type { PerformerElement } from "./element.js";
 import { PerformerNode } from "./node.js";
-import { render, resolveMessages } from "./render.js";
+import { freeElement, render, resolveMessages } from "./render.js";
 import {
   createErrorEvent,
   createLifecycleEvent,
@@ -11,6 +11,7 @@ import type { PerformerMessage } from "./message.js";
 import {
   getLogger,
   logEvent,
+  logger,
   nodeToStr,
   setLogLevel,
   toLogFmt,
@@ -145,18 +146,24 @@ export class Performer {
         );
       }
       sibling.sibling = element;
+      element.parent = sibling.parent;
       logger.info(`Insert sibling ${id} on ${sibling.id}`);
     }
     // register
     this.elementMap.set(id, element);
-    // render
-    this.queueRender("new element");
+    // set render before next render since we know state has changed
+    this.setRendering();
+    this.queueRender("remove element");
     return element;
   }
 
   remove(id: string) {
-    // remove from node map
-    // unlink
+    const logger = getLogger("Performer:remove");
+    logger.debug(`id=${id}`);
+    freeElement(this.elementMap.get(id)!);
+    this.elementMap.delete(id);
+    this.setRendering();
+    this.queueRender("new element");
   }
 
   finalize(id: string) {
@@ -196,16 +203,19 @@ export class Performer {
 
   setFinished() {
     this.state = "finished";
+    logger.debug(`state=${this.state}`);
     this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
   }
 
   setRendering() {
     this.state = "rendering";
+    logger.debug(`state=${this.state}`);
     this.dispatchEvent(createLifecycleEvent("root", { state: "rendering" }));
   }
 
   setListening() {
     this.state = "listening";
+    logger.debug(`state=${this.state}`);
     this.dispatchEvent(createLifecycleEvent("root", { state: "listening" }));
   }
 

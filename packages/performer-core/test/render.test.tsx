@@ -1,12 +1,21 @@
 /* @vitest-environment jsdom */
-import { test } from "vitest";
-import { Action } from "../src/components/Action.js";
-import { MessageDelta, readTextContent } from "../src/index.js";
+import { expect, test } from "vitest";
+import {
+  Action,
+  Generative,
+  GenerativeContext,
+  GenerativeContextType,
+  MessageDelta,
+  Performer,
+  PerformerMessage,
+  readTextContent,
+  System,
+} from "../src/index.js";
 import { sleep } from "openai/core";
-import { Generative } from "../src/components/Generative.js";
-import { render } from "@testing-library/react";
+import { findAllByText, findByText, render } from "@testing-library/react";
+import { ReactNode, useContext, useEffect, useState } from "react";
 
-test("should re-render on each stream update but not finalize until stream complete", async () => {
+test("should render on each stream update but not finalize until stream complete", async () => {
   function streamAction() {
     const chars = ["A", "B", "C", "D", "E"];
     return new ReadableStream<MessageDelta>({
@@ -39,6 +48,22 @@ test("should re-render on each stream update but not finalize until stream compl
   await findByText("A!");
   await sleep(1000);
   await findByText("ABCDE!");
+});
+
+test("should update when message prop changes", async () => {
+  const app = (
+    <Generative options={{ logLevel: "debug" }}>
+      <System content={"A"}>{(message) => readTextContent(message)}</System>
+    </Generative>
+  );
+  const { rerender, findByText } = render(app);
+  await findByText("A");
+  rerender(
+    <Generative options={{ logLevel: "debug" }}>
+      <System content={"B"}>{(message) => readTextContent(message)}</System>
+    </Generative>,
+  );
+  await findByText("B");
 });
 
 // function Container({ children }: any) {
@@ -146,92 +171,178 @@ test("should re-render on each stream update but not finalize until stream compl
 //   await testHydration(performer);
 // });
 //
-// test("should update links when elements are reordered", async () => {
-//   function Rotate({ children }: any) {
-//     const offset = useState(0);
-//     return () => {
-//       let _offset = offset.value % children.length;
-//       return children.slice(_offset).concat(children.slice(0, _offset));
-//     };
-//   }
-//   function Item({ children }: any) {
-//     return () => <user content={[{ type: "text", text: children }]} />;
-//   }
-//   const app = (
-//     <Rotate>
-//       <Item>One</Item>
-//       <Item>Two</Item>
-//       <Item>Three</Item>
-//     </Rotate>
-//   );
-//   const performer = new Performer(app, { logLevel: "trace" });
-//   performer.start();
-//   await performer.waitUntilFinished();
-//
-//   let messages = resolveMessages(performer.root, undefined);
-//   expect(messages).toHaveLength(3);
-//
-//   const offset = performer.root!.hooks["state-0"];
-//   offset!.value += 1;
-//   performer.start();
-//
-//   await performer.waitUntilFinished();
-//   messages = resolveMessages(performer.root, undefined);
-//   expect(messages).toHaveLength(3);
-//   await testHydration(performer);
-// });
-//
-// test("should render new elements when dynamically added or removed", async () => {
-//   function Repeat({ children }: any) {
-//     const times = useState(1);
-//     return () => Array(times.value).fill(children).flat();
-//   }
-//   const app = (
-//     <Repeat>
-//       <user>Greet the user</user>
-//     </Repeat>
-//   );
-//   let performer = new Performer(app, { logLevel: "trace" });
-//   performer.start();
-//   await performer.waitUntilFinished();
-//   let messages = resolveMessages(performer.root, undefined);
-//   expect(messages).toHaveLength(1);
-//
-//   // rehydrate for second run
-//   performer = await testHydration(performer);
-//   // change state for second run
-//   let times = performer.root!.hooks["state-0"];
-//   times.value += 4;
-//   performer.start();
-//   // second run
-//   await performer.waitUntilFinished();
-//   messages = resolveMessages(performer.root, undefined);
-//   expect(messages).toHaveLength(5);
-//
-//   // rehydrate for third run
-//   performer = await testHydration(performer);
-//   // change state for third run
-//   times = performer.root!.hooks["state-0"];
-//   times.value -= 2;
-//   performer.start();
-//   // third run
-//   await performer.waitUntilFinished();
-//   messages = resolveMessages(performer.root, undefined);
-//   expect(messages).toHaveLength(3);
-//
-//   // rehydrate for fourth run
-//   performer = await testHydration(performer);
-//   // change state for fourth run
-//   times = performer.root!.hooks["state-0"];
-//   times.value -= 1;
-//   performer.start();
-//   // fourth run
-//   await performer.waitUntilFinished();
-//   messages = resolveMessages(performer.root, undefined);
-//   expect(messages).toHaveLength(2);
-//   // final hydration test
-//   performer = await testHydration(performer);
-// }, 30_000);
+test("should update message order when elements are reordered", async () => {
+  function Rotate({ children, offset = 0 }: any) {
+    return children.slice(offset).concat(children.slice(0, offset));
+  }
+  let performer: Performer;
+  function GetContext() {
+    const context = useContext(GenerativeContext);
+    performer = context.performer;
+    return null;
+  }
+  const renderContent = (message: PerformerMessage) => readTextContent(message);
+
+  const renderApp = (offset: number) => (
+    <Generative options={{ logLevel: "debug" }}>
+      <GetContext />
+      <Rotate offset={offset}>
+        <System content="A">{renderContent}</System>
+        <System content="B">{renderContent}</System>
+        <System content="C">{renderContent}</System>
+      </Rotate>
+    </Generative>
+  );
+
+  const { rerender, findByText } = render(renderApp(0));
+
+  let elementA = await findByText("A");
+  let elementB = await findByText("B");
+  let elementC = await findByText("C");
+
+  // Assert the order of elements
+  expect(elementA.compareDocumentPosition(elementB)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+  expect(elementB.compareDocumentPosition(elementC)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+
+  let messages = performer!.getAllMessages();
+  expect(messages.map((m) => m.content)).toEqual(["A", "B", "C"]);
+
+  // rotate right
+  rerender(renderApp(-1));
+
+  elementA = await findByText("A");
+  elementB = await findByText("B");
+  elementC = await findByText("C");
+
+  expect(elementA.compareDocumentPosition(elementB)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+  expect(elementC.compareDocumentPosition(elementA)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+
+  messages = performer!.getAllMessages();
+  expect(messages.map((m) => m.content)).toEqual(["C", "A", "B"]);
+
+  // rotate left
+  rerender(renderApp(1));
+
+  elementA = await findByText("A");
+  elementB = await findByText("B");
+  elementC = await findByText("C");
+
+  expect(elementB.compareDocumentPosition(elementC)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+  expect(elementC.compareDocumentPosition(elementA)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  );
+
+  messages = performer!.getAllMessages();
+  expect(messages.map((m) => m.content)).toEqual(["B", "C", "A"]);
+});
+
+test("should render new elements when dynamically added or removed", async () => {
+  let performer: Performer;
+  function GetContext() {
+    const context = useContext(GenerativeContext);
+    performer = context.performer;
+    return null;
+  }
+  const renderContent = (message: PerformerMessage) => readTextContent(message);
+  function Repeater({ times, children }: any) {
+    return Array(times).fill(children).flat();
+  }
+  const renderApp = (times: number) => (
+    <Generative options={{ logLevel: "debug" }}>
+      <GetContext />
+      <Repeater times={times}>
+        <System content="A">{renderContent}</System>
+      </Repeater>
+    </Generative>
+  );
+  const { rerender, findAllByText } = render(renderApp(1));
+  let elements = await findAllByText("A");
+  let messages = performer!.getAllMessages();
+  expect(
+    elements.map((e) => e.textContent),
+    "Element content does match expected",
+  ).toEqual(["A"]);
+  expect(
+    elements.map((e) => e.textContent),
+    "Element content does not match messages",
+  ).toEqual(messages.map((m) => m.content));
+
+  // add two
+  console.log("add 2");
+  rerender(renderApp(3));
+  await performer!.waitUntilSettled();
+  elements = await findAllByText("A");
+  messages = performer!.getAllMessages();
+  expect(
+    elements.map((e) => e.textContent),
+    "Element content does match expected",
+  ).toEqual(["A", "A", "A"]);
+  expect(
+    elements.map((e) => e.textContent),
+    "Element content does not match messages",
+  ).toEqual(messages.map((m) => m.content));
+
+  // remove one
+  console.log("remove 1");
+  rerender(renderApp(2));
+  await performer!.waitUntilSettled();
+  elements = await findAllByText("A");
+  messages = performer!.getAllMessages();
+  expect(
+    elements.map((e) => e.textContent),
+    "Element content does match expected",
+  ).toEqual(["A", "A"]);
+  expect(
+    elements.map((e) => e.textContent),
+    "Element content does not match messages",
+  ).toEqual(messages.map((m) => m.content));
+  console.log("done");
+
+  // // rehydrate for second run
+  // performer = await testHydration(performer);
+  // // change state for second run
+  // let times = performer.root!.hooks["state-0"];
+  // times.value += 4;
+  // performer.start();
+  // // second run
+  // await performer.waitUntilFinished();
+  // messages = resolveMessages(performer.root, undefined);
+  // expect(messages).toHaveLength(5);
+  //
+  // // rehydrate for third run
+  // performer = await testHydration(performer);
+  // // change state for third run
+  // times = performer.root!.hooks["state-0"];
+  // times.value -= 2;
+  // performer.start();
+  // // third run
+  // await performer.waitUntilFinished();
+  // messages = resolveMessages(performer.root, undefined);
+  // expect(messages).toHaveLength(3);
+  //
+  // // rehydrate for fourth run
+  // performer = await testHydration(performer);
+  // // change state for fourth run
+  // times = performer.root!.hooks["state-0"];
+  // times.value -= 1;
+  // performer.start();
+  // // fourth run
+  // await performer.waitUntilFinished();
+  // messages = resolveMessages(performer.root, undefined);
+  // expect(messages).toHaveLength(2);
+  // // final hydration test
+  // performer = await testHydration(performer);
+}, 30_000);
 //
 // test("should unlink messages when removed by conditional", async () => {
 //   function Temp({ children }: any) {

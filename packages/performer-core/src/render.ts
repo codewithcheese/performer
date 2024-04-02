@@ -190,8 +190,7 @@ export function evaluateRenderOps(
   let childElement: PerformerElement | undefined = element.child;
   while (childElement || childNode) {
     if (!childElement) {
-      // todo handle orphans not return
-      return {};
+      break;
     }
     const childOps = evaluateRenderOps(
       // childThreadId,
@@ -538,6 +537,31 @@ async function consumeDeltaStream(
   //   index += 1;
   // }
   return message;
+}
+
+export function freeElement(element: PerformerElement) {
+  getLogger("render:freeElement").debug(`id=${element.id}`);
+  const parent = element.parent!;
+  // find previous sibling
+  let prevSibling;
+  if (parent.child !== element) {
+    prevSibling = parent.child;
+    while (prevSibling && prevSibling.sibling !== element) {
+      prevSibling = prevSibling.sibling;
+    }
+  }
+  // assign sibling as new first child
+  if (parent.child === element) {
+    parent.child = element.sibling;
+  }
+
+  if (prevSibling) {
+    prevSibling.sibling = element.sibling;
+  }
+
+  element.parent = undefined;
+  element.sibling = undefined;
+  element.child = undefined;
 }
 
 function freeNode(

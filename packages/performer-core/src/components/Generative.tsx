@@ -1,12 +1,12 @@
 import { createContext, ReactNode, useContext, useState } from "react";
 import { Performer, PerformerOptions } from "../performer.js";
 
-type GenerativeContext = {
+export type GenerativeContextType = {
   performer: Performer;
   signal: AbortSignal;
 };
 
-export const GenerativeContext = createContext<GenerativeContext>(null!);
+export const GenerativeContext = createContext<GenerativeContextType>(null!);
 
 export function Generative({
   children,
@@ -16,7 +16,7 @@ export function Generative({
   options?: PerformerOptions;
 }) {
   const [abortController] = useState(new AbortController());
-  const [context] = useState<GenerativeContext>({
+  const [context] = useState<GenerativeContextType>({
     performer: new Performer(options),
     signal: abortController.signal,
   });
