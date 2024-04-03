@@ -14,7 +14,3 @@ export type PerformerElement = {
   sibling?: PerformerElement;
   node?: PerformerNode;
 };
-
-export function Fragment(props: any) {
-  return props.children;
-}

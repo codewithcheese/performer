@@ -1,11 +1,9 @@
 /* @vitest-environment jsdom */
 import { expect, test } from "vitest";
-import { Assistant, System } from "../../src/index.js";
+import { Assistant, Generative, Message, System } from "../../src/index.js";
 import { render } from "@testing-library/react";
-import { Message } from "../../src/components/Message.js";
 import { sleep } from "openai/core";
 import "dotenv/config";
-import { Generative } from "../../src/components/Generative.js";
 
 test("should call model with messages", async () => {
   let done = false;

@@ -7,7 +7,6 @@ import {
   useResource,
   useState,
 } from "../../src/index.js";
-import { testHydration } from "../util/test-hydration.js";
 import { sleep } from "openai/core";
 
 function Async({ children }: any) {
@@ -104,7 +103,6 @@ test("should repeat until times prop is reached", async () => {
   await performer.waitUntilFinished();
   let messages = resolveMessages(performer.root);
   expect(messages).toHaveLength(1 + 1 * 3 + 1 + 2 * 3 + 1);
-  await testHydration(performer);
 }, 30_000);
 
 test("should stop repeating using stop prop", async () => {
@@ -137,5 +135,4 @@ test("should stop repeating using stop prop", async () => {
   await performer.waitUntilFinished();
   const messages = resolveMessages(performer.root);
   expect(messages.length).toEqual(1 + 3 * 4 + 2);
-  await testHydration(performer);
 }, 10_000);

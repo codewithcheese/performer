@@ -2,7 +2,6 @@ import {
   DependencyList,
   MutableRefObject,
   useContext,
-  useEffect,
   useId,
   useLayoutEffect,
   useRef,

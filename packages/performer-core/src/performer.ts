@@ -1,26 +1,13 @@
 import type { PerformerElement } from "./element.js";
 import { PerformerNode } from "./node.js";
 import { freeElement, render, resolveMessages } from "./render.js";
-import {
-  createErrorEvent,
-  createLifecycleEvent,
-  PerformerErrorEvent,
-  PerformerEventMap,
-} from "./event.js";
 import type { PerformerMessage } from "./message.js";
-import {
-  getLogger,
-  logEvent,
-  logger,
-  nodeToStr,
-  setLogLevel,
-  toLogFmt,
-} from "./util/log.js";
+import { getLogger, logger, setLogLevel, toLogFmt } from "./util/log.js";
 import { getEnv } from "./util/env.js";
-import { LogLevels, type LogType } from "consola";
+import { type LogType } from "consola";
 import Emittery from "emittery";
-import { ActionType } from "./action.js";
-import { assertTrue, assertTruthy } from "./util/assert.js";
+import { assertTruthy } from "./util/assert.js";
+import { withResolvers } from "./util/with-resolvers.js";
 
 export type PerformerOptions = {
   throwOnError?: boolean;
@@ -35,8 +22,8 @@ export class Performer {
   app: PerformerElement;
   root?: PerformerNode;
   options: PerformerOptions;
-  errors: PerformerErrorEvent[] = [];
-  state: PerformerState = "pending";
+  #state: PerformerState = "pending";
+  #statePromises: Map<PerformerState, () => void> = new Map();
 
   elementMap: Map<string, PerformerElement> = new Map();
 
@@ -49,10 +36,6 @@ export class Performer {
   renderQueued = false;
   renderQueuedReason: string = "";
   renderInProgress: boolean = false;
-
-  threadNonce = 0;
-
-  emitter = new Emittery<PerformerEventMap>();
 
   constructor(options: PerformerOptions = {}) {
     this.#uid = crypto.randomUUID();
@@ -68,11 +51,6 @@ export class Performer {
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
     }
-    // this.addEventListener("*", logEvent);
-    this.addEventListener("error", (error) => {
-      logger.error(error.detail.message);
-      this.errors.push(error);
-    });
     // insert a noop root
     this.app = {
       id: "root",
@@ -232,7 +210,7 @@ export class Performer {
   }
 
   abort() {
-    this.dispatchEvent(createLifecycleEvent("root", { state: "aborted" }));
+    // todo: test abort when running message action
     this.abortController.abort();
     // this.finish();
   }
@@ -240,19 +218,16 @@ export class Performer {
   setFinished() {
     this.state = "finished";
     logger.debug(`state=${this.state}`);
-    this.dispatchEvent(createLifecycleEvent("root", { state: "finished" }));
   }
 
   setRendering() {
     this.state = "rendering";
     logger.debug(`state=${this.state}`);
-    this.dispatchEvent(createLifecycleEvent("root", { state: "rendering" }));
   }
 
   setListening() {
     this.state = "listening";
     logger.debug(`state=${this.state}`);
-    this.dispatchEvent(createLifecycleEvent("root", { state: "listening" }));
   }
 
   get aborted() {
@@ -317,36 +292,51 @@ export class Performer {
     this.queueRender("input fulfilled");
   }
 
-  async waitUntilFinished(signal?: AbortSignal) {
-    if (this.state === "finished") {
+  get state() {
+    return this.#state;
+  }
+
+  set state(value: PerformerState) {
+    this.#state = value;
+    this.resolveStatePromise(value);
+  }
+
+  private resolveStatePromise(state: PerformerState) {
+    const resolve = this.#statePromises.get(state);
+    if (resolve) {
+      resolve();
+      this.#statePromises.delete(state);
+    }
+  }
+
+  async waitForState(state: PerformerState, signal?: AbortSignal) {
+    if (this.state === state) {
       return;
     }
-    return new Promise<void>((resolve) => {
-      this.addEventListener("lifecycle", (event) => {
-        if (event.detail.state === "finished") {
-          resolve();
-        }
+
+    if (signal && signal.aborted) {
+      return;
+    }
+
+    const { promise, resolve } = withResolvers<void>();
+    this.#statePromises.set(state, resolve);
+
+    if (signal) {
+      signal.addEventListener("abort", () => {
+        this.#statePromises.delete(state);
+        resolve();
       });
-      if (signal) {
-        signal.addEventListener("abort", () => resolve());
-      }
-    });
+    }
+
+    await promise;
+  }
+
+  async waitUntilFinished(signal?: AbortSignal) {
+    await this.waitForState("finished", signal);
   }
 
   async waitUntilListening(signal?: AbortSignal) {
-    if (this.state === "listening") {
-      return;
-    }
-    return new Promise<void>((resolve) => {
-      this.addEventListener("lifecycle", (event) => {
-        if (event.detail.state === "listening") {
-          resolve();
-        }
-        if (signal) {
-          signal.addEventListener("abort", () => resolve());
-        }
-      });
-    });
+    await this.waitForState("listening", signal);
   }
 
   /**
@@ -363,30 +353,10 @@ export class Performer {
   }
 
   onError(threadId: string, error: unknown) {
-    this.dispatchEvent(createErrorEvent(threadId, { error }));
     this.setFinished();
     if (this.options.throwOnError) {
       throw error;
     }
     return Promise.resolve();
-  }
-
-  /* Events */
-
-  addEventListener<Type extends keyof PerformerEventMap>(
-    type: Type,
-    listener: (data: PerformerEventMap[Type]) => void,
-  ) {
-    if (type === "*") {
-      this.emitter.onAny((_, data) =>
-        listener(data as PerformerEventMap[Type]),
-      );
-    } else {
-      this.emitter.on(type, listener);
-    }
-  }
-
-  dispatchEvent(event: PerformerEventMap[keyof PerformerEventMap]) {
-    this.emitter.emit(event.type as keyof PerformerEventMap, event);
   }
 }

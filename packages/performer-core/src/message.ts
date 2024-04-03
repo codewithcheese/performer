@@ -1,4 +1,4 @@
-import { jsx } from "./jsx/index.js";
+// import { jsx } from "./jsx/index.js";
 
 export type PerformerMessage =
   | UserMessage
@@ -148,14 +148,14 @@ export function readTextContent(message: PerformerMessage) {
         .join(" ");
 }
 
-export function messagesToElements(
-  messages: PerformerMessage[],
-  onMessage?: (message: PerformerMessage) => void,
-) {
-  return messages.map((message) => {
-    return jsx(message.role, { ...message, onMessage });
-  });
-}
+// export function messagesToElements(
+//   messages: PerformerMessage[],
+//   onMessage?: (message: PerformerMessage) => void,
+// ) {
+//   return messages.map((message) => {
+//     return jsx(message.role, { ...message, onMessage });
+//   });
+// }
 
 export function concatDelta(previous: MessageDelta, delta: MessageDelta) {
   if (delta.content != null) {
