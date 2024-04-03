@@ -642,7 +642,7 @@ export function resolveMessages(
     // if (typeof cursor.type === "string") {
     //   messages.push(nodeToMessage(cursor));
     // }
-    if (cursor.state.messages) {
+    if (cursor.state.messages && cursor.status === "RESOLVED") {
       messages.push(...cursor.state.messages);
     }
 

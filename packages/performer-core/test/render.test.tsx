@@ -9,6 +9,7 @@ import {
   PerformerMessage,
   readTextContent,
   System,
+  UserMessage,
 } from "../src/index.js";
 import { sleep } from "openai/core";
 import { render } from "@testing-library/react";
@@ -466,43 +467,59 @@ describe("Render", () => {
     messages = performer!.getAllMessages();
     expect(messages.map((m) => m.content)).toEqual([]);
   });
-  //
-  // test("should wait for async message actions", async () => {
-  //   function AsyncMessage() {
-  //     const isReady = useState<boolean>(false);
-  //     useResource(sleep, 10);
-  //     isReady.value = true;
-  //     return () => isReady && <system>Your name is Bob</system>;
-  //   }
-  //
-  //   const app = (
-  //     <Container>
-  //       <AsyncMessage />
-  //       <assistant>Hi, how can I help?</assistant>
-  //       <user>Hold me close</user>
-  //     </Container>
-  //   );
-  //   const performer = new Performer(app);
-  //   console.time("Render");
-  //   performer.start();
-  //   await performer.waitUntilFinished();
-  //   console.timeEnd("Render");
-  //   const messages = resolveMessages(performer.root);
-  //   expect(messages).toHaveLength(3);
-  //   expect(messages[0]).toEqual({
-  //     role: "system",
-  //     content: "Your name is Bob",
-  //   });
-  //   expect(messages[1]).toEqual({
-  //     role: "assistant",
-  //     content: "Hi, how can I help?",
-  //   });
-  //   expect(messages[2]).toEqual({
-  //     role: "user",
-  //     content: "Hold me close",
-  //   });
-  //   await testHydration(performer);
-  // });
+
+  test("should wait for async message actions depth first", async () => {
+    const after100ms = async (content: string) => {
+      await sleep(100);
+      return { role: "user" as const, content };
+    };
+    const renderApp = () => (
+      <Generative options={{ logLevel: "debug" }}>
+        <UsePerformer />
+        <Message action={() => after100ms("A")}>
+          {(message) => (
+            <>
+              {renderContent(message)}
+              <Message action={() => after100ms("B")}>{renderContent}</Message>
+            </>
+          )}
+        </Message>
+        <System content="C">{renderContent}</System>
+      </Generative>
+    );
+
+    const { container, findByText } = render(renderApp());
+    // wait for A
+    // await sleep(10_000);
+    console.log(container.innerHTML);
+    await findByText("A");
+    let elements = container.querySelectorAll(`[data-performer-id]`);
+    expect(Array.from(elements).map((e) => e.textContent)).toEqual([
+      "A",
+      "", // B should not be rendered yet
+      "", // C should not be rendered yet
+    ]);
+    let messages = performer!.getAllMessages();
+    expect(messages.map((m) => m.content)).toEqual(["A"]);
+    await findByText("B");
+    elements = container.querySelectorAll(`[data-performer-id]`);
+    expect(Array.from(elements).map((e) => e.textContent)).toEqual([
+      "AB", // A contains both A and B text content
+      "B",
+      "", // C should not be rendered yet
+    ]);
+    messages = performer!.getAllMessages();
+    expect(messages.map((m) => m.content)).toEqual(["A", "B"]);
+    await findByText("C");
+    elements = container.querySelectorAll(`[data-performer-id]`);
+    expect(Array.from(elements).map((e) => e.textContent)).toEqual([
+      "AB", // A contains both A and B text content
+      "B",
+      "C",
+    ]);
+    messages = performer!.getAllMessages();
+    expect(messages.map((m) => m.content)).toEqual(["A", "B", "C"]);
+  }, 30_000);
   //
   // test("should render tree", async () => {
   //   function First(props: any) {
