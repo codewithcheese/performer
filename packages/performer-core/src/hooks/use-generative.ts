@@ -2,6 +2,7 @@ import {
   DependencyList,
   MutableRefObject,
   useContext,
+  useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -14,10 +15,12 @@ import { PerformerMessage } from "../message.js";
 
 const logger = getLogger("useGenerative");
 
-export function findPreviousElement(
+type AncestorRecord = { id: string; type: "parent" | "sibling" };
+
+export function findDOMAncestor(
   element: HTMLElement,
   attrName: string = "data-performer-id",
-): { id: string; type: "parent" | "sibling" } | null {
+): AncestorRecord {
   // Check previous siblings
   let sibling = element.previousElementSibling;
   while (sibling) {
@@ -39,7 +42,7 @@ export function findPreviousElement(
   }
 
   // No matching element found
-  return null;
+  return { id: "root", type: "parent" };
 }
 
 export function useGenerative(
@@ -56,6 +59,7 @@ export function useGenerative(
   const ref = useRef<HTMLDivElement>(null);
   const [isPending, setIsPending] = useState(true);
   const [finalize, setFinalize] = useState(false);
+  const [ancestor, setAncestor] = useState<AncestorRecord | null>(null);
   const [element, setElement] = useState<PerformerElement | null>(null);
   const [_, setNonce] = useState(0);
   const [messages, setMessages] = useState<PerformerMessage[]>([]);
@@ -80,11 +84,12 @@ export function useGenerative(
       );
       throw Error("usePerformer: data-performer-id attribute not set");
     }
-    const previous = findPreviousElement(ref.current);
-    const element = performer.insert({
+    const ancestor = findDOMAncestor(ref.current);
+    setAncestor(ancestor);
+    const element = performer.upsert({
       id,
       type,
-      previous,
+      ancestor,
       onStreaming: () => {
         if (element.node?.state.messages) {
           setMessages(element.node.state.messages);
@@ -117,6 +122,25 @@ export function useGenerative(
       setFinalize(false);
     }
   }, [finalize]);
+
+  const renderCount = useRef(0);
+  useLayoutEffect(() => {
+    if (!ref.current) {
+      throw Error("usePerformer: ref not set");
+    }
+    if (!ancestor) {
+      return;
+    }
+    const currentAncestor = findDOMAncestor(ref.current);
+    if (currentAncestor.id !== ancestor.id) {
+      setAncestor(currentAncestor);
+      performer.updateAncestor(id, currentAncestor, ancestor);
+    }
+    renderCount.current++;
+    // console.log(
+    //   `Generative id=${id} ancestorId=${currentAncestor.id} isPending=${isPending} renderCount=${renderCount.current}`,
+    // );
+  });
 
   return { id, ref, isPending, element, messages };
 }

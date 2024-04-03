@@ -98,38 +98,72 @@ export class Performer {
     });
   }
 
-  insert({
+  upsert({
     id,
     type,
     props = {},
-    previous,
+    ancestor,
     onFinalize,
     onStreaming,
   }: {
     id: string;
     type: PerformerElement["type"];
     props?: Record<string, any>;
-    previous: { id: string; type: "parent" | "sibling" } | null;
+    ancestor: { id: string; type: "parent" | "sibling" };
     onFinalize: () => void;
     onStreaming: () => void;
   }) {
-    const logger = getLogger("Performer:insert");
-    const element: PerformerElement = {
-      id,
-      type,
-      props,
-      onFinalize,
-      onStreaming,
-    };
+    const logger = getLogger("Performer:upsert");
+    let element = this.elementMap.get(id);
+    if (!element) {
+      // insert element
+      logger.debug(`insert=${id}`);
+      element = {
+        id,
+        type,
+        props,
+        onFinalize,
+        onStreaming,
+      };
+    } else {
+      logger.debug(`update=${id}`);
+      element = { ...element, type, props, onFinalize, onStreaming };
+    }
 
-    if (!previous) {
-      // no previous assign as first child of root
-      const parent = this.app;
-      element.parent = this.app;
-      parent.child = element;
-      logger.info(`Insert child ${id} on root.`);
-    } else if (previous.type === "parent") {
-      const parent = this.elementMap.get(previous.id);
+    this.elementMap.set(id, element);
+    this.updateAncestor(id, ancestor);
+
+    return element;
+  }
+
+  updateAncestor(
+    id: string,
+    newAncestor: { id: string; type: "parent" | "sibling" },
+    oldAncestor?: { id: string; type: "parent" | "sibling" },
+  ) {
+    const logger = getLogger("Performer:updateAncestor");
+    const element = this.elementMap.get(id)!;
+    // unlink old ancestor
+    if (oldAncestor) {
+      const ancestor = this.elementMap.get(oldAncestor.id)!;
+      // unlink old ancestor if still exists and it still points at element
+      if (
+        ancestor &&
+        oldAncestor.type === "parent" &&
+        ancestor.child === element
+      ) {
+        ancestor.child = undefined;
+      } else if (
+        ancestor &&
+        oldAncestor.type === "sibling" &&
+        ancestor.sibling === element
+      ) {
+        ancestor.sibling = undefined;
+      }
+    }
+    // link new ancestor
+    if (newAncestor.type === "parent") {
+      const parent = this.elementMap.get(newAncestor.id);
       if (!parent) {
         throw Error(
           `Failed to insert Performer element ${id}. Parent not registered`,
@@ -139,7 +173,7 @@ export class Performer {
       parent.child = element;
       logger.info(`Insert child ${id} on ${parent.id}`);
     } else {
-      const sibling = this.elementMap.get(previous.id);
+      const sibling = this.elementMap.get(newAncestor.id);
       if (!sibling) {
         throw Error(
           `Failed to insert Performer element ${id}. Sibling not registered`,
@@ -149,12 +183,9 @@ export class Performer {
       element.parent = sibling.parent;
       logger.info(`Insert sibling ${id} on ${sibling.id}`);
     }
-    // register
-    this.elementMap.set(id, element);
-    // set render before next render since we know state has changed
+    // fixme: state changes should be handled by rendering logic
     this.setRendering();
-    this.queueRender("remove element");
-    return element;
+    this.queueRender("update ancestor");
   }
 
   remove(id: string) {
@@ -162,8 +193,9 @@ export class Performer {
     logger.debug(`id=${id}`);
     freeElement(this.elementMap.get(id)!);
     this.elementMap.delete(id);
+    // fixme: state changes should be handled by rendering logic
     this.setRendering();
-    this.queueRender("new element");
+    this.queueRender("remove element");
   }
 
   finalize(id: string) {
