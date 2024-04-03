@@ -61,6 +61,7 @@ export function useGenerative(
   const [finalize, setFinalize] = useState(false);
   const [ancestor, setAncestor] = useState<AncestorRecord | null>(null);
   const [element, setElement] = useState<PerformerElement | null>(null);
+  const [error, setError] = useState<unknown | null>(null);
   const [_, setNonce] = useState(0);
   const [messages, setMessages] = useState<PerformerMessage[]>([]);
   const context = useContext(GenerativeContext);
@@ -108,6 +109,12 @@ export function useGenerative(
         setIsPending(false);
         setFinalize(true);
       },
+      onError: (error: unknown) => {
+        if (!error) {
+          error = new Error("Undefined error");
+        }
+        setError(error);
+      },
     });
     setElement(element);
     return () => {
@@ -141,6 +148,8 @@ export function useGenerative(
     //   `Generative id=${id} ancestorId=${currentAncestor.id} isPending=${isPending} renderCount=${renderCount.current}`,
     // );
   });
+
+  if (error) throw error;
 
   return { id, ref, isPending, element, messages };
 }

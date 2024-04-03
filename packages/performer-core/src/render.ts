@@ -2,7 +2,7 @@ import { type PerformerElement } from "./element.js";
 import {
   createNode,
   type PerformerNode,
-  SerializedNode,
+  setNodeError,
   setNodeFinalize,
   setNodeStreaming,
 } from "./node.js";
@@ -243,7 +243,6 @@ export function evaluateRenderOps(
 export async function performOp(
   performer: Performer,
   op: CreateOp | ResumeOp,
-  serialized?: SerializedNode,
 ): Promise<PerformerNode> {
   let node;
   if (op.type === "CREATE") {
@@ -254,7 +253,6 @@ export async function performOp(
       parent,
       prevSibling,
       child,
-      serialized,
     });
     if (!parent) {
       performer.root = node;
@@ -301,54 +299,59 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   //   nonce: 0,
   //   abortController: performer.abortController,
   // });
-  // try {
-  const type = node.element.type;
-  // try {
-  if (type instanceof Function) {
-    const messages = resolveMessages(performer.root, node);
-    let results = await type({
-      messages,
-      signal: performer.abortController.signal,
-    });
-    if (results instanceof ReadableStream) {
-      node.state.stream = results;
-      node.status = "PAUSED";
-      const message = await consumeDeltaStream(
-        performer,
-        node,
-        node.state.stream,
-      );
-      node.state.messages = [message];
-      setNodeFinalize(node);
-      logger.debug(`${node.element.id} stream resolved. status=${node.status}`);
-      performer.queueRender("stream resolved");
-    } else if (results && typeof results === "object") {
-      if (!Array.isArray(results)) {
-        results = [results];
-      }
-      if (!results.every(isMessage)) {
-        throw Error(
-          `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(results)}.`,
+  try {
+    const type = node.element.type;
+    if (type instanceof Function) {
+      const messages = resolveMessages(performer.root, node);
+      let results = await type({
+        messages,
+        signal: performer.abortController.signal,
+      });
+      if (results instanceof ReadableStream) {
+        node.state.stream = results;
+        node.status = "PAUSED";
+        const message = await consumeDeltaStream(
+          performer,
+          node,
+          node.state.stream,
         );
+        node.state.messages = [message];
+        setNodeFinalize(node);
+        logger.debug(
+          `${node.element.id} stream resolved. status=${node.status}`,
+        );
+        performer.queueRender("stream resolved");
+      } else if (results && typeof results === "object") {
+        if (!Array.isArray(results)) {
+          results = [results];
+        }
+        if (!results.every(isMessage)) {
+          throw Error(
+            `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(results)}.`,
+          );
+        }
+        node.state.messages = results;
+        setNodeFinalize(node);
+        logger.debug(
+          `${node.element.id} messages resolved. status=${node.status}`,
+        );
+      } else {
+        setNodeFinalize(node);
+        logger.debug(`${node.element.id} resolved. status=${node.status}`);
       }
-      node.state.messages = results;
-      setNodeFinalize(node);
-      logger.debug(
-        `${node.element.id} messages resolved. status=${node.status}`,
-      );
-    } else {
-      setNodeFinalize(node);
-      logger.debug(`${node.element.id} resolved. status=${node.status}`);
+    } else if (type === "LISTENER") {
+      if (performer.inputQueue.length) {
+        node.state.messages = performer.inputQueue;
+        performer.inputQueue = [];
+        setNodeFinalize(node);
+      } else {
+        node.status = "LISTENING";
+        logger.debug(`${node.element.id} listening.`);
+      }
     }
-  } else if (type === "LISTENER") {
-    if (performer.inputQueue.length) {
-      node.state.messages = performer.inputQueue;
-      performer.inputQueue = [];
-      setNodeFinalize(node);
-    } else {
-      node.status = "LISTENING";
-      logger.debug(`${node.element.id} listening.`);
-    }
+  } catch (e) {
+    logger.debug(`${node.element.id} exception. error=${e}`);
+    setNodeError(node, e);
   }
 
   // if (!Array.isArray(results)) {

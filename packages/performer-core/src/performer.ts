@@ -80,6 +80,7 @@ export class Performer {
       props: {},
       onFinalize: () => this.finalize("root"),
       onStreaming: () => {},
+      onError: () => {},
     };
     this.elementMap.set("root", this.app);
   }
@@ -105,6 +106,7 @@ export class Performer {
     ancestor,
     onFinalize,
     onStreaming,
+    onError,
   }: {
     id: string;
     type: PerformerElement["type"];
@@ -112,6 +114,7 @@ export class Performer {
     ancestor: { id: string; type: "parent" | "sibling" };
     onFinalize: () => void;
     onStreaming: () => void;
+    onError: (error: unknown) => void;
   }) {
     const logger = getLogger("Performer:upsert");
     let element = this.elementMap.get(id);
@@ -124,10 +127,11 @@ export class Performer {
         props,
         onFinalize,
         onStreaming,
+        onError,
       };
     } else {
       logger.debug(`update=${id}`);
-      element = { ...element, type, props, onFinalize, onStreaming };
+      element = { ...element, type, props, onFinalize, onStreaming, onError };
     }
 
     this.elementMap.set(id, element);

@@ -7,6 +7,7 @@ export type PerformerElement = {
   props: { afterChildren?: () => void };
   onFinalize: () => void;
   onStreaming: () => void;
+  onError: (error: unknown) => void;
   // links
   parent?: PerformerElement;
   child?: PerformerElement;

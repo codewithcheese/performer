@@ -1,5 +1,13 @@
 /* @vitest-environment jsdom */
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import {
   Message,
   Generative,
@@ -12,8 +20,8 @@ import {
   UserMessage,
 } from "../src/index.js";
 import { sleep } from "openai/core";
-import { render } from "@testing-library/react";
-import { useContext } from "react";
+import { findByText, render } from "@testing-library/react";
+import { Component, ErrorInfo, ReactNode, useContext } from "react";
 
 describe("Render", () => {
   let performer: Performer | undefined;
@@ -520,72 +528,46 @@ describe("Render", () => {
     messages = performer!.getAllMessages();
     expect(messages.map((m) => m.content)).toEqual(["A", "B", "C"]);
   }, 30_000);
-  //
-  // test("should render tree", async () => {
-  //   function First(props: any) {
-  //     return () => props.children;
-  //   }
-  //   function Second(props: any) {
-  //     return () => props.children;
-  //   }
-  //   function Greet(props: any) {
-  //     return () => props.children;
-  //   }
-  //   function Child() {
-  //     return () => null;
-  //   }
-  //   function Third() {
-  //     return () => <Child />;
-  //   }
-  //
-  //   const app = (
-  //     <>
-  //       <First>Greet the user</First>
-  //       <Second>
-  //         <Greet>Hello world</Greet>
-  //         <Third />
-  //       </Second>
-  //     </>
-  //   );
-  //   const performer = new Performer(app);
-  //   performer.start();
-  //   await performer.waitUntilFinished();
-  //   const root = performer.root!;
-  //   expect(root.parent).toBeUndefined();
-  //   expect(root.nextSibling).toBeUndefined();
-  //   expect(root.prevSibling).toBeUndefined();
-  //   const expected = {
-  //     type: "Fragment",
-  //     children: [
-  //       { type: "First", props: { children: "Greet the user" } },
-  //       {
-  //         type: "Second",
-  //         children: [
-  //           { type: "Greet", props: { children: "Hello world" } },
-  //           { type: "Third" },
-  //         ],
-  //       },
-  //     ],
-  //   };
-  //   expectTree(performer.root!, expected);
-  //   expect(root.child?.nextSibling?.nextSibling).toBeUndefined();
-  //   await testHydration(performer);
-  // });
-  //
-  // test("should catch sync component that throws", async () => {
-  //   function App() {
-  //     throw Error("Throwing!");
-  //     return () => {};
-  //   }
-  //   const performer = new Performer(<App />, { throwOnError: false });
-  //   performer.start();
-  //   const events: PerformerErrorEvent[] = [];
-  //   performer.addEventListener("error", (event) => {
-  //     events.push(event);
-  //   });
-  //   await performer.waitUntilFinished();
-  //   expect(events).toHaveLength(1);
-  // });
+
+  test("should bubble message action exceptions", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      class ErrorBoundary extends Component<
+        { children?: ReactNode },
+        { error: Error | null }
+      > {
+        public state: { error: Error | null } = {
+          error: null,
+        };
+        public static getDerivedStateFromError(error: Error) {
+          return { error };
+        }
+        public render() {
+          return this.state.error ? (
+            <div>{this.state.error.message}</div>
+          ) : (
+            this.props.children
+          );
+        }
+      }
+      const { findByText } = render(
+        <Generative options={{ logLevel: "debug" }}>
+          <ErrorBoundary>
+            <Message
+              action={() => {
+                throw Error("A");
+              }}
+            />
+          </ErrorBoundary>
+        </Generative>,
+      );
+      const element = await findByText("A");
+      expect(element.textContent).toEqual("A");
+    } finally {
+      // @ts-expect-error TS not aware of mock
+      console.error.mockRestore();
+    }
+  });
   //
   // test("should catch resumed component that throws", async () => {
   //   function App() {

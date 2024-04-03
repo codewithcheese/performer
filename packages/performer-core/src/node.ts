@@ -1,20 +1,15 @@
-import type { Component } from "./component.js";
 import type { PerformerElement } from "./element.js";
-import type { HookRecord } from "./hooks/index.js";
-import { MessageDelta, PerformerMessage } from "./message.js";
-import { hydrateHooks } from "./hydration.js";
+import { PerformerMessage } from "./message.js";
 import { nanoid } from "nanoid";
-import { nodeToStr } from "./util/log.js";
-import { Fragment } from "./jsx/index.js";
-import { ActionType } from "./action.js";
 
 export type NodeStatus =
   | "PENDING" // initial state
-  | "PAUSED" // ??
+  | "PAUSED" // fixme: remove
   | "FINALIZE" // ready for ack from React before becoming resolved
   | "RESOLVED" // done
   | "LISTENING" // type LISTENER, transitions to FINALIZE once input queue is assigned to messages
-  | "STREAMING"; //
+  | "STREAMING"
+  | "ERROR";
 
 export type PerformerNode = {
   // threadId: string;
@@ -50,12 +45,17 @@ export function setNodeStreaming(node: PerformerNode) {
   node.element.onStreaming();
 }
 
-export type SerializedNode = {
-  uid: string;
-  type: string;
-  hooks: Record<string, unknown> & HookRecord;
-  children: SerializedNode[];
-};
+export function setNodeError(node: PerformerNode, error: unknown) {
+  node.status = "ERROR";
+  node.element.onError(error);
+}
+
+// export type SerializedNode = {
+//   uid: string;
+//   type: string;
+//   hooks: Record<string, unknown> & HookRecord;
+//   children: SerializedNode[];
+// };
 
 // export function isRawNode(node: PerformerNode): node is RawNode {
 //   return node.type === "raw";
@@ -84,14 +84,14 @@ export function createNode({
   parent,
   prevSibling,
   child,
-  serialized,
+  // serialized,
 }: {
   // threadId: string;
   element: PerformerElement;
   parent?: PerformerNode;
   prevSibling?: PerformerNode;
   child?: PerformerNode;
-  serialized?: SerializedNode;
+  // serialized?: SerializedNode;
 }): PerformerNode {
   // validateElement(element, parent);
   // React compat Fragment type is Symbol(react.fragment)
@@ -99,7 +99,7 @@ export function createNode({
   return {
     // _typeName: typeof type === "string" ? type : type.name,
     // threadId,
-    uid: serialized ? serialized.uid : nanoid(),
+    uid: nanoid(),
     // props: element.props,
     element,
     state: {
@@ -107,7 +107,7 @@ export function createNode({
     },
     // hooks: serialized ? hydrateHooks(serialized.hooks) : {},
     status: "PENDING",
-    isHydrating: !!serialized,
+    isHydrating: false,
     parent,
     child,
     prevSibling,
