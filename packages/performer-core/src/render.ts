@@ -182,6 +182,10 @@ export function evaluateRenderOps(
     };
   }
 
+  if (node.status === "ERROR") {
+    return {};
+  }
+
   let ops: Record<string, RenderOp> = {};
   let index = 0;
   // let childThreadId = node.hooks.thread?.id ? node.hooks.thread.id : threadId;

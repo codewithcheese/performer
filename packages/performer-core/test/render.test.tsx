@@ -9,19 +9,18 @@ import {
   vi,
 } from "vitest";
 import {
-  Message,
   Generative,
   GenerativeContext,
+  Message,
   MessageDelta,
   Performer,
   PerformerMessage,
   readTextContent,
   System,
-  UserMessage,
 } from "../src/index.js";
 import { sleep } from "openai/core";
 import { findByText, render } from "@testing-library/react";
-import { Component, ErrorInfo, ReactNode, useContext } from "react";
+import { Component, ReactNode, useContext } from "react";
 
 describe("Render", () => {
   let performer: Performer | undefined;
@@ -103,111 +102,6 @@ describe("Render", () => {
     await findByText("B");
   });
 
-  // function Container({ children }: any) {
-  //   return () => children;
-  // }
-
-  // test("should render and resolve intrinsic element", async () => {
-  //   const app = (
-  //     <>
-  //       <system>Greet the user</system>
-  //       <assistant>Hello how can I help you?</assistant>
-  //       <user>Tell me a joke, please.</user>
-  //     </>
-  //   );
-  //   const performer = new Performer(app);
-  //   performer.start();
-  //   await performer.waitUntilFinished();
-  //   const messages = resolveMessages(performer.root);
-  //   expect(messages).toHaveLength(3);
-  //   expect(messages[0].role).toEqual("system");
-  //   expect(messages[1].role).toEqual("assistant");
-  //   expect(messages[2].role).toEqual("user");
-  //   await testHydration(performer);
-  // });
-
-  // test("should render view", async () => {
-  //   function AChild() {
-  //     return () => null;
-  //   }
-  //   function BChild() {
-  //     return () => null;
-  //   }
-  //   function AComponent() {
-  //     console.log("hello");
-  //     useResource(sleep, 10);
-  //     console.log("world");
-  //     return () => (
-  //       <Container>
-  //         <AChild>hello a</AChild>
-  //         <AChild>hello a+</AChild>
-  //         <BChild>hello b</BChild>
-  //       </Container>
-  //     );
-  //   }
-  //   const app = <AComponent />;
-  //   const performer = new Performer(app);
-  //   performer.start();
-  //   await performer.waitUntilFinished();
-  //   await testHydration(performer);
-  // });
-
-  // test("should update prop when signal changes", async () => {
-  //   function Receiver({ message }: any) {
-  //     expect(message, "Message should not be null").not.toBeNull();
-  //     return () => {};
-  //   }
-  //   function App() {
-  //     const message = useState<PerformerMessage | null>(null);
-  //     return () => (
-  //       <>
-  //         <user
-  //           onMessage={(userMessage) => {
-  //             console.log("onMessage", userMessage);
-  //             message.value = userMessage;
-  //           }}
-  //         >
-  //           Hello world
-  //         </user>
-  //         <Receiver message={message.value} />
-  //       </>
-  //     );
-  //   }
-  //   const performer = new Performer(<App />);
-  //   performer.start();
-  //   await performer.waitUntilFinished();
-  //   await testHydration(performer);
-  // });
-
-  // test("should update and run message actions when state changes", async () => {
-  //   function DelayedIf({ children }: any) {
-  //     const predicate = useState(false);
-  //     return () => predicate.value && children;
-  //   }
-  //   const app = (
-  //     <>
-  //       <user>X = 0. Answer with scalar.</user>
-  //       <DelayedIf>
-  //         <user>Increment X by 1</user>
-  //         <user>X = 1</user>
-  //       </DelayedIf>
-  //     </>
-  //   );
-  //   const performer = new Performer(app);
-  //   performer.start();
-  //   await performer.waitUntilFinished();
-  //   let messages = resolveMessages(performer.root);
-  //   expect(messages).toHaveLength(1);
-  //
-  //   performer.root!.child!.nextSibling!.hooks["state-0"].value = true;
-  //   performer.start();
-  //
-  //   await performer.waitUntilFinished();
-  //   messages = resolveMessages(performer.root);
-  //   expect(messages).toHaveLength(3);
-  //   await testHydration(performer);
-  // });
-  //
   test("should update message order when elements WITH KEYS are reordered", async () => {
     function Rotate({ children, offset = 0 }: any) {
       return children.slice(offset).concat(children.slice(0, offset));
@@ -550,87 +444,51 @@ describe("Render", () => {
           );
         }
       }
-      const { findByText } = render(
+      let { findByText, queryByText } = render(
         <Generative options={{ logLevel: "debug" }}>
           <ErrorBoundary>
             <Message
               action={() => {
                 throw Error("A");
               }}
-            />
+            >
+              <Message action={() => ({ role: "user" as const, content: "B" })}>
+                {renderContent}
+              </Message>
+            </Message>
           </ErrorBoundary>
+          <Message action={() => ({ role: "user" as const, content: "C" })}>
+            {renderContent}
+          </Message>
         </Generative>,
       );
-      const element = await findByText("A");
+      let element = await findByText("A");
       expect(element.textContent).toEqual("A");
+      expect(
+        queryByText("B"),
+        "Children of exception should not be rendered",
+      ).toEqual(null);
+      await findByText("C");
+
+      // try nested throw
+      ({ findByText } = render(
+        <Generative options={{ logLevel: "debug" }}>
+          <ErrorBoundary>
+            <Message action={() => ({ role: "user" as const, content: "A" })}>
+              <Message
+                action={() => {
+                  throw Error("B");
+                }}
+              />
+            </Message>
+          </ErrorBoundary>
+        </Generative>,
+      ));
+      element = await findByText("B");
+      expect(element.textContent).toEqual("B");
     } finally {
       // @ts-expect-error TS not aware of mock
       console.error.mockRestore();
     }
   });
-  //
-  // test("should catch resumed component that throws", async () => {
-  //   function App() {
-  //     useResource(sleep, 10);
-  //     throw Error("Throwing!");
-  //     return () => {};
-  //   }
-  //   const performer = new Performer(<App />, { throwOnError: false });
-  //   performer.start();
-  //   const errors: PerformerErrorEvent[] = [];
-  //   performer.addEventListener("error", (event) => {
-  //     errors.push(event);
-  //   });
-  //   await performer.waitUntilFinished();
-  //   expect(errors).toHaveLength(1);
-  // });
-  //
-  // test("should throw if component is async function", async () => {
-  //   async function App() {
-  //     return () => <user>Hello, world!</user>;
-  //   }
-  //   // @ts-ignore
-  //   const performer = new Performer(<App />, { throwOnError: false });
-  //   performer.start();
-  //   await performer.waitUntilFinished();
-  //   expect(performer.errors).toHaveLength(1);
-  // });
-  //
-  // test("should cast non-string message children", async () => {
-  //   function App() {
-  //     return () => (
-  //       <system>
-  //         {/* @ts-expect-error null | undefined invalid message child type */}
-  //         Message with {1} and {0} and {true} and {false} and {null} and{" "}
-  //         {/* @ts-expect-error null | undefined invalid message child type */}
-  //         {undefined} {{}}
-  //       </system>
-  //     );
-  //   }
-  //   const performer = new Performer(<App />);
-  //   performer.start();
-  //   await performer.waitUntilFinished();
-  //   const messages = resolveMessages(performer.root);
-  //   expect(messages[0].content).toEqual(
-  //     "Message with 1 and 0 and true and false and null and undefined [object Object]",
-  //   );
-  // });
-  //
-  // // fixme: correctly handle exception
-  // // test("should throw if component children contains both strings and elements", async () => {
-  // //   expect(async () => {
-  // //     function App() {
-  // //       return () => (
-  // //         <>
-  // //           Hello World
-  // //           <></>
-  // //         </>
-  // //       );
-  // //     }
-  // //
-  // //     const performer = new Performer(<App />, { throwOnError: true });
-  // //     performer.start();
-  // //     await performer.waitUntilSettled();
-  // //   }).toThrow();
-  // // });
 });
