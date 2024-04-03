@@ -29,7 +29,7 @@ export function Assistant({
         requestOptions,
         clientOptions,
       }),
-    [],
+    [model, requestOptions, clientOptions],
   );
   return (
     <Action className={className} action={action}>
