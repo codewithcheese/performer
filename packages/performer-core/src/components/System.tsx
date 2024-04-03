@@ -11,7 +11,7 @@ export function System({
 }) {
   return (
     <Message<SystemMessage>
-      action={() => ({ role: "system", content })}
+      type={() => ({ role: "system", content })}
       deps={[content]}
     >
       {children}

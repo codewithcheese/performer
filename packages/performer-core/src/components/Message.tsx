@@ -4,18 +4,18 @@ import { PerformerMessage } from "../message.js";
 import { PerformerElement } from "../element.js";
 
 export function Message<MessageType extends PerformerMessage>({
-  action,
+  type,
   className,
   children,
   deps = [],
 }: {
   className?: string;
-  action: PerformerElement["type"];
+  type: PerformerElement["type"];
   children?: ReactNode | ((message: MessageType) => ReactNode);
   deps?: DependencyList;
 }) {
   const { id, ref, isPending, message } = useGenerative<MessageType>(
-    action,
+    type,
     deps,
   );
 

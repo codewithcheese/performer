@@ -352,6 +352,11 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
         node.status = "LISTENING";
         logger.debug(`${node.element.id} listening.`);
       }
+    } else if (isMessage(type)) {
+      node.state.message = type;
+      setNodeFinalize(node);
+    } else {
+      throw Error(`Unexpected message type: ${JSON.stringify(type)}`);
     }
   } catch (e) {
     logger.debug(`${node.element.id} exception. error=${e}`);

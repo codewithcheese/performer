@@ -44,7 +44,7 @@ export function Assistant({
     [model, requestOptions, clientOptions, tools, toolChoice],
   );
   return (
-    <Message<AssistantMessage> className={className} action={action}>
+    <Message<AssistantMessage> className={className} type={action}>
       {children}
     </Message>
   );
