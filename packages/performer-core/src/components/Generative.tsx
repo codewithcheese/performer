@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import { createContext, ReactNode, useState } from "react";
 import { Performer, PerformerOptions } from "../performer.js";
 
 export type GenerativeContextType = {

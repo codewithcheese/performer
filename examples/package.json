@@ -15,7 +15,6 @@
     },
     "dependencies": {
         "@performer/core": "workspace:*",
-        "@performer/playground": "workspace:*",
         "@preact/signals-core": "1.5.1",
         "jsdom": "^23.2.0",
         "langchain": "^0.0.201",

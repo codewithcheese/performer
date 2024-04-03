@@ -6,30 +6,38 @@ import { ReactNode, useCallback } from "react";
 import { ActionType } from "../action.js";
 import { Message } from "./Message.js";
 import { ChatCompletionCreateParamsStreaming } from "openai/resources/index";
+import { Tool } from "../index.js";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 export function Assistant({
   className,
   model = "gpt-3.5-turbo",
-  children,
+  toolChoice = "auto",
+  tools = [],
   requestOptions = {},
   clientOptions = {},
+  children,
 }: {
   className?: string;
   model?: string;
-  children?: ReactNode | ((message: PerformerMessage) => ReactNode);
+  toolChoice?: "auto" | "none" | Tool;
+  tools?: Tool[];
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
+  children?: ReactNode | ((message: PerformerMessage) => ReactNode);
 }) {
   const action = useCallback<ActionType>(
     async ({ messages, signal }) =>
       fetchCompletion({
         model,
+        toolChoice,
+        tools,
         messages,
         signal,
         requestOptions,
         clientOptions,
       }),
-    [model, requestOptions, clientOptions],
+    [model, requestOptions, clientOptions, tools, toolChoice],
   );
   return (
     <Message className={className} action={action}>
@@ -40,17 +48,40 @@ export function Assistant({
 
 async function fetchCompletion({
   model = "gpt-3.5-turbo",
+  toolChoice = "auto",
+  tools = [],
   messages,
   signal,
   requestOptions,
   clientOptions = {},
 }: {
   model?: string;
+  toolChoice?: "auto" | "none" | Tool;
+  tools?: Tool[];
   messages: PerformerMessage[];
   signal: AbortSignal;
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
 }) {
+  if (tools.length) {
+    requestOptions = {
+      ...requestOptions,
+      tool_choice:
+        typeof toolChoice === "string"
+          ? toolChoice
+          : { type: "function", function: { name: toolChoice.name } },
+      tools: tools.map((tool) => {
+        return {
+          type: "function",
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: zodToJsonSchema(tool.schema),
+          },
+        };
+      }),
+    };
+  }
   const openai = new OpenAI({
     dangerouslyAllowBrowser: true,
     ...clientOptions,

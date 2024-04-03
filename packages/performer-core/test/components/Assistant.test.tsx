@@ -1,14 +1,40 @@
 /* @vitest-environment jsdom */
-import { expect, test } from "vitest";
-import { Assistant, Generative, Message, System } from "../../src/index.js";
+import { afterEach, assert, expect, test } from "vitest";
+import {
+  Assistant,
+  createTool,
+  Generative,
+  GenerativeContext,
+  Message,
+  Performer,
+  PerformerMessage,
+  readTextContent,
+  System,
+} from "../../src/index.js";
 import { render } from "@testing-library/react";
 import { sleep } from "openai/core";
 import "dotenv/config";
+import { useCallback, useContext } from "react";
+import { z } from "zod";
+
+let performer: Performer | undefined;
+function UsePerformer() {
+  const context = useContext(GenerativeContext);
+  performer = context.performer;
+  return null;
+}
+
+const renderContent = (message: PerformerMessage) => readTextContent(message);
+
+afterEach(() => {
+  performer = undefined;
+});
 
 test("should call model with messages", async () => {
   let done = false;
   const app = (
     <Generative>
+      <UsePerformer />
       <System content="JSON true value" />
       <Assistant requestOptions={{ response_format: { type: "json_object" } }}>
         <Message
@@ -25,36 +51,10 @@ test("should call model with messages", async () => {
     </Generative>
   );
   const { findByText } = render(app);
-  await sleep(5_000);
+  await performer!.waitUntilSettled();
   await findByText("Done");
-  // await sleep(10_000);
-  // performer.start();
-  // await performer.waitUntilFinished();
-  // const lookup = createLookup(performer.root!);
-  //
-  // expect(lookup("system").action).toEqual("system");
-  // expect(lookup("system").props.children).toEqual(
-  //   "Hello world in Javascript. Code only.",
-  // );
-  // const assistant = lookup("Assistant");
-  // assert(assistant.action instanceof Function);
-  // expect(assistant.action.name).toEqual("Assistant");
-  //
-  // const fragment = lookup("Assistant->Fragment");
-  // assert(fragment.action instanceof Function);
-  // expect(fragment.action.name).toEqual("Fragment");
-  //
-  // const raw = lookup("Assistant->Fragment->raw");
-  // expect(raw.action).toEqual("raw");
-  // expect(
-  //   raw.hooks.message,
-  //   "Expect raw element message hook to be defined.",
-  // ).toBeDefined();
-  // assert(isMessage(raw.hooks?.message));
-  // expect(raw.hooks?.message.role).toEqual("assistant");
-  // expect(raw.hooks?.message.content).not.toBeNull();
-  // testHydration(performer);
-}, 12_000);
+  expect(done).toEqual(true);
+}, 10_000);
 
 // test("should call onMessage event handler after assistant response", async () => {
 //   function App() {
@@ -78,30 +78,22 @@ test("should call model with messages", async () => {
 //   expect(hydratedMessages).toHaveLength(3);
 // });
 //
-// test("should include tool message before resolving", async () => {
-//   const tool = createTool(
-//     "answer",
-//     z.object({ answer: z.boolean() }),
-//     () => {},
-//   );
-//   // expect that tool message is available immediately after Assistant resolves
-//   function CheckForToolMessage() {
-//     const messages = useMessages();
-//     expect(messages).toHaveLength(3);
-//     return () => {};
-//   }
-//   const app = (
-//     <>
-//       <system>1+1. Scalar only, no preamble.</system>
-//       <Assistant tools={[tool]} toolChoice={tool} />
-//       <CheckForToolMessage />
-//     </>
-//   );
-//   const performer = new Performer(app);
-//   performer.start();
-//   await performer.waitUntilFinished();
-//   testHydration(performer);
-// });
+test("should use tool", async () => {
+  const tool = createTool("answer", z.object({ answer: z.boolean() }));
+  const app = (
+    <Generative>
+      <UsePerformer />
+      <System content="1+1. Scalar only, no preamble." />
+      <Assistant tools={[tool]} toolChoice={tool} />
+    </Generative>
+  );
+  const {} = render(app);
+  await performer!.waitUntilSettled();
+  const messages = performer!.getAllMessages();
+  expect(messages).toHaveLength(2);
+  assert(messages[1].role === "assistant");
+  expect(messages[1].tool_calls).toHaveLength(1);
+});
 //
 // test("should emit error event when apiKey is incorrect", async () => {
 //   function App() {
