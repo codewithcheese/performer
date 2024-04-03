@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 import {
-  Action,
+  Message,
   Generative,
   GenerativeContext,
   MessageDelta,
@@ -59,12 +59,12 @@ describe("Render", () => {
 
     function Streamer() {
       return (
-        <Action action={streamAction}>
+        <Message action={streamAction}>
           {(message) => {
             // console.log("Render streamer", message);
             return readTextContent(message) + "!";
           }}
-        </Action>
+        </Message>
       );
     }
 

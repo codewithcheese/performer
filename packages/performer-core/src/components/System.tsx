@@ -1,4 +1,4 @@
-import { Action } from "./Action.js";
+import { Message } from "./Message.js";
 import { ReactNode } from "react";
 import { PerformerMessage } from "../message.js";
 
@@ -10,8 +10,8 @@ export function System({
   children?: ReactNode | ((message: PerformerMessage) => ReactNode);
 }) {
   return (
-    <Action action={() => ({ role: "system", content })} deps={[content]}>
+    <Message action={() => ({ role: "system", content })} deps={[content]}>
       {children}
-    </Action>
+    </Message>
   );
 }

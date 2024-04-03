@@ -4,7 +4,7 @@ import { isEmptyObject } from "../util/is-empty-object.js";
 import "../util/readable-stream-polyfill.js";
 import { ReactNode, useCallback } from "react";
 import { ActionType } from "../action.js";
-import { Action } from "./Action.js";
+import { Message } from "./Message.js";
 import { ChatCompletionCreateParamsStreaming } from "openai/resources/index";
 
 export function Assistant({
@@ -32,9 +32,9 @@ export function Assistant({
     [model, requestOptions, clientOptions],
   );
   return (
-    <Action className={className} action={action}>
+    <Message className={className} action={action}>
       {children}
-    </Action>
+    </Message>
   );
 }
 

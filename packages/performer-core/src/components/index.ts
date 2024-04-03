@@ -5,4 +5,4 @@ export * from "./User.js";
 // export * from "./Thread.js";
 export * from "./System.js";
 export * from "./Generative.js";
-export * from "./Action.js";
+export * from "./Message.js";

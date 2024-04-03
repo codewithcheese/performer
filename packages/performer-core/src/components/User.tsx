@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useGenerative } from "../hooks/use-generative.js";
 import { PerformerMessage } from "../message.js";
-import { Action } from "./Action.js";
+import { Message } from "./Message.js";
 
 export function User({
   children,
@@ -11,8 +11,8 @@ export function User({
   className?: string;
 }) {
   return (
-    <Action className={className} action="LISTENER">
+    <Message className={className} action="LISTENER">
       {children}
-    </Action>
+    </Message>
   );
 }

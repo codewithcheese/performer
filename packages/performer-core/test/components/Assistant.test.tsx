@@ -2,7 +2,7 @@
 import { expect, test } from "vitest";
 import { Assistant, System } from "../../src/index.js";
 import { render } from "@testing-library/react";
-import { Action } from "../../src/components/Action.js";
+import { Message } from "../../src/components/Message.js";
 import { sleep } from "openai/core";
 import "dotenv/config";
 import { Generative } from "../../src/components/Generative.js";
@@ -13,7 +13,7 @@ test("should call model with messages", async () => {
     <Generative>
       <System content="JSON true value" />
       <Assistant requestOptions={{ response_format: { type: "json_object" } }}>
-        <Action
+        <Message
           action={({ messages }) => {
             done = true;
             expect(messages).toHaveLength(2);
@@ -22,7 +22,7 @@ test("should call model with messages", async () => {
           }}
         >
           Done
-        </Action>
+        </Message>
       </Assistant>
     </Generative>
   );

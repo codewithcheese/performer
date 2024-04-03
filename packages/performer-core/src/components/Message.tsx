@@ -3,7 +3,7 @@ import { useGenerative } from "../hooks/use-generative.js";
 import { PerformerMessage } from "../message.js";
 import { PerformerElement } from "../element.js";
 
-export function Action({
+export function Message({
   action,
   className,
   children,

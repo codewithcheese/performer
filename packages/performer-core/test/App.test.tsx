@@ -1,16 +1,18 @@
 /* @vitest-environment jsdom */
 import { expect, it } from "vitest";
 import { render } from "@testing-library/react";
-import { Action, Generative, Repeat, System } from "../src/index.js";
+import { Message, Generative, Repeat, System } from "../src/index.js";
 
 it("should call actions depth first", async () => {
   let siblingActioned = false;
   const { findByText } = render(
     <Generative options={{ logLevel: "debug" }}>
-      <Action action={() => ({ role: "user", content: "A" })}>
-        <Action action={() => ({ role: "assistant" as const, content: "B" })} />
-      </Action>
-      <Action
+      <Message action={() => ({ role: "user", content: "A" })}>
+        <Message
+          action={() => ({ role: "assistant" as const, content: "B" })}
+        />
+      </Message>
+      <Message
         action={({ messages }) => {
           siblingActioned = true;
           expect(messages).toEqual([
@@ -20,7 +22,7 @@ it("should call actions depth first", async () => {
         }}
       >
         Done
-      </Action>
+      </Message>
     </Generative>,
   );
   await findByText("Done");
@@ -31,14 +33,14 @@ it("renders correctly", async () => {
   let testActioned = false;
   const TestMessages = () => {
     return (
-      <Action
+      <Message
         action={({ messages, signal }) => {
           testActioned = true;
           expect(messages.map((m) => m.content)).toEqual(["1", "2", "1", "2"]);
         }}
       >
         3
-      </Action>
+      </Message>
     );
   };
 
