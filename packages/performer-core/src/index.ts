@@ -1,5 +1,3 @@
-import { getEnv } from "./util/env.js";
-
 declare global {
   var __DEV__: boolean;
 }

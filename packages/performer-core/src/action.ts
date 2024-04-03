@@ -1,7 +1,5 @@
 import { MessageDelta, PerformerMessage } from "./message.js";
 
-export type Props = Record<string, any>;
-
 export type ActionReturn =
   | ReadableStream<MessageDelta>
   | PerformerMessage[]

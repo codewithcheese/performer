@@ -1,5 +1,3 @@
-// import { jsx } from "./jsx/index.js";
-
 export type PerformerMessage =
   | UserMessage
   | AssistantMessage
@@ -147,15 +145,6 @@ export function readTextContent(message: PerformerMessage) {
         .map((content) => content.text)
         .join(" ");
 }
-
-// export function messagesToElements(
-//   messages: PerformerMessage[],
-//   onMessage?: (message: PerformerMessage) => void,
-// ) {
-//   return messages.map((message) => {
-//     return jsx(message.role, { ...message, onMessage });
-//   });
-// }
 
 export function concatDelta(previous: MessageDelta, delta: MessageDelta) {
   if (delta.content != null) {

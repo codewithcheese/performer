@@ -44,7 +44,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <Generative>
     <Repeat>
       <User>{(message) => readTextContent(message)}</User>
-      <Assistant>{(message) => readTextContent(message)}</Assistant>
+      <Assistant>{(message) => message.content}</Assistant>
     </Repeat>
     <MessageInput />
   </Generative>,

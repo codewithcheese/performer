@@ -18,7 +18,7 @@ export type PerformerNode = {
   // props: Record<string, any>;
   state: {
     stream?: ReadableStream;
-    messages?: PerformerMessage[];
+    message?: PerformerMessage;
     childRenderCount: number;
   };
   // hooks: Record<string, unknown> & HookRecord;

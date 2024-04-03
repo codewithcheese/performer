@@ -100,8 +100,7 @@ export async function render(performer: Performer, reason: string) {
           continue;
         case "LISTENING":
           if (performer.inputQueue.length) {
-            op.payload.node.state.messages = performer.inputQueue;
-            performer.inputQueue = [];
+            op.payload.node.state.message = performer.inputQueue.shift();
             setNodeFinalize(op.payload.node);
           }
           continue;
@@ -307,34 +306,36 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     const type = node.element.type;
     if (type instanceof Function) {
       const messages = resolveMessages(performer.root, node);
-      let results = await type({
+      let result = await type({
         messages,
         signal: performer.abortController.signal,
       });
-      if (results instanceof ReadableStream) {
-        node.state.stream = results;
+      if (result instanceof ReadableStream) {
+        node.state.stream = result;
         node.status = "PAUSED";
         const message = await consumeDeltaStream(
           performer,
           node,
           node.state.stream,
         );
-        node.state.messages = [message];
+        node.state.message = message;
         setNodeFinalize(node);
         logger.debug(
           `${node.element.id} stream resolved. status=${node.status}`,
         );
         performer.queueRender("stream resolved");
-      } else if (results && typeof results === "object") {
-        if (!Array.isArray(results)) {
-          results = [results];
-        }
-        if (!results.every(isMessage)) {
+      } else if (result && typeof result === "object") {
+        if (Array.isArray(result)) {
           throw Error(
-            `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(results)}.`,
+            `Invalid message action result. Expected message object received array: ${JSON.stringify(result)}`,
           );
         }
-        node.state.messages = results;
+        if (!isMessage) {
+          throw Error(
+            `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(result)}.`,
+          );
+        }
+        node.state.message = result;
         setNodeFinalize(node);
         logger.debug(
           `${node.element.id} messages resolved. status=${node.status}`,
@@ -345,8 +346,7 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
       }
     } else if (type === "LISTENER") {
       if (performer.inputQueue.length) {
-        node.state.messages = performer.inputQueue;
-        performer.inputQueue = [];
+        node.state.message = performer.inputQueue.shift();
         setNodeFinalize(node);
       } else {
         node.status = "LISTENING";
@@ -518,7 +518,7 @@ async function consumeDeltaStream(
     }
     concatDelta(message as MessageDelta, chunk);
     // rerender after each delta update
-    node.state.messages = [message];
+    node.state.message = message;
     setNodeStreaming(node);
 
     // performer.dispatchEvent(
@@ -649,8 +649,8 @@ export function resolveMessages(
     // if (typeof cursor.type === "string") {
     //   messages.push(nodeToMessage(cursor));
     // }
-    if (cursor.state.messages && cursor.status === "RESOLVED") {
-      messages.push(...cursor.state.messages);
+    if (cursor.state.message && cursor.status === "RESOLVED") {
+      messages.push(cursor.state.message);
     }
 
     const exit = to && cursor === to;

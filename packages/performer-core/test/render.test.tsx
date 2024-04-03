@@ -43,9 +43,7 @@ describe("Render", () => {
     const { findByText } = render(
       <Generative options={{ logLevel: "debug" }}>
         <Message action={() => ({ role: "user", content: "A" })}>
-          <Message
-            action={() => ({ role: "assistant" as const, content: "B" })}
-          />
+          <Message action={() => ({ role: "assistant", content: "B" })} />
         </Message>
         <Message
           action={({ messages }) => {

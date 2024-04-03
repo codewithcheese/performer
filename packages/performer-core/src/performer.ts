@@ -5,7 +5,6 @@ import type { PerformerMessage } from "./message.js";
 import { getLogger, logger, setLogLevel, toLogFmt } from "./util/log.js";
 import { getEnv } from "./util/env.js";
 import { type LogType } from "consola";
-import Emittery from "emittery";
 import { assertTruthy } from "./util/assert.js";
 import { withResolvers } from "./util/with-resolvers.js";
 

@@ -1,9 +1,9 @@
 import { DependencyList, ReactNode } from "react";
-import { useGenerative } from "../hooks/use-generative.js";
+import { useGenerative } from "../hooks/index.js";
 import { PerformerMessage } from "../message.js";
 import { PerformerElement } from "../element.js";
 
-export function Message({
+export function Message<MessageType extends PerformerMessage>({
   action,
   className,
   children,
@@ -11,10 +11,13 @@ export function Message({
 }: {
   className?: string;
   action: PerformerElement["type"];
-  children?: ReactNode | ((message: PerformerMessage) => ReactNode);
+  children?: ReactNode | ((message: MessageType) => ReactNode);
   deps?: DependencyList;
 }) {
-  const { id, ref, isPending, messages } = useGenerative(action, deps);
+  const { id, ref, isPending, message } = useGenerative<MessageType>(
+    action,
+    deps,
+  );
 
   // const renderCount = useRef(0);
   // useEffect(() => {
@@ -27,7 +30,7 @@ export function Message({
   return (
     <div data-performer-id={id} ref={ref} className={className}>
       {!isPending &&
-        (typeof children === "function" ? messages.map(children) : children)}
+        (typeof children === "function" ? children(message!) : children)}
     </div>
   );
 }

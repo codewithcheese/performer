@@ -1,4 +1,8 @@
-import { MessageDelta, type PerformerMessage } from "../message.js";
+import {
+  AssistantMessage,
+  MessageDelta,
+  type PerformerMessage,
+} from "../message.js";
 import { ClientOptions, OpenAI } from "openai";
 import { object } from "../util/object.js";
 import "../util/readable-stream-polyfill.js";
@@ -24,7 +28,7 @@ export function Assistant({
   tools?: Tool[];
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
-  children?: ReactNode | ((message: PerformerMessage) => ReactNode);
+  children?: ReactNode | ((message: AssistantMessage) => ReactNode);
 }) {
   const action = useCallback<ActionType>(
     async ({ messages, signal }) =>
@@ -40,7 +44,7 @@ export function Assistant({
     [model, requestOptions, clientOptions, tools, toolChoice],
   );
   return (
-    <Message className={className} action={action}>
+    <Message<AssistantMessage> className={className} action={action}>
       {children}
     </Message>
   );

@@ -44,7 +44,7 @@ export function findDOMAncestor(
   return { id: "root", type: "parent" };
 }
 
-export function useGenerative(
+export function useGenerative<MessageType extends PerformerMessage>(
   type: PerformerElement["type"],
   deps: DependencyList = [],
 ): {
@@ -52,7 +52,7 @@ export function useGenerative(
   ref: MutableRefObject<any>;
   isPending: boolean;
   element: PerformerElement | null;
-  messages: PerformerMessage[];
+  message: MessageType | null;
 } {
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
@@ -62,7 +62,7 @@ export function useGenerative(
   const [element, setElement] = useState<PerformerElement | null>(null);
   const [error, setError] = useState<unknown | null>(null);
   const [_, setNonce] = useState(0);
-  const [messages, setMessages] = useState<PerformerMessage[]>([]);
+  const [message, setMessage] = useState<MessageType | null>(null);
   const context = useContext(GenerativeContext);
   if (!context) {
     throw Error(
@@ -91,8 +91,8 @@ export function useGenerative(
       type,
       ancestor,
       onStreaming: () => {
-        if (element.node?.state.messages) {
-          setMessages(element.node.state.messages);
+        if (element.node?.state.message) {
+          setMessage(element.node.state.message as MessageType);
         }
         // complete pending before finalized
         setIsPending(false);
@@ -102,8 +102,8 @@ export function useGenerative(
       },
       onFinalize: () => {
         logger.info(`onFinalize=${id}`);
-        if (element.node?.state.messages) {
-          setMessages(element.node.state.messages);
+        if (element.node?.state.message) {
+          setMessage(element.node.state.message as MessageType);
         }
         setIsPending(false);
         setFinalize(true);
@@ -150,5 +150,5 @@ export function useGenerative(
 
   if (error) throw error;
 
-  return { id, ref, isPending, element, messages };
+  return { id, ref, isPending, element, message };
 }
