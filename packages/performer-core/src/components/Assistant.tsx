@@ -1,6 +1,6 @@
 import { MessageDelta, type PerformerMessage } from "../message.js";
 import { ClientOptions, OpenAI } from "openai";
-import { isEmptyObject } from "../util/is-empty-object.js";
+import { object } from "../util/object.js";
 import "../util/readable-stream-polyfill.js";
 import { ReactNode, useCallback } from "react";
 import { ActionType } from "../action.js";
@@ -68,7 +68,7 @@ async function fetchCompletion({
     async start(controller) {
       for await (const chunk of stream) {
         const delta = chunk.choices[0]?.delta;
-        if (!isEmptyObject(delta)) {
+        if (!object(delta)) {
           controller.enqueue(delta);
         }
       }

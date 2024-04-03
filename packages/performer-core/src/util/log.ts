@@ -2,7 +2,7 @@ import {
   isAssistantMessage,
   PerformerElement,
   // nodeToMessage,
-  PerformerEvent,
+  // PerformerEvent,
   PerformerNode,
   RenderOp,
 } from "../index.js";
@@ -45,53 +45,53 @@ export const logger = createConsola({});
 //   logger.info(toLogFmt(pairs));
 // }
 
-export function logEvent(event: PerformerEvent) {
-  const pairs: [string, any][] = [["event", event.type]];
-  if ("threadId" in event) {
-    pairs.push(["threadId", event.threadId]);
-  }
-
-  if (event.type === "message" || event.type === "delta") {
-    const message =
-      "message" in event.detail ? event.detail.message : event.detail.delta;
-    if (message.role) {
-      pairs.push(["role", message.role]);
-    }
-    if (message.content) {
-      if (typeof message.content === "string") {
-        pairs.push(["content", message.content]);
-      } else {
-        for (const content of message.content) {
-          if (isTextContent(content)) {
-            pairs.push(["text", content.text]);
-          } else if (isImageContent(content)) {
-            pairs.push(["image_url", content.image_url.url]);
-          }
-        }
-      }
-    }
-    if ("tool_calls" in message && message.tool_calls) {
-      for (const toolCall of message.tool_calls) {
-        if (toolCall?.function?.name) {
-          pairs.push(["tool_call.name", toolCall.function.name]);
-        }
-        if (toolCall?.function?.arguments) {
-          pairs.push(["tool_call.arguments", toolCall.function.arguments]);
-        }
-      }
-    }
-  } else if (event.type === "error") {
-    pairs.push(["message", event.detail.message]);
-  } else if (event.type === "lifecycle") {
-    pairs.push(["state", event.detail.state]);
-  }
-
-  if (event.type === "delta") {
-    logger.debug(toLogFmt(pairs));
-  } else {
-    logger.info(toLogFmt(pairs));
-  }
-}
+// export function logEvent(event: PerformerEvent) {
+//   const pairs: [string, any][] = [["event", event.type]];
+//   if ("threadId" in event) {
+//     pairs.push(["threadId", event.threadId]);
+//   }
+//
+//   if (event.type === "message" || event.type === "delta") {
+//     const message =
+//       "message" in event.detail ? event.detail.message : event.detail.delta;
+//     if (message.role) {
+//       pairs.push(["role", message.role]);
+//     }
+//     if (message.content) {
+//       if (typeof message.content === "string") {
+//         pairs.push(["content", message.content]);
+//       } else {
+//         for (const content of message.content) {
+//           if (isTextContent(content)) {
+//             pairs.push(["text", content.text]);
+//           } else if (isImageContent(content)) {
+//             pairs.push(["image_url", content.image_url.url]);
+//           }
+//         }
+//       }
+//     }
+//     if ("tool_calls" in message && message.tool_calls) {
+//       for (const toolCall of message.tool_calls) {
+//         if (toolCall?.function?.name) {
+//           pairs.push(["tool_call.name", toolCall.function.name]);
+//         }
+//         if (toolCall?.function?.arguments) {
+//           pairs.push(["tool_call.arguments", toolCall.function.arguments]);
+//         }
+//       }
+//     }
+//   } else if (event.type === "error") {
+//     pairs.push(["message", event.detail.message]);
+//   } else if (event.type === "lifecycle") {
+//     pairs.push(["state", event.detail.state]);
+//   }
+//
+//   if (event.type === "delta") {
+//     logger.debug(toLogFmt(pairs));
+//   } else {
+//     logger.info(toLogFmt(pairs));
+//   }
+// }
 
 export function logOp(threadId: string, op: RenderOp) {
   const pairs: [string, any][] = [["op", op.type]];
