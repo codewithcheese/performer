@@ -8,7 +8,7 @@ import { object } from "../util/object.js";
 import "../util/readable-stream-polyfill.js";
 import { ReactNode, useCallback } from "react";
 import { ActionType } from "../action.js";
-import { Message } from "./Message.js";
+import { Message, MessageRenderFunc } from "./Message.js";
 import { ChatCompletionCreateParamsStreaming } from "openai/resources/index";
 import { Tool } from "../index.js";
 import { zodToJsonSchema } from "zod-to-json-schema";
@@ -21,14 +21,16 @@ export function Assistant({
   requestOptions = {},
   clientOptions = {},
   children,
+  onMessage,
 }: {
   className?: string;
   model?: string;
-  toolChoice?: "auto" | "none" | Tool;
-  tools?: Tool[];
+  toolChoice?: "auto" | "none" | Tool<any>;
+  tools?: Tool<any>[];
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
-  children?: ReactNode | ((message: AssistantMessage) => ReactNode);
+  children?: ReactNode | MessageRenderFunc<AssistantMessage>;
+  onMessage?: (message: AssistantMessage) => void;
 }) {
   const action = useCallback<ActionType>(
     async ({ messages, signal }) =>
@@ -44,7 +46,11 @@ export function Assistant({
     [model, requestOptions, clientOptions, tools, toolChoice],
   );
   return (
-    <Message<AssistantMessage> className={className} type={action}>
+    <Message<AssistantMessage>
+      className={className}
+      type={action}
+      onMessage={onMessage}
+    >
       {children}
     </Message>
   );
@@ -60,8 +66,8 @@ async function fetchCompletion({
   clientOptions = {},
 }: {
   model?: string;
-  toolChoice?: "auto" | "none" | Tool;
-  tools?: Tool[];
+  toolChoice?: "auto" | "none" | Tool<any>;
+  tools?: Tool<any>[];
   messages: PerformerMessage[];
   signal: AbortSignal;
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;

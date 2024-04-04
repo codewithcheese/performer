@@ -53,11 +53,12 @@ export function useGenerative<MessageType extends PerformerMessage>(
   isPending: boolean;
   element: PerformerElement | null;
   message: MessageType | null;
+  finalized: boolean;
 } {
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
   const [isPending, setIsPending] = useState(true);
-  const [finalize, setFinalize] = useState(false);
+  const [finalized, setFinalized] = useState(false);
   const [ancestor, setAncestor] = useState<AncestorRecord | null>(null);
   const [element, setElement] = useState<PerformerElement | null>(null);
   const [error, setError] = useState<unknown | null>(null);
@@ -66,14 +67,14 @@ export function useGenerative<MessageType extends PerformerMessage>(
   const context = useContext(GenerativeContext);
   if (!context) {
     throw Error(
-      "Generative context not set. Generative components must be wrapped with `<Generative>` provider.",
+      "Generative context missing. Generative components must be wrapped with `<Generative>` provider.",
     );
   }
   const { performer } = context;
 
   useLayoutEffect(() => {
     setIsPending(true);
-    setFinalize(false);
+    setFinalized(false);
     if (!ref.current) {
       throw Error("usePerformer: ref not set");
     }
@@ -106,7 +107,7 @@ export function useGenerative<MessageType extends PerformerMessage>(
           setMessage(element.node.state.message as MessageType);
         }
         setIsPending(false);
-        setFinalize(true);
+        setFinalized(true);
       },
       onError: (error: unknown) => {
         if (!error) {
@@ -121,13 +122,13 @@ export function useGenerative<MessageType extends PerformerMessage>(
     };
   }, deps);
 
-  // finalize after render
+  // finalized after render
   useLayoutEffect(() => {
-    if (finalize) {
+    if (finalized) {
       performer.finalize(id);
-      setFinalize(false);
+      setFinalized(false);
     }
-  }, [finalize]);
+  }, [finalized]);
 
   const renderCount = useRef(0);
   useLayoutEffect(() => {
@@ -150,5 +151,5 @@ export function useGenerative<MessageType extends PerformerMessage>(
 
   if (error) throw error;
 
-  return { id, ref, isPending, element, message };
+  return { id, ref, isPending, element, message, finalized };
 }

@@ -327,12 +327,12 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
       } else if (result && typeof result === "object") {
         if (Array.isArray(result)) {
           throw Error(
-            `Invalid message action result. Expected message object received array: ${JSON.stringify(result)}`,
+            `Invalid Message action return value. Expected object type PerformerMessage. Received array: ${JSON.stringify(result)}`,
           );
         }
-        if (!isMessage) {
+        if (!isMessage(result)) {
           throw Error(
-            `Invalid Performer result. Expected type PerformerMessage, received ${JSON.stringify(result)}.`,
+            `Invalid Message action return value. Expected type PerformerMessage. Received ${JSON.stringify(result)}.`,
           );
         }
         node.state.message = result;
@@ -340,9 +340,14 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
         logger.debug(
           `${node.element.id} messages resolved. status=${node.status}`,
         );
-      } else {
+      } else if (!result) {
+        // return falsey no message will be applied
         setNodeFinalize(node);
         logger.debug(`${node.element.id} resolved. status=${node.status}`);
+      } else {
+        throw Error(
+          `Invalid Message action return value. Received ${JSON.stringify(result)}.`,
+        );
       }
     } else if (type === "LISTENER") {
       if (performer.inputQueue.length) {

@@ -10,5 +10,5 @@ import { PathContext } from "../components/index.js";
  * e.g. <Append path="/example" data={"more route data"} />
  */
 export function useRouteData() {
-  return useContext(PathContext);
+  return useContext(PathContext).data;
 }
