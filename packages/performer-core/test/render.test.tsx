@@ -53,7 +53,7 @@ it("should render repeat with limit", async () => {
     );
   };
 
-  const { findByText } = render(
+  const { findByText, container } = render(
     <Generative options={{ logLevel: "debug" }}>
       <Repeat limit={2}>
         <System content="1">1</System>
@@ -63,6 +63,7 @@ it("should render repeat with limit", async () => {
     </Generative>,
   );
   await findByText("3");
+  console.log(container.innerHTML);
   expect(testActioned).toEqual(true);
 });
 

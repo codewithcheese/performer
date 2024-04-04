@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { PerformerElement } from "../element.js";
-import { GenerativeContext } from "../index.js";
+import { GenerativeContext, NodeStatus, PerformerNode } from "../index.js";
 import { getLogger } from "../util/log.js";
 import { PerformerMessage } from "../message.js";
 
@@ -50,15 +50,15 @@ export function useGenerative<MessageType extends PerformerMessage>(
 ): {
   id: string;
   ref: MutableRefObject<any>;
-  isPending: boolean;
   element: PerformerElement | null;
   message: MessageType | null;
-  finalized: boolean;
+  status: NodeStatus;
+  ready: boolean; // message ready for children to consume (streaming|resolved|finalized)
+  complete: boolean; // message complete (resolve|finalized)
 } {
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
-  const [isPending, setIsPending] = useState(true);
-  const [finalized, setFinalized] = useState(false);
+  const [status, setStatus] = useState<NodeStatus>("PENDING");
   const [ancestor, setAncestor] = useState<AncestorRecord | null>(null);
   const [element, setElement] = useState<PerformerElement | null>(null);
   const [error, setError] = useState<unknown | null>(null);
@@ -73,8 +73,9 @@ export function useGenerative<MessageType extends PerformerMessage>(
   const { performer } = context;
 
   useLayoutEffect(() => {
-    setIsPending(true);
-    setFinalized(false);
+    // fixme use internal status
+    // if deps change then may need to regenerate node
+    setStatus("PENDING");
     if (!ref.current) {
       throw Error("usePerformer: ref not set");
     }
@@ -91,28 +92,29 @@ export function useGenerative<MessageType extends PerformerMessage>(
       id,
       type,
       ancestor,
-      onStreaming: () => {
-        if (element.node?.state.message) {
-          setMessage(element.node.state.message as MessageType);
+      onStreaming: (node) => {
+        if (node.state.message) {
+          setMessage(node.state.message as MessageType);
         }
-        // complete pending before finalized
-        setIsPending(false);
+        setStatus(node.status);
 
         // update nonce for rerender on each stream update
         setNonce((n) => n + 1);
       },
-      onFinalize: () => {
-        logger.info(`onFinalize=${id}`);
-        if (element.node?.state.message) {
-          setMessage(element.node.state.message as MessageType);
+      onResolved: (node) => {
+        console.log(
+          `useGenerative onResolved=${id} message=${JSON.stringify(element?.node?.state.message)}`,
+        );
+        if (node.state.message) {
+          setMessage(element.node!.state.message as MessageType);
         }
-        setIsPending(false);
-        setFinalized(true);
+        setStatus(node.status);
       },
       onError: (error: unknown) => {
         if (!error) {
           error = new Error("Undefined error");
         }
+        setStatus("ERROR");
         setError(error);
       },
     });
@@ -124,11 +126,11 @@ export function useGenerative<MessageType extends PerformerMessage>(
 
   // finalized after render
   useLayoutEffect(() => {
-    if (finalized) {
+    if (status === "RESOLVED") {
       performer.finalize(id);
-      setFinalized(false);
+      setStatus("FINALIZED");
     }
-  }, [finalized]);
+  }, [status]);
 
   const renderCount = useRef(0);
   useLayoutEffect(() => {
@@ -151,5 +153,9 @@ export function useGenerative<MessageType extends PerformerMessage>(
 
   if (error) throw error;
 
-  return { id, ref, isPending, element, message, finalized };
+  const ready =
+    status === "STREAMING" || status === "RESOLVED" || status === "FINALIZED";
+  const complete = status === "RESOLVED" || status === "FINALIZED";
+
+  return { id, ref, status, element, message, ready, complete };
 }

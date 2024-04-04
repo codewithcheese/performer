@@ -6,8 +6,8 @@ export type PerformerElement = {
   id: string;
   type: ActionType | "LISTENER" | PerformerMessage;
   props: { afterChildren?: () => void };
-  onFinalize: () => void;
-  onStreaming: () => void;
+  onResolved: (node: PerformerNode) => void;
+  onStreaming: (node: PerformerNode) => void;
   onError: (error: unknown) => void;
   // links
   parent?: PerformerElement;

@@ -1,14 +1,15 @@
 import type { PerformerElement } from "./element.js";
 import { PerformerMessage } from "./message.js";
 import { nanoid } from "nanoid";
+import { logger } from "./util/log.js";
 
 export type NodeStatus =
   | "PENDING" // initial state
-  | "PAUSED" // fixme: remove
-  | "FINALIZE" // ready for ack from React before becoming resolved
-  | "RESOLVED" // done
-  | "LISTENING" // type LISTENER, transitions to FINALIZE once input queue is assigned to messages
-  | "STREAMING"
+  | "PAUSED" // waiting for data
+  | "LISTENING" // waiting for message input
+  | "STREAMING" // message streaming
+  | "RESOLVED" // message value resolved
+  | "FINALIZED" // message acked by flow control
   | "ERROR";
 
 export type PerformerNode = {
@@ -35,19 +36,32 @@ export type PerformerNode = {
   nextSibling: PerformerNode | undefined;
 };
 
-export function setNodeFinalize(node: PerformerNode) {
-  node.status = "FINALIZE";
-  node.element.onFinalize();
+export function setNodeResolved(node: PerformerNode) {
+  node.status = "RESOLVED";
+  logger.debug(`id=${node.element.id} status=${node.status}`);
+  node.element.onResolved(node);
 }
 
 export function setNodeStreaming(node: PerformerNode) {
   node.status = "STREAMING";
-  node.element.onStreaming();
+  logger.debug(`id=${node.element.id} status=${node.status}`);
+  node.element.onStreaming(node);
 }
 
 export function setNodeError(node: PerformerNode, error: unknown) {
   node.status = "ERROR";
+  logger.debug(`id=${node.element.id} status=${node.status}`);
   node.element.onError(error);
+}
+
+export function setNodeFinalized(node: PerformerNode) {
+  node.status = "FINALIZED";
+  logger.debug(`id=${node.element.id} status=${node.status}`);
+}
+
+export function setNodeListening(node: PerformerNode) {
+  node.status = "LISTENING";
+  logger.debug(`id=${node.element.id} status=${node.status}`);
 }
 
 // export type SerializedNode = {

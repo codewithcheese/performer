@@ -3,7 +3,8 @@ import {
   createNode,
   type PerformerNode,
   setNodeError,
-  setNodeFinalize,
+  setNodeListening,
+  setNodeResolved,
   setNodeStreaming,
 } from "./node.js";
 import type { Performer } from "./performer.js";
@@ -101,12 +102,12 @@ export async function render(performer: Performer, reason: string) {
         case "LISTENING":
           if (performer.inputQueue.length) {
             op.payload.node.state.message = performer.inputQueue.shift();
-            setNodeFinalize(op.payload.node);
+            setNodeResolved(op.payload.node);
           }
           continue;
         case "AFTER_CHILDREN":
           op.payload.node.element.props.afterChildren!();
-          setNodeFinalize(op.payload.node);
+          setNodeResolved(op.payload.node);
           // ensure that render is queue at least once if afterChildren has no effect
           performer.queueRender("after children effect");
       }
@@ -175,7 +176,7 @@ export function evaluateRenderOps(
     };
   }
 
-  if (node.status === "FINALIZE") {
+  if (node.status === "RESOLVED") {
     return {
       ["root"]: { type: "PAUSED", payload: { node } } satisfies PausedOp,
     };
@@ -288,20 +289,6 @@ export async function performOp(
 }
 
 async function renderComponent(performer: Performer, node: PerformerNode) {
-  // if (!(node.action instanceof Function)) {
-  //   throw new Error(
-  //     `Invalid node type: renderComponent() expects 'node.action' to be a function`,
-  //   );
-  // }
-  const logger = getLogger("render:renderComponent");
-  // call component and get view function
-  // let view: unknown;
-  // setRenderScope({
-  //   performer,
-  //   node,
-  //   nonce: 0,
-  //   abortController: performer.abortController,
-  // });
   try {
     const type = node.element.type;
     if (type instanceof Function) {
@@ -313,16 +300,12 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
       if (result instanceof ReadableStream) {
         node.state.stream = result;
         node.status = "PAUSED";
-        const message = await consumeDeltaStream(
+        node.state.message = await consumeDeltaStream(
           performer,
           node,
           node.state.stream,
         );
-        node.state.message = message;
-        setNodeFinalize(node);
-        logger.debug(
-          `${node.element.id} stream resolved. status=${node.status}`,
-        );
+        setNodeResolved(node);
         performer.queueRender("stream resolved");
       } else if (result && typeof result === "object") {
         if (Array.isArray(result)) {
@@ -336,14 +319,10 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
           );
         }
         node.state.message = result;
-        setNodeFinalize(node);
-        logger.debug(
-          `${node.element.id} messages resolved. status=${node.status}`,
-        );
+        setNodeResolved(node);
       } else if (!result) {
         // return falsey no message will be applied
-        setNodeFinalize(node);
-        logger.debug(`${node.element.id} resolved. status=${node.status}`);
+        setNodeResolved(node);
       } else {
         throw Error(
           `Invalid Message action return value. Received ${JSON.stringify(result)}.`,
@@ -352,19 +331,17 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
     } else if (type === "LISTENER") {
       if (performer.inputQueue.length) {
         node.state.message = performer.inputQueue.shift();
-        setNodeFinalize(node);
+        setNodeResolved(node);
       } else {
-        node.status = "LISTENING";
-        logger.debug(`${node.element.id} listening.`);
+        setNodeListening(node);
       }
     } else if (isMessage(type)) {
       node.state.message = type;
-      setNodeFinalize(node);
+      setNodeResolved(node);
     } else {
       throw Error(`Unexpected message type: ${JSON.stringify(type)}`);
     }
   } catch (e) {
-    logger.debug(`${node.element.id} exception. error=${e}`);
     setNodeError(node, e);
   }
 
@@ -659,7 +636,7 @@ export function resolveMessages(
     // if (typeof cursor.type === "string") {
     //   messages.push(nodeToMessage(cursor));
     // }
-    if (cursor.state.message && cursor.status === "RESOLVED") {
+    if (cursor.state.message && cursor.status === "FINALIZED") {
       messages.push(cursor.state.message);
     }
 

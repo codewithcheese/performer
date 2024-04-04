@@ -1,11 +1,11 @@
 import type { PerformerElement } from "./element.js";
-import { PerformerNode } from "./node.js";
+import { PerformerNode, setNodeFinalized } from "./node.js";
 import { freeElement, render, resolveMessages } from "./render.js";
 import type { PerformerMessage } from "./message.js";
 import { getLogger, logger, setLogLevel, toLogFmt } from "./util/log.js";
 import { getEnv } from "./util/env.js";
 import { type LogType } from "consola";
-import { assertTruthy } from "./util/assert.js";
+import { assertExists } from "./util/assert.js";
 import { withResolvers } from "./util/with-resolvers.js";
 
 export type PerformerOptions = {
@@ -55,7 +55,7 @@ export class Performer {
       id: "root",
       type: () => {},
       props: {},
-      onFinalize: () => this.finalize("root"),
+      onResolved: () => this.finalize("root"),
       onStreaming: () => {},
       onError: () => {},
     };
@@ -81,7 +81,7 @@ export class Performer {
     type,
     props = {},
     ancestor,
-    onFinalize,
+    onResolved,
     onStreaming,
     onError,
   }: {
@@ -89,8 +89,8 @@ export class Performer {
     type: PerformerElement["type"];
     props?: Record<string, any>;
     ancestor: { id: string; type: "parent" | "sibling" };
-    onFinalize: () => void;
-    onStreaming: () => void;
+    onResolved: (node: PerformerNode) => void;
+    onStreaming: (node: PerformerNode) => void;
     onError: (error: unknown) => void;
   }) {
     const logger = getLogger("Performer:upsert");
@@ -102,13 +102,20 @@ export class Performer {
         id,
         type,
         props,
-        onFinalize,
+        onResolved,
         onStreaming,
         onError,
       };
     } else {
       logger.debug(`update=${id}`);
-      element = { ...element, type, props, onFinalize, onStreaming, onError };
+      element = {
+        ...element,
+        type,
+        props,
+        onResolved,
+        onStreaming,
+        onError,
+      };
     }
 
     this.elementMap.set(id, element);
@@ -181,9 +188,9 @@ export class Performer {
 
   finalize(id: string) {
     const element = this.elementMap.get(id);
-    assertTruthy(element, "Expect element when finalizing");
-    assertTruthy(element.node, "Expect element.node when finalizing");
-    element.node.status = "RESOLVED";
+    assertExists(element, "Expect element when finalizing");
+    assertExists(element.node, "Expect element.node when finalizing");
+    setNodeFinalized(element.node);
     this.queueRender(`${id} finalized`);
   }
 

@@ -5,7 +5,7 @@ import { PerformerElement } from "../element.js";
 
 export type MessageRenderFunc<MessageType extends PerformerMessage> = (
   message: MessageType,
-  done: boolean,
+  complete: boolean,
 ) => ReactNode;
 
 export function Message<MessageType extends PerformerMessage>({
@@ -21,16 +21,14 @@ export function Message<MessageType extends PerformerMessage>({
   deps?: DependencyList;
   onMessage?: (message: MessageType) => void;
 }) {
-  const { id, ref, isPending, message, finalized } = useGenerative<MessageType>(
-    type,
-    deps,
-  );
+  const { id, ref, status, message, ready, complete } =
+    useGenerative<MessageType>(type, deps);
 
   useEffect(() => {
-    if (finalized && message && onMessage) {
+    if (status === "FINALIZED" && message && onMessage) {
       onMessage(message);
     }
-  }, [finalized]);
+  }, [status]);
 
   // const renderCount = useRef(0);
   // useEffect(() => {
@@ -42,9 +40,9 @@ export function Message<MessageType extends PerformerMessage>({
 
   return (
     <div data-performer-id={id} ref={ref} className={className}>
-      {!isPending &&
+      {ready &&
         (typeof children === "function"
-          ? children(message!, finalized)
+          ? children(message!, complete)
           : children)}
     </div>
   );

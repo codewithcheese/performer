@@ -22,7 +22,7 @@ type RepeatProps = {
  *	Repeat the children indefinitely or until limit is reached if set.
  */
 export function Repeat({ limit, children }: RepeatProps) {
-  const { id, ref, element, isPending } = useGenerative(() => {});
+  const { id, ref, element, ready, complete } = useGenerative(() => {});
   const [iteration, setIteration] = useState(1);
 
   const renderCount = useRef(0);
@@ -30,7 +30,7 @@ export function Repeat({ limit, children }: RepeatProps) {
     renderCount.current++;
   });
   logger.debug(
-    `Repeat id=${id} iteration=${iteration} isPending=${isPending} renderCount=${renderCount.current}`,
+    `Repeat id=${id} iteration=${iteration} ready=${ready} complete=${complete} renderCount=${renderCount.current}`,
     Array(iteration).map((_, index) => index),
   );
 
@@ -53,7 +53,7 @@ export function Repeat({ limit, children }: RepeatProps) {
 
   return (
     <div ref={ref} data-performer-id={id}>
-      {!isPending &&
+      {ready &&
         Array(iteration)
           .fill(true)
           .map((_, index) => {
