@@ -12,8 +12,6 @@ import { GenerativeContext, NodeStatus, PerformerNode } from "../index.js";
 import { getLogger } from "../util/log.js";
 import { PerformerMessage } from "../message.js";
 
-const logger = getLogger("useGenerative");
-
 type AncestorRecord = { id: string; type: "parent" | "sibling" };
 
 export function findDOMAncestor(
@@ -44,10 +42,17 @@ export function findDOMAncestor(
   return { id: "root", type: "parent" };
 }
 
-export function useGenerative<MessageType extends PerformerMessage>(
-  type: PerformerElement["type"],
-  deps: DependencyList = [],
-): {
+export function useGenerative<MessageType extends PerformerMessage>({
+  type,
+  deps = [],
+  onBeforeResolved,
+  onBeforeFinalized,
+}: {
+  type: PerformerElement["type"];
+  deps?: DependencyList;
+  onBeforeResolved?: (message: MessageType | null) => void;
+  onBeforeFinalized?: (message: MessageType | null) => void;
+}): {
   id: string;
   ref: MutableRefObject<any>;
   element: PerformerElement | null;
@@ -56,6 +61,7 @@ export function useGenerative<MessageType extends PerformerMessage>(
   ready: boolean; // message ready for children to consume (streaming|resolved|finalized)
   complete: boolean; // message complete (resolve|finalized)
 } {
+  const logger = getLogger("useGenerative");
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<NodeStatus>("PENDING");
@@ -102,12 +108,14 @@ export function useGenerative<MessageType extends PerformerMessage>(
         setNonce((n) => n + 1);
       },
       onResolved: (node) => {
-        console.log(
+        logger.info(
           `useGenerative onResolved=${id} message=${JSON.stringify(element?.node?.state.message)}`,
         );
+        let message = element.node!.state.message as MessageType;
         if (node.state.message) {
-          setMessage(element.node!.state.message as MessageType);
+          setMessage(message);
         }
+        onBeforeResolved && onBeforeResolved(message);
         setStatus(node.status);
       },
       onError: (error: unknown) => {
@@ -127,6 +135,7 @@ export function useGenerative<MessageType extends PerformerMessage>(
   // finalized after render
   useLayoutEffect(() => {
     if (status === "RESOLVED") {
+      onBeforeFinalized && onBeforeFinalized(message);
       performer.finalize(id);
       setStatus("FINALIZED");
     }

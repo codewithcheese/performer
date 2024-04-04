@@ -13,22 +13,23 @@ export function Message<MessageType extends PerformerMessage>({
   className,
   children,
   deps = [],
-  onMessage,
+  onBeforeResolved,
+  onBeforeFinalized,
 }: {
   className?: string;
   type: PerformerElement["type"];
   children?: ReactNode | MessageRenderFunc<MessageType>;
   deps?: DependencyList;
-  onMessage?: (message: MessageType) => void;
+  onBeforeResolved?: (message: MessageType | null) => void;
+  onBeforeFinalized?: (message: MessageType | null) => void;
 }) {
   const { id, ref, status, message, ready, complete } =
-    useGenerative<MessageType>(type, deps);
-
-  useEffect(() => {
-    if (status === "FINALIZED" && message && onMessage) {
-      onMessage(message);
-    }
-  }, [status]);
+    useGenerative<MessageType>({
+      type,
+      deps,
+      onBeforeResolved,
+      onBeforeFinalized,
+    });
 
   // const renderCount = useRef(0);
   // useEffect(() => {

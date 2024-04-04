@@ -6,7 +6,7 @@ import {
 import { ClientOptions, OpenAI } from "openai";
 import { object } from "../util/object.js";
 import "../util/readable-stream-polyfill.js";
-import { ReactNode, useCallback } from "react";
+import { ReactNode, useCallback, useMemo } from "react";
 import { ActionType } from "../action.js";
 import { Message, MessageRenderFunc } from "./Message.js";
 import { ChatCompletionCreateParamsStreaming } from "openai/resources/index";
@@ -21,7 +21,8 @@ export function Assistant({
   requestOptions = {},
   clientOptions = {},
   children,
-  onMessage,
+  onBeforeResolved,
+  onBeforeFinalized,
 }: {
   className?: string;
   model?: string;
@@ -30,7 +31,8 @@ export function Assistant({
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
   children?: ReactNode | MessageRenderFunc<AssistantMessage>;
-  onMessage?: (message: AssistantMessage) => void;
+  onBeforeResolved?: (message: AssistantMessage | null) => void;
+  onBeforeFinalized?: (message: AssistantMessage | null) => void;
 }) {
   const action = useCallback<ActionType>(
     async ({ messages, signal }) =>
@@ -49,7 +51,8 @@ export function Assistant({
     <Message<AssistantMessage>
       className={className}
       type={action}
-      onMessage={onMessage}
+      onBeforeResolved={onBeforeResolved}
+      onBeforeFinalized={onBeforeFinalized}
     >
       {children}
     </Message>

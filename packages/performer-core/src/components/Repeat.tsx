@@ -22,7 +22,9 @@ type RepeatProps = {
  *	Repeat the children indefinitely or until limit is reached if set.
  */
 export function Repeat({ limit, children }: RepeatProps) {
-  const { id, ref, element, ready, complete } = useGenerative(() => {});
+  const { id, ref, element, ready, complete } = useGenerative({
+    type: () => {},
+  });
   const [iteration, setIteration] = useState(1);
 
   const renderCount = useRef(0);

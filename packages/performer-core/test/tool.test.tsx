@@ -26,7 +26,7 @@ test("should use tool with callback", async () => {
     <>
       <system>Say hello to world</system>
       <Assistant
-        onMessage={(message) => eventMessages.push(message)}
+        onBeforeResolved={(message) => eventMessages.push(message)}
         model="gpt-4-1106-preview"
         toolChoice={tool}
         tools={[tool]}

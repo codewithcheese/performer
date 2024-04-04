@@ -129,8 +129,11 @@ export function Decision({
 
   const tools = useMemo(() => [selectPathTool], [selectPathTool]);
 
-  const onMessage = useCallback(
-    (message: AssistantMessage) => {
+  const onBeforeResolved = useCallback(
+    (message: AssistantMessage | null) => {
+      if (!message) {
+        throw Error("Assistant message empty");
+      }
       const call = getToolCall(selectPathTool, message);
       if (!call) {
         // fixme: improve retry/fallback when tool call fails
@@ -148,7 +151,7 @@ export function Decision({
         <Assistant
           toolChoice={selectPathTool}
           tools={tools}
-          onMessage={onMessage}
+          onBeforeResolved={onBeforeResolved}
         ></Assistant>
       </>
     );
