@@ -245,12 +245,7 @@ export class Performer {
   }
 
   queueRender(reason: string) {
-    getLogger("Performer:queueRender").debug(
-      toLogFmt([
-        ["call", "queueRender"],
-        ["reason", reason],
-      ]),
-    );
+    getLogger("Performer:queueRender").debug(`reason=${reason}`);
     if (!this.renderInProgress) {
       this.renderInProgress = true;
       requestIdleCallback(() => this.start(reason));

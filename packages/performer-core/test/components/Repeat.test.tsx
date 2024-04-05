@@ -1,6 +1,7 @@
 /* @vitest-environment jsdom */
 import { expect, test } from "vitest";
 import {
+  Assistant,
   Generative,
   Message,
   Performer,
@@ -64,9 +65,9 @@ test("should support nested repeat", async () => {
   expect(countOccurrence(messages, "4")).toEqual(1);
 }, 10_000);
 
-test("node after repeat should not render until repeat is complete", async () => {
+test("should render all iterations before next message", async () => {
   const app = (
-    <Generative options={{ logLevel: "debug" }}>
+    <Generative options={{ logLevel: "info" }}>
       <Repeat limit={2}>
         <System content="A">{readTextContent}</System>
       </Repeat>
@@ -74,68 +75,24 @@ test("node after repeat should not render until repeat is complete", async () =>
     </Generative>
   );
 
-  const { findByText, container } = render(app);
+  const { findByText, container, queryAllByText } = render(app);
   await findByText("B");
-  console.log(container.innerHTML);
+  const elements = queryAllByText("A");
+  expect(elements).toHaveLength(2);
 }, 30_000);
 
-test("should repeat until times prop is reached", async () => {
-  const app = (
-    <>
-      <system>0</system>
-      <Repeat times={1}>
-        <system>A</system>
-        <assistant>B</assistant>
-        <Async>
-          <user>C</user>
-        </Async>
+test("should not repeat when stopped", async () => {
+  const renderApp = (stopped: boolean) => (
+    <Generative>
+      <System content="0">{readTextContent}</System>
+      <Repeat stopped={stopped}>
+        <System content="2">{readTextContent}</System>
       </Repeat>
-      <system>1</system>
-      <Repeat times={2}>
-        <system>D</system>
-        <assistant>E</assistant>
-        <Async>
-          <user>F</user>
-        </Async>
-      </Repeat>
-      <system>2</system>
-    </>
+      <System content="1">{readTextContent}</System>
+    </Generative>
   );
-  const performer = new Performer(app);
-  performer.start();
-  await performer.waitUntilFinished();
-  let messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(1 + 1 * 3 + 1 + 2 * 3 + 1);
-}, 30_000);
-
-test("should stop repeating using stop prop", async () => {
-  function App() {
-    let count = 0; // no signal needed not used in view
-    const stop = useState<boolean>(false);
-    const onMessage = () => {
-      count += 1;
-      if (count >= 4) {
-        stop.value = true;
-      }
-    };
-    return () => (
-      <>
-        <system>0</system>
-        <Repeat stop={stop}>
-          <system onMessage={onMessage}>A</system>
-          <assistant>B</assistant>
-          <Async>
-            <user>C</user>
-          </Async>
-        </Repeat>
-        <system>1</system>
-        <user>2</user>
-      </>
-    );
-  }
-  const performer = new Performer(<App />);
-  performer.start();
-  await performer.waitUntilFinished();
-  const messages = resolveMessages(performer.root);
-  expect(messages.length).toEqual(1 + 3 * 4 + 2);
+  const { findByText, queryAllByText } = render(renderApp(true));
+  await findByText("1");
+  const elements = queryAllByText("2");
+  expect(elements).toHaveLength(1);
 }, 10_000);

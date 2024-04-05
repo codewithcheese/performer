@@ -11,17 +11,17 @@ import {
 import { useGenerative } from "../hooks/use-generative.js";
 import { getLogger } from "../util/log.js";
 
-const logger = getLogger("Repeat");
-
 type RepeatProps = {
   limit?: number;
+  stopped?: boolean;
   children?: ReactNode;
 };
 
 /**
- *	Repeat the children indefinitely or until limit is reached if set.
+ *	Repeat the children indefinitely or until stopped or limit is reached if set.
  */
-export function Repeat({ limit, children }: RepeatProps) {
+export function Repeat({ limit, stopped = false, children }: RepeatProps) {
+  const logger = getLogger("Repeat");
   const { id, ref, element, ready, complete } = useGenerative({
     type: () => {},
   });
@@ -32,22 +32,23 @@ export function Repeat({ limit, children }: RepeatProps) {
     renderCount.current++;
   });
   logger.debug(
-    `Repeat id=${id} iteration=${iteration} ready=${ready} complete=${complete} renderCount=${renderCount.current}`,
+    `id=${id} iteration=${iteration} ready=${ready} complete=${complete} renderCount=${renderCount.current}`,
     Array(iteration).map((_, index) => index),
   );
 
   useAfterChildren(element, () => {
+    if (stopped) {
+      return;
+    }
     setIteration((i) => {
       if (!limit) {
         return i + 1;
       }
       if (i < limit) {
-        logger.debug(
-          `Repeat:useAfterChildren before=${i} after=${i + 1} limit=${limit}`,
-        );
+        logger.debug(`before=${i} after=${i + 1} limit=${limit}`);
         return i + 1;
       } else {
-        logger.debug(`Repeat:useAfterChildren i=${i} limit=${limit}`);
+        logger.debug(`i=${i} limit=${limit}`);
         return i;
       }
     });
