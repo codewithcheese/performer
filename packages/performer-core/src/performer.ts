@@ -2,7 +2,7 @@ import type { PerformerElement } from "./element.js";
 import { PerformerNode, setNodeFinalized } from "./node.js";
 import { freeElement, render, resolveMessages } from "./render.js";
 import type { PerformerMessage } from "./message.js";
-import { getLogger, logger, setLogLevel, toLogFmt } from "./util/log.js";
+import { getLogger, logger, setLogLevel } from "./util/log.js";
 import { getEnv } from "./util/env.js";
 import { type LogType } from "consola";
 import { assertExists } from "./util/assert.js";
@@ -45,7 +45,6 @@ export class Performer {
       options.logLevel ||
       (getEnv("VITEST") && "info") ||
       "info";
-    const logger = getLogger("Performer");
     setLogLevel(logLevel);
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
