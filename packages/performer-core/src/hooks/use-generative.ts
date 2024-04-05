@@ -109,7 +109,7 @@ export function useGenerative<MessageType extends PerformerMessage>({
       },
       onResolved: (node) => {
         logger.info(
-          `useGenerative onResolved=${id} message=${JSON.stringify(element?.node?.state.message)}`,
+          `onResolved=${id} message=${JSON.stringify(element?.node?.state.message)}`,
         );
         let message = element.node!.state.message as MessageType;
         if (node.state.message) {

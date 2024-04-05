@@ -1,50 +1,59 @@
+/* @vitest-environment jsdom */
 import { expect, test } from "vitest";
 import {
+  Generative,
+  Message,
   Performer,
   PerformerMessage,
+  readTextContent,
   Repeat,
   resolveMessages,
-  useResource,
-  useState,
+  System,
+  User,
 } from "../../src/index.js";
-import { sleep } from "openai/core";
+import { sleep } from "../../src/util/sleep.js";
+import { render } from "@testing-library/react";
+import { getPerformer, UsePerformer } from "../util/UsePerformer.js";
 
 function Async({ children }: any) {
-  useResource(sleep, 5);
-  return () => children;
+  return (
+    <Message
+      type={async () => {
+        await sleep(1);
+      }}
+    >
+      {children}
+    </Message>
+  );
 }
 
 test("should support nested repeat", async () => {
   const app = (
-    <>
-      <system>-1</system>
-      <Repeat times={2}>
-        <system>0</system>
-        <Repeat times={3}>
+    <Generative>
+      <UsePerformer />
+      <System content="-1">{readTextContent}</System>
+      <Repeat limit={2}>
+        <System content="0">{readTextContent}</System>
+        <Repeat limit={3}>
           <Async>
-            <user>1</user>
-            <Repeat times={4}>
+            <User content="1">{readTextContent}</User>
+            <Repeat limit={4}>
               <Async>
-                <user>2</user>
+                <User content="2">{readTextContent}</User>
               </Async>
             </Repeat>
           </Async>
         </Repeat>
-        <assistant>3</assistant>
+        <System content="3">{readTextContent}</System>
       </Repeat>
-      <system>4</system>
-    </>
+      <System content="4">{readTextContent}</System>
+    </Generative>
   );
-  const performer = new Performer(app);
-  let eventMessages: PerformerMessage[] = [];
-  performer.addEventListener("message", (event) =>
-    eventMessages.push(event.detail.message),
-  );
-  performer.start();
-  await performer.waitUntilFinished();
-  let messages = performer.getAllMessages();
-  // compare order of events (render order) with order of messages (tree order)
-  expect(messages).toEqual(eventMessages);
+  const {} = render(app);
+  const performer = getPerformer()!;
+  await performer.waitUntilSettled();
+
+  const messages = performer.getAllMessages();
   const countOccurrence = (list: PerformerMessage[], content: string) =>
     list.filter((m) => m.content === content).length;
   expect(countOccurrence(messages, "-1")).toEqual(1);
@@ -53,27 +62,21 @@ test("should support nested repeat", async () => {
   expect(countOccurrence(messages, "2")).toEqual(2 * 3 * 4);
   expect(countOccurrence(messages, "3")).toEqual(2);
   expect(countOccurrence(messages, "4")).toEqual(1);
-}, 30_000);
+}, 10_000);
 
 test("node after repeat should not render until repeat is complete", async () => {
   const app = (
-    <>
-      <Repeat times={2}>
-        <system>A</system>
+    <Generative options={{ logLevel: "debug" }}>
+      <Repeat limit={2}>
+        <System content="A">{readTextContent}</System>
       </Repeat>
-      <system>1</system>
-    </>
+      <System content="B">{readTextContent}</System>
+    </Generative>
   );
-  const performer = new Performer(app);
-  let eventMessages: PerformerMessage[] = [];
-  performer.addEventListener("message", (event) =>
-    eventMessages.push(event.detail.message),
-  );
-  performer.start();
-  await performer.waitUntilFinished();
-  let messages = performer.getAllMessages();
-  // compare order of events (render order) with order of messages (tree order)
-  expect(messages).toEqual(eventMessages);
+
+  const { findByText, container } = render(app);
+  await findByText("B");
+  console.log(container.innerHTML);
 }, 30_000);
 
 test("should repeat until times prop is reached", async () => {

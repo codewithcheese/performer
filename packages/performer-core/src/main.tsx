@@ -40,12 +40,25 @@ function MessageInput() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <Generative>
-    <Repeat>
-      <User>{(message) => readTextContent(message)}</User>
-      <Assistant>{(message) => message.content}</Assistant>
-    </Repeat>
-    <MessageInput />
-  </Generative>,
-);
+let root: ReactDOM.Root | null = null;
+
+function render() {
+  if (!root) {
+    root = ReactDOM.createRoot(document.getElementById("root")!);
+  }
+  root.render(
+    <Generative>
+      <Repeat>
+        <User>{(message) => readTextContent(message)}</User>
+        <Assistant>{(message) => message.content}</Assistant>
+      </Repeat>
+      <MessageInput />
+    </Generative>,
+  );
+}
+
+render();
+
+if (import.meta.hot) {
+  import.meta.hot.accept(render);
+}
