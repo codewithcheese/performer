@@ -81,7 +81,7 @@ export async function render(performer: Performer, reason: string) {
   if (!performer.app) {
     throw Error("Cannot render before app is assigned");
   }
-  getLogger("render:start").debug(`i=${++renderCount} reason=${reason} `);
+  getLogger("render").debug(`start=${++renderCount} reason=${reason} `);
   try {
     const ops = evaluateRenderOps(
       // "root",
@@ -119,7 +119,7 @@ export async function render(performer: Performer, reason: string) {
   } catch (error) {
     performer.onError("root", error);
   } finally {
-    getLogger("render:end").debug(`i=${renderCount}`);
+    getLogger("render").debug(`end=${renderCount}`);
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "name": "performer",
+  "name": "generative.js",
   "type": "module",
   "private": true,
   "packageManager": "pnpm@8.6.12",
@@ -11,8 +11,7 @@
     "ci:publish": "pnpm publish -r --report-summary --no-git-checks --access public ",
     "ci:snapshot": "pnpm publish -r --report-summary --no-git-checks --access public --tag",
     "test": "vitest run",
-    "typecheck": "pnpm --recursive --parallel run typecheck",
-    "e2e": "playwright test packages/performer-playground --config packages/performer-playground/playwright.config.ts"
+    "typecheck": "pnpm --recursive --parallel run typecheck"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

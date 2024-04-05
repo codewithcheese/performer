@@ -1,8 +1,7 @@
 import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
+import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
+
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@performer/core/jsx-dev-runtime": "../packages/performer-core/src/jsx",
-    },
-  },
+  plugins: [react(), TanStackRouterVite()],
 });
