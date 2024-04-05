@@ -1,97 +1,22 @@
-import {
-  isAssistantMessage,
-  PerformerElement,
-  // nodeToMessage,
-  // PerformerEvent,
-  PerformerNode,
-  RenderOp,
-} from "../index.js";
-import { createConsola, LogLevels, LogType } from "consola";
-import { isImageContent, isTextContent } from "../message.js";
+import { PerformerElement, RenderOp } from "../index.js";
+import { ConsolaOptions, createConsola, LogLevels, LogType } from "consola";
 
-export const logger = createConsola({});
+let options: Partial<ConsolaOptions & { fancy: boolean }> = {};
 
-// export function logMessageResolved(node: PerformerNode) {
-//   const message = nodeToMessage(node);
-//   const pairs: [string, any][] = [];
-//   pairs.push(["message", "resolved"]);
-//   pairs.push(["role", message.role]);
-//   if (typeof message.content === "string") {
-//     pairs.push(["content", message.content]);
-//   } else {
-//     if (typeof message.content === "string") {
-//       pairs.push(["content", message.content]);
-//     } else if (message.content) {
-//       for (const content of message.content) {
-//         if (isTextContent(content)) {
-//           pairs.push(["text", content.text]);
-//         } else if (isImageContent(content)) {
-//           pairs.push(["image_url", content.image_url.url]);
-//         }
-//       }
-//     }
-//   }
-//   if (isAssistantMessage(message) && message.tool_calls) {
-//     for (const toolCall of message.tool_calls) {
-//       pairs.push(["tool_call.name", toolCall.function.name]);
-//       pairs.push(["tool_call.arguments", toolCall.function.arguments]);
-//     }
-//   }
-//   if (isAssistantMessage(message) && message.function_call) {
-//     pairs.push(["function_call.name", message.function_call.name]);
-//     pairs.push(["function_call.arguments", message.function_call.arguments]);
-//   }
-//   pairs.push(["node", nodeToStr(node)]);
-//   logger.info(toLogFmt(pairs));
-// }
+if (
+  typeof globalThis.window !== "undefined" &&
+  typeof globalThis.process === "undefined"
+) {
+  // Running in a browser environment (excluding jsdom)
+  const { BrowserReporter } = await import("./consola-browser-reporter.js");
+  options.reporters = [new BrowserReporter({})];
+} else {
+  // Running in a Node.js environment or jsdom
+  const { NodeReporter } = await import("./consola-node-reporter.js");
+  options.reporters = [new NodeReporter()];
+}
 
-// export function logEvent(event: PerformerEvent) {
-//   const pairs: [string, any][] = [["event", event.type]];
-//   if ("threadId" in event) {
-//     pairs.push(["threadId", event.threadId]);
-//   }
-//
-//   if (event.type === "message" || event.type === "delta") {
-//     const message =
-//       "message" in event.detail ? event.detail.message : event.detail.delta;
-//     if (message.role) {
-//       pairs.push(["role", message.role]);
-//     }
-//     if (message.content) {
-//       if (typeof message.content === "string") {
-//         pairs.push(["content", message.content]);
-//       } else {
-//         for (const content of message.content) {
-//           if (isTextContent(content)) {
-//             pairs.push(["text", content.text]);
-//           } else if (isImageContent(content)) {
-//             pairs.push(["image_url", content.image_url.url]);
-//           }
-//         }
-//       }
-//     }
-//     if ("tool_calls" in message && message.tool_calls) {
-//       for (const toolCall of message.tool_calls) {
-//         if (toolCall?.function?.name) {
-//           pairs.push(["tool_call.name", toolCall.function.name]);
-//         }
-//         if (toolCall?.function?.arguments) {
-//           pairs.push(["tool_call.arguments", toolCall.function.arguments]);
-//         }
-//       }
-//     }
-//   } else if (event.type === "error") {
-//     pairs.push(["message", event.detail.message]);
-//   } else if (event.type === "lifecycle") {
-//     pairs.push(["state", event.detail.state]);
-//   }
-//
-//   if (event.type === "delta") {
-//     logger.debug(toLogFmt(pairs));
-//   } else {
-//     logger.info(toLogFmt(pairs));
-//   }
-// }
+export const logger = createConsola(options);
 
 export function logOp(threadId: string, op: RenderOp) {
   const pairs: [string, any][] = [["op", op.type]];
