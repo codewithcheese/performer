@@ -17,7 +17,7 @@ import {
   PerformerMessage,
 } from "./message.js";
 import { isEqualWith } from "lodash-es";
-import { getLogger, logOp, toLogFmt } from "./util/log.js";
+import { getLogger } from "./util/log.js";
 
 type CreateOp = {
   type: "CREATE";
@@ -90,8 +90,7 @@ export async function render(performer: Performer, reason: string) {
       undefined,
       undefined,
     );
-    for (const [threadId, op] of Object.entries(ops)) {
-      logOp(threadId, op);
+    for (const [_, op] of Object.entries(ops)) {
       switch (op.type) {
         case "CREATE":
           await performOp(performer, op);
@@ -564,13 +563,7 @@ function freeNode(
   freeRemaining: boolean = false,
 ) {
   try {
-    getLogger("render:freeNode").debug(
-      toLogFmt([
-        ["free", "node"],
-        ["threadId", "root"],
-        // ["node", nodeToStr(node)],
-      ]),
-    );
+    getLogger("render:freeNode").debug(`id=${node.element.id}`);
     // dispose view so that its no longer reactive
     // if (node.disposeView) {
     //   node.disposeView();
