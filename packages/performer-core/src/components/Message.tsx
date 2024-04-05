@@ -10,6 +10,7 @@ export type MessageRenderFunc<MessageType extends PerformerMessage> = (
 
 export function Message<MessageType extends PerformerMessage>({
   type,
+  typeName,
   className,
   children,
   deps = [],
@@ -18,14 +19,16 @@ export function Message<MessageType extends PerformerMessage>({
 }: {
   className?: string;
   type: PerformerElement["type"];
+  typeName?: string;
   children?: ReactNode | MessageRenderFunc<MessageType>;
   deps?: DependencyList;
-  onBeforeResolved?: (message: MessageType | null) => void;
-  onBeforeFinalized?: (message: MessageType | null) => void;
+  onBeforeResolved?: (message: MessageType) => void;
+  onBeforeFinalized?: (message: MessageType) => void;
 }) {
   const { id, ref, status, message, ready, complete } =
     useGenerative<MessageType>({
       type,
+      typeName,
       deps,
       onBeforeResolved,
       onBeforeFinalized,

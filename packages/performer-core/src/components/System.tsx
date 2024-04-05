@@ -12,8 +12,8 @@ export function System({
   content: string;
   children?: ReactNode | ((message: SystemMessage) => ReactNode);
   className?: string;
-  onBeforeResolved?: (message: SystemMessage | null) => void;
-  onBeforeFinalized?: (message: SystemMessage | null) => void;
+  onBeforeResolved?: (message: SystemMessage) => void;
+  onBeforeFinalized?: (message: SystemMessage) => void;
 }) {
   const message = useMemo(
     (): SystemMessage => ({ role: "system", content }),
@@ -23,6 +23,7 @@ export function System({
   return (
     <Message<SystemMessage>
       type={message}
+      typeName="System"
       deps={deps}
       className={className}
       onBeforeResolved={onBeforeResolved}

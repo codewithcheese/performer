@@ -1,71 +1,52 @@
+/* @vitest-environment jsdom */
 import { expect, test } from "vitest";
-import {
-  Assistant,
-  Performer,
-  PerformerErrorEvent,
-  PerformerMessageEvent,
-  User,
-} from "../src/index.js";
+import { Assistant, Generative, Performer, User } from "../src/index.js";
 import { sleep } from "openai/core";
+import { getPerformer, UsePerformer } from "./util/UsePerformer.js";
+import { render } from "@testing-library/react";
 
 test("should wait for input before performer is finished", async () => {
-  const app = <User />;
-  const performer = new Performer(app);
-  console.time("Render");
-  performer.start();
+  const app = (
+    <Generative options={{ logLevel: "debug" }}>
+      <UsePerformer />
+      <User />
+    </Generative>
+  );
+  const {} = render(app);
+  const performer = getPerformer()!;
   await performer.waitUntilListening();
-  expect(performer.inputNode).toBeDefined();
   performer.submit({
     role: "user",
-    content: [{ type: "text", text: "Hold me close" }],
+    content: [{ type: "text", text: "A" }],
   });
   await performer.waitUntilFinished();
 });
 
 test("should wait for multiple inputs", async () => {
   const app = (
-    <>
+    <Generative options={{ logLevel: "debug" }}>
+      <UsePerformer />
       <User />
       <User />
       <User />
-    </>
+    </Generative>
   );
-  const performer = new Performer(app);
-  console.time("Render");
-  performer.start();
+  const {} = render(app);
+  const performer = getPerformer()!;
   await performer.waitUntilListening();
   performer.submit({
     role: "user",
-    content: [{ type: "text", text: "One" }],
+    content: [{ type: "text", text: "A" }],
   });
   await performer.waitUntilListening();
   performer.submit({
     role: "user",
-    content: [{ type: "text", text: "Two" }],
+    content: [{ type: "text", text: "B" }],
   });
   await performer.waitUntilListening();
   performer.submit({
     role: "user",
-    content: [{ type: "text", text: "Three" }],
+    content: [{ type: "text", text: "C" }],
   });
   await performer.waitUntilFinished();
-});
-
-test("should abort assistant response", async () => {
-  const app = (
-    <>
-      <system>Hello world in Javascript. Code only.</system>
-      <Assistant />
-    </>
-  );
-  const performer = new Performer(app, { throwOnError: false });
-  const events: PerformerErrorEvent[] = [];
-  performer.addEventListener("error", (event) => {
-    events.push(event);
-  });
-  performer.start();
-  performer.abort();
-  await performer.waitUntilFinished();
-  await sleep(1000);
-  // expect(events).toHaveLength(1);
 });

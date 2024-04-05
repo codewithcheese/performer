@@ -87,3 +87,5 @@ test("should bubble error when apiKey invalid", async () => {
     console.error.mockRestore();
   }
 }, 10_000);
+
+test("should abort assistant response");

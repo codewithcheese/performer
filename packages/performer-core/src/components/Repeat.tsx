@@ -24,6 +24,7 @@ export function Repeat({ limit, stopped = false, children }: RepeatProps) {
   const logger = getLogger("Repeat");
   const { id, ref, element, ready, complete } = useGenerative({
     type: () => {},
+    typeName: "Repeat",
   });
   const [iteration, setIteration] = useState(1);
 

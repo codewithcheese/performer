@@ -38,30 +38,50 @@ export type PerformerNode = {
 
 export function setNodeResolved(node: PerformerNode) {
   node.status = "RESOLVED";
-  logger.debug(`id=${node.element.id} status=${node.status}`);
+  logger
+    .withTag("Node")
+    .debug(
+      `id=${node.element.id} type=${node.element.typeName} status=${node.status}`,
+    );
   node.element.onResolved(node);
 }
 
 export function setNodeStreaming(node: PerformerNode) {
   node.status = "STREAMING";
-  logger.debug(`id=${node.element.id} status=${node.status}`);
+  logger
+    .withTag("Node")
+    .debug(
+      `id=${node.element.id} type=${node.element.typeName} status=${node.status}`,
+    );
   node.element.onStreaming(node);
 }
 
 export function setNodeError(node: PerformerNode, error: unknown) {
   node.status = "ERROR";
-  logger.debug(`id=${node.element.id} status=${node.status}`);
+  logger
+    .withTag("Node")
+    .debug(
+      `id=${node.element.id} type=${node.element.typeName} status=${node.status}`,
+    );
   node.element.onError(error);
 }
 
 export function setNodeFinalized(node: PerformerNode) {
   node.status = "FINALIZED";
-  logger.debug(`id=${node.element.id} status=${node.status}`);
+  logger
+    .withTag("Node")
+    .debug(
+      `id=${node.element.id} type=${node.element.typeName} status=${node.status}`,
+    );
 }
 
 export function setNodeListening(node: PerformerNode) {
   node.status = "LISTENING";
-  logger.debug(`id=${node.element.id} status=${node.status}`);
+  logger
+    .withTag("Node")
+    .debug(
+      `id=${node.element.id}  type=${node.element.typeName}status=${node.status}`,
+    );
 }
 
 // export type SerializedNode = {

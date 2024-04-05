@@ -1,77 +1,65 @@
+/* @vitest-environment jsdom */
 import { assert, expect, test } from "vitest";
 import { z } from "zod";
 import {
   Assistant,
   createTool,
-  isAssistantMessage,
-  isSystemMessage,
-  Performer,
-  PerformerMessage,
-  resolveMessages,
-  isToolMessage,
+  Generative,
+  getToolCall,
+  System,
+  User,
 } from "../src/index.js";
+import { useState } from "react";
+import { ErrorBoundary } from "./util/ErrorBoundary.js";
+import { render } from "@testing-library/react";
+import { getPerformer, UsePerformer } from "./util/UsePerformer.js";
 
-test("should use tool with callback", async () => {
-  let toolCall = undefined;
-  const HelloSchema = z
-    .object({
-      name: z.string(),
-    })
-    .describe("Say hello");
-  const tool = createTool("sayHello", HelloSchema, ({ name }) => {
-    toolCall = name;
-  });
-  const eventMessages: PerformerMessage[] = [];
-  const app = (
-    <>
-      <system>Say hello to world</system>
-      <Assistant
-        onBeforeResolved={(message) => eventMessages.push(message)}
-        model="gpt-4-1106-preview"
-        toolChoice={tool}
-        tools={[tool]}
-      />
-    </>
-  );
-  const performer = new Performer(app);
-  performer.start();
-  await performer.waitUntilFinished();
-  const messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(3);
-  expect(messages[0].role).toEqual("system");
-  assert(isSystemMessage(messages[0]));
-  assert(isAssistantMessage(messages[1]));
-  assert(isToolMessage(messages[2]));
-  assert(messages[1].tool_calls);
-  expect(toolCall).toBeDefined();
-  expect(eventMessages).toHaveLength(2);
-  expect(eventMessages[0]).toEqual(messages[1]);
-});
+test("should use tool", async () => {
+  function UseTool() {
+    const [sum, setSum] = useState<number | null>(null);
+    const HelloSchema = z
+      .object({
+        sum: z.number(),
+      })
+      .describe("1 + 1");
+    const tool = createTool("sum", HelloSchema);
 
-test("should use tool without callback", async () => {
-  const HelloSchema = z
-    .object({
-      name: z.string(),
-    })
-    .describe("Say hello");
-  const tool = createTool("sayHello", HelloSchema);
+    if (sum) {
+      return <div>Success</div>;
+    } else {
+      return (
+        <Assistant
+          onBeforeResolved={(message) => {
+            const call = getToolCall(tool, message);
+            assert(call);
+            setSum(call.data.sum);
+          }}
+          model="gpt-4-1106-preview"
+          toolChoice={tool}
+          tools={[tool]}
+        >
+          <Loading />
+        </Assistant>
+      );
+    }
+  }
+  function Loading() {
+    return <div>...</div>;
+  }
   const app = (
-    <>
-      <system>Say hello to world</system>
-      <Assistant toolChoice={tool} tools={[tool]} />
-    </>
+    <Generative>
+      <UsePerformer />
+      <ErrorBoundary>
+        <System content="Say hello to world" />
+        <UseTool />
+      </ErrorBoundary>
+    </Generative>
   );
-  const performer = new Performer(app);
-  performer.start();
-  await performer.waitUntilFinished();
-  const messages = resolveMessages(performer.root);
-  expect(messages).toHaveLength(3);
-  assert(isToolMessage(messages[2]));
-  const assistant = performer.root?.child?.nextSibling;
-  expect(
-    assistant!.hooks["state-0"].value[0].content,
-    "Expect Assistant tool messages state to equal tool message",
-  ).toEqual(messages[2].content);
+  const { container, findByText } = render(app);
+  const performer = getPerformer()!;
+  await performer.waitUntilSettled();
+  const result = await findByText("Success");
+  console.log(container.innerHTML);
 });
 
 test("should use multiple tools", async () => {
@@ -85,28 +73,30 @@ test("should use multiple tools", async () => {
       name: z.string(),
     })
     .describe("Extact name of widget");
-  let callCount = 0;
   function App() {
-    const countTool = createTool("extractCount", WidgetCountSchema, () => {
-      callCount += 1;
-    });
-    const nameTool = createTool("extractName", WidgetNameSchema, () => {
-      callCount += 1;
-    });
-    return () => (
-      <>
-        <system>Use tools to extract widget information.</system>
-        <user>
-          Widget of the day:{"\n"}
-          name: Gizmo{"\n"}
+    const countTool = createTool("extractCount", WidgetCountSchema);
+    const nameTool = createTool("extractName", WidgetNameSchema);
+    return (
+      <Generative>
+        <UsePerformer />
+        <System content=">Use tools to extract widget information." />
+        <User
+          content={`
+          Widget of the day:
+          name: Gizmo
           count: 42
-        </user>
-        <Assistant toolChoice={"auto"} tools={[countTool, nameTool]} />
-      </>
+        `}
+        />
+        <Assistant toolChoice={"auto"} tools={[countTool, nameTool]}>
+          {(message) => {
+            return message.tool_calls?.length;
+          }}
+        </Assistant>
+      </Generative>
     );
   }
-  const performer = new Performer(<App />);
-  performer.start();
-  await performer.waitUntilFinished();
-  expect(callCount).toBeGreaterThan(0);
+  const { findByText } = render(<App />);
+  const performer = getPerformer()!;
+  await performer.waitUntilSettled();
+  await findByText("2");
 });

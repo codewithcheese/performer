@@ -81,7 +81,7 @@ export async function render(performer: Performer, reason: string) {
   if (!performer.app) {
     throw Error("Cannot render before app is assigned");
   }
-  getLogger("render").debug(`start count=${++renderCount} reason=${reason} `);
+  getLogger("render:start").debug(`i=${++renderCount} reason=${reason} `);
   try {
     const ops = evaluateRenderOps(
       // "root",
@@ -119,7 +119,7 @@ export async function render(performer: Performer, reason: string) {
   } catch (error) {
     performer.onError("root", error);
   } finally {
-    getLogger("render").debug(`end count=${renderCount}`);
+    getLogger("render:end").debug(`i=${renderCount}`);
   }
 }
 
@@ -331,8 +331,9 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
       if (performer.inputQueue.length) {
         node.state.message = performer.inputQueue.shift();
         setNodeResolved(node);
-      } else {
+      } else if (node.status !== "LISTENING") {
         setNodeListening(node);
+        performer.setListening();
       }
     } else if (isMessage(type)) {
       node.state.message = type;

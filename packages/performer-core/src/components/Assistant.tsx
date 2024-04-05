@@ -31,8 +31,8 @@ export function Assistant({
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;
   children?: ReactNode | MessageRenderFunc<AssistantMessage>;
-  onBeforeResolved?: (message: AssistantMessage | null) => void;
-  onBeforeFinalized?: (message: AssistantMessage | null) => void;
+  onBeforeResolved?: (message: AssistantMessage) => void;
+  onBeforeFinalized?: (message: AssistantMessage) => void;
 }) {
   const action = useCallback<ActionType>(
     async ({ messages, signal }) =>
@@ -51,6 +51,7 @@ export function Assistant({
     <Message<AssistantMessage>
       className={className}
       type={action}
+      typeName="Assistant"
       onBeforeResolved={onBeforeResolved}
       onBeforeFinalized={onBeforeFinalized}
     >

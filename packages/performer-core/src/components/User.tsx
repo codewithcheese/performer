@@ -12,8 +12,8 @@ export function User({
   content?: UserMessage["content"];
   children?: ReactNode | ((message: UserMessage) => ReactNode);
   className?: string;
-  onBeforeResolved?: (message: UserMessage | null) => void;
-  onBeforeFinalized?: (message: UserMessage | null) => void;
+  onBeforeResolved?: (message: UserMessage) => void;
+  onBeforeFinalized?: (message: UserMessage) => void;
 }) {
   const type = useMemo(
     () => (content ? { role: "user" as const, content } : "LISTENER"),
@@ -24,6 +24,7 @@ export function User({
     <Message<UserMessage>
       className={className}
       type={type}
+      typeName="User"
       deps={deps}
       onBeforeResolved={onBeforeResolved}
       onBeforeFinalized={onBeforeFinalized}

@@ -5,6 +5,7 @@ import { PerformerMessage } from "./message.js";
 export type PerformerElement = {
   id: string;
   type: ActionType | "LISTENER" | PerformerMessage;
+  typeName: string;
   props: { afterChildren?: () => void };
   onResolved: (node: PerformerNode) => void;
   onStreaming: (node: PerformerNode) => void;

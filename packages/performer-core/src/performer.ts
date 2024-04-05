@@ -28,7 +28,6 @@ export class Performer {
 
   // todo add deadline
   inputQueue: PerformerMessage[] = [];
-  inputNode: PerformerNode | undefined;
 
   abortController = new AbortController();
 
@@ -53,6 +52,7 @@ export class Performer {
     this.app = {
       id: "root",
       type: () => {},
+      typeName: "root",
       props: {},
       onResolved: () => this.finalize("root"),
       onStreaming: () => {},
@@ -78,6 +78,7 @@ export class Performer {
   upsert({
     id,
     type,
+    typeName,
     props = {},
     ancestor,
     onResolved,
@@ -86,6 +87,7 @@ export class Performer {
   }: {
     id: string;
     type: PerformerElement["type"];
+    typeName: string;
     props?: Record<string, any>;
     ancestor: { id: string; type: "parent" | "sibling" };
     onResolved: (node: PerformerNode) => void;
@@ -100,6 +102,7 @@ export class Performer {
       element = {
         id,
         type,
+        typeName,
         props,
         onResolved,
         onStreaming,
@@ -110,6 +113,7 @@ export class Performer {
       element = {
         ...element,
         type,
+        typeName,
         props,
         onResolved,
         onStreaming,
@@ -222,17 +226,14 @@ export class Performer {
 
   setFinished() {
     this.state = "finished";
-    logger.debug(`state=${this.state}`);
   }
 
   setRendering() {
     this.state = "rendering";
-    logger.debug(`state=${this.state}`);
   }
 
   setListening() {
     this.state = "listening";
-    logger.debug(`state=${this.state}`);
   }
 
   get aborted() {
@@ -298,6 +299,7 @@ export class Performer {
 
   set state(value: PerformerState) {
     this.#state = value;
+    logger.withTag("Performer").debug(`state=${this.state}`);
     this.resolveStatePromise(value);
   }
 
