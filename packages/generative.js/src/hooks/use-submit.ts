@@ -1,9 +1,12 @@
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import { GenerativeContext } from "../index.js";
 
-export function useSubmit(role: "user" | "assistant" | "system" = "user") {
+export function useSubmit() {
   const { generative } = useContext(GenerativeContext);
-  return (content: string) => {
-    generative.submit({ role, content });
-  };
+  return useCallback(
+    (role: "user" | "assistant" | "system", content: string) => {
+      generative.submit({ role, content });
+    },
+    [generative],
+  );
 }

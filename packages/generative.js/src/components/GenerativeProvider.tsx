@@ -12,7 +12,7 @@ export function GenerativeProvider({
   children,
   options = {},
 }: {
-  children: ReactNode;
+  children?: ReactNode;
   options?: GenerativeOptions;
 }) {
   const [abortController] = useState(new AbortController());
