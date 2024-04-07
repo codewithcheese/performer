@@ -1,14 +1,33 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { Generative, System } from "generative.js";
+import { Assistant, readTextContent, System } from "generative.js";
+import { Fragment, ReactNode, useState } from "react";
 
 export const Route = createLazyFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  const [inserts, setInserts] = useState<ReactNode[]>([]);
   return (
-    <Generative options={{ logLevel: "debug" }}>
-      <System content="Greet the user" />
-    </Generative>
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setInserts((i) =>
+            i.concat(
+              <Fragment key={i.length - 1}>
+                <System content="Tell a joke about Typescript" />
+                <Assistant>{readTextContent}</Assistant>
+              </Fragment>,
+            ),
+          );
+        }}
+      >
+        Joke
+      </button>
+      <System content="Greet the user">{readTextContent}</System>
+      <Assistant>{readTextContent}</Assistant>
+      {inserts}
+    </>
   );
 }

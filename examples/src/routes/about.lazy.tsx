@@ -1,9 +1,10 @@
 import { createLazyFileRoute } from "@tanstack/react-router";
+import { Generative, System, readTextContent } from "generative.js";
 
 export const Route = createLazyFileRoute("/about")({
   component: About,
 });
 
 function About() {
-  return <div className="p-2">Hello from About!</div>;
+  return <System content="About yourself">{readTextContent}</System>;
 }

@@ -2,6 +2,13 @@ import React, { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
+if ("VITE_OPENAI_API_KEY" in import.meta.env) {
+  // @ts-ignore
+  globalThis.process = {
+    env: { OPENAI_API_KEY: import.meta.env["VITE_OPENAI_API_KEY"] },
+  };
+}
+
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen.js";
 
