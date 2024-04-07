@@ -2,8 +2,8 @@ import { useContext } from "react";
 import { GenerativeContext } from "../index.js";
 
 export function useSubmit(role: "user" | "assistant" | "system" = "user") {
-  const { performer } = useContext(GenerativeContext);
+  const { generative } = useContext(GenerativeContext);
   return (content: string) => {
-    performer.submit({ role, content });
+    generative.submit({ role, content });
   };
 }

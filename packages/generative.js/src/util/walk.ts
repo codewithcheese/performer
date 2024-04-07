@@ -1,10 +1,10 @@
-import { PerformerNode } from "../node.js";
+import { GenerativeNode } from "../node.js";
 
 export function walk(
-  node: PerformerNode,
-  cb: (node: PerformerNode) => boolean,
+  node: GenerativeNode,
+  cb: (node: GenerativeNode) => boolean,
 ) {
-  let cursor: PerformerNode | undefined = node;
+  let cursor: GenerativeNode | undefined = node;
   while (cursor) {
     const result = cb(cursor);
     if (!result) {

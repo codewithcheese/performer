@@ -7,9 +7,4 @@ export default defineConfig({
     setupFiles: ["./test/setupTests.ts"],
   },
   plugins: [react()],
-  resolve: {
-    alias: {
-      "@performer/core/jsx-dev-runtime": "./src/jsx",
-    },
-  },
 });

@@ -1,4 +1,4 @@
-export type PerformerMessage =
+export type GenerativeMessage =
   | UserMessage
   | AssistantMessage
   | SystemMessage
@@ -96,7 +96,7 @@ export function isImageContent(
   );
 }
 
-export function isMessage(message: unknown): message is PerformerMessage {
+export function isMessage(message: unknown): message is GenerativeMessage {
   return (
     message != null &&
     typeof message === "object" &&
@@ -134,7 +134,7 @@ export function isAssistantMessage(
   return isMessage(message) && message.role === "assistant";
 }
 
-export function readTextContent(message: PerformerMessage) {
+export function readTextContent(message: GenerativeMessage) {
   if (!message.content) {
     return "";
   }

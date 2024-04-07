@@ -1,14 +1,14 @@
 import { DependencyList, ReactNode, useEffect } from "react";
 import { useGenerative } from "../hooks/index.js";
-import { AssistantMessage, PerformerMessage } from "../message.js";
-import { PerformerElement } from "../element.js";
+import { AssistantMessage, GenerativeMessage } from "../message.js";
+import { GenerativeElement } from "../element.js";
 
-export type MessageRenderFunc<MessageType extends PerformerMessage> = (
+export type MessageRenderFunc<MessageType extends GenerativeMessage> = (
   message: MessageType,
   complete: boolean,
 ) => ReactNode;
 
-export function Message<MessageType extends PerformerMessage>({
+export function Message<MessageType extends GenerativeMessage>({
   type,
   typeName,
   className,
@@ -18,7 +18,7 @@ export function Message<MessageType extends PerformerMessage>({
   onBeforeFinalized,
 }: {
   className?: string;
-  type: PerformerElement["type"];
+  type: GenerativeElement["type"];
   typeName?: string;
   children?: ReactNode | MessageRenderFunc<MessageType>;
   deps?: DependencyList;
@@ -43,7 +43,7 @@ export function Message<MessageType extends PerformerMessage>({
   // );
 
   return (
-    <div data-performer-id={id} ref={ref} className={className}>
+    <div data-generative-id={id} ref={ref} className={className}>
       {ready &&
         (typeof children === "function"
           ? children(message!, complete)

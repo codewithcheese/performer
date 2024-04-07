@@ -1,5 +1,5 @@
-import type { PerformerElement } from "./element.js";
-import { PerformerMessage } from "./message.js";
+import type { GenerativeElement } from "./element.js";
+import { GenerativeMessage } from "./message.js";
 import { nanoid } from "nanoid";
 import { logger } from "./util/log.js";
 
@@ -12,31 +12,25 @@ export type NodeStatus =
   | "FINALIZED" // message acked by flow control
   | "ERROR";
 
-export type PerformerNode = {
-  // threadId: string;
+export type GenerativeNode = {
   uid: string;
-  // _typeName: string;
-  // props: Record<string, any>;
   state: {
     stream?: ReadableStream;
-    message?: PerformerMessage;
+    message?: GenerativeMessage;
     childRenderCount: number;
   };
-  // hooks: Record<string, unknown> & HookRecord;
-  element: PerformerElement;
-  // childElements?: PerformerElement[] | undefined;
+  element: GenerativeElement;
   status: NodeStatus;
-  // disposeView?: () => void | undefined;
   isHydrating: boolean;
 
   // linked tree
-  parent: PerformerNode | undefined;
-  child: PerformerNode | undefined;
-  prevSibling: PerformerNode | undefined;
-  nextSibling: PerformerNode | undefined;
+  parent: GenerativeNode | undefined;
+  child: GenerativeNode | undefined;
+  prevSibling: GenerativeNode | undefined;
+  nextSibling: GenerativeNode | undefined;
 };
 
-export function setNodeResolved(node: PerformerNode) {
+export function setNodeResolved(node: GenerativeNode) {
   node.status = "RESOLVED";
   logger
     .withTag("Node")
@@ -46,7 +40,7 @@ export function setNodeResolved(node: PerformerNode) {
   node.element.onResolved(node);
 }
 
-export function setNodeStreaming(node: PerformerNode) {
+export function setNodeStreaming(node: GenerativeNode) {
   node.status = "STREAMING";
   logger
     .withTag("Node")
@@ -56,7 +50,7 @@ export function setNodeStreaming(node: PerformerNode) {
   node.element.onStreaming(node);
 }
 
-export function setNodeError(node: PerformerNode, error: unknown) {
+export function setNodeError(node: GenerativeNode, error: unknown) {
   node.status = "ERROR";
   logger
     .withTag("Node")
@@ -66,7 +60,7 @@ export function setNodeError(node: PerformerNode, error: unknown) {
   node.element.onError(error);
 }
 
-export function setNodeFinalized(node: PerformerNode) {
+export function setNodeFinalized(node: GenerativeNode) {
   node.status = "FINALIZED";
   logger
     .withTag("Node")
@@ -75,7 +69,7 @@ export function setNodeFinalized(node: PerformerNode) {
     );
 }
 
-export function setNodeListening(node: PerformerNode) {
+export function setNodeListening(node: GenerativeNode) {
   node.status = "LISTENING";
   logger
     .withTag("Node")
@@ -83,34 +77,6 @@ export function setNodeListening(node: PerformerNode) {
       `id=${node.element.id}  type=${node.element.typeName}status=${node.status}`,
     );
 }
-
-// export type SerializedNode = {
-//   uid: string;
-//   type: string;
-//   hooks: Record<string, unknown> & HookRecord;
-//   children: SerializedNode[];
-// };
-
-// export function isRawNode(node: PerformerNode): node is RawNode {
-//   return node.type === "raw";
-// }
-
-// export interface RawNode extends PerformerNode {
-//   type: "raw";
-//   props: {
-//     stream?: ReadableStream<MessageDelta>;
-//     message?: PerformerMessage;
-//     onResolved?: (message: PerformerMessage) => Promise<void>;
-//   };
-// }
-
-// function validateElement(element: unknown, parent?: PerformerNode) {
-//   if (!(typeof element === "object")) {
-//     throw Error(
-//       `Invalid Child Type - The ${parent && nodeToStr(parent)} component has child of type "${typeof element}" with value: "${element}".\nComponent children must be other components or elements, not primitive values.\nOnly message elements (system, user, assistant) elements support non-object children values.`,
-//     );
-//   }
-// }
 
 export function createNode({
   // threadId,
@@ -121,12 +87,12 @@ export function createNode({
   // serialized,
 }: {
   // threadId: string;
-  element: PerformerElement;
-  parent?: PerformerNode;
-  prevSibling?: PerformerNode;
-  child?: PerformerNode;
+  element: GenerativeElement;
+  parent?: GenerativeNode;
+  prevSibling?: GenerativeNode;
+  child?: GenerativeNode;
   // serialized?: SerializedNode;
-}): PerformerNode {
+}): GenerativeNode {
   // validateElement(element, parent);
   // React compat Fragment type is Symbol(react.fragment)
   // const type = typeof element.type === "symbol" ? Fragment : element.type;
@@ -148,17 +114,3 @@ export function createNode({
     nextSibling: undefined,
   };
 }
-
-// export function getNearestParent(
-//   node: PerformerNode,
-//   predicate: (parent: PerformerNode) => boolean,
-// ) {
-//   let parent: PerformerNode | undefined = node.parent;
-//   while (parent) {
-//     if (predicate(parent)) {
-//       return parent;
-//     }
-//     parent = parent.parent;
-//   }
-//   return parent;
-// }

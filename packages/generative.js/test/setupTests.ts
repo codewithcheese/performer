@@ -7,7 +7,7 @@ vi.stubGlobal("requestIdleCallback", (callback: any) =>
 );
 config();
 
-// fixme: find method to trigger callbacks from Performer that do not cause these warnings
+// fixme: find method to trigger callbacks from Generative that do not cause these warnings
 // silence act warning
 const originalError = console.error;
 beforeAll(() => {

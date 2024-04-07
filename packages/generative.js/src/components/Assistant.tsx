@@ -1,7 +1,7 @@
 import {
   AssistantMessage,
   MessageDelta,
-  type PerformerMessage,
+  type GenerativeMessage,
 } from "../message.js";
 import { ClientOptions, OpenAI } from "openai";
 import { object } from "../util/object.js";
@@ -72,7 +72,7 @@ async function fetchCompletion({
   model?: string;
   toolChoice?: "auto" | "none" | Tool<any>;
   tools?: Tool<any>[];
-  messages: PerformerMessage[];
+  messages: GenerativeMessage[];
   signal: AbortSignal;
   requestOptions?: Partial<ChatCompletionCreateParamsStreaming>;
   clientOptions?: ClientOptions;

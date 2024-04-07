@@ -1,9 +1,9 @@
-import { MessageDelta, PerformerMessage } from "./message.js";
+import { MessageDelta, GenerativeMessage } from "./message.js";
 
 export type ActionReturn =
   | ReadableStream<MessageDelta>
-  | PerformerMessage[]
-  | PerformerMessage
+  | GenerativeMessage[]
+  | GenerativeMessage
   | void
   | null
   | undefined
@@ -14,7 +14,7 @@ export type ActionType = {
     messages,
     signal,
   }: {
-    messages: PerformerMessage[];
+    messages: GenerativeMessage[];
     signal: AbortSignal;
   }): ActionReturn;
 };

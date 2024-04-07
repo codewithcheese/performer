@@ -6,10 +6,13 @@ declare global {
   if (typeof process !== "undefined" && process.env) {
     globalThis.__DEV__ =
       process.env.NODE_ENV === "development" || !!process.env.VITEST;
-  } else if (typeof import.meta !== "undefined" && import.meta.env) {
-    globalThis.__DEV__ = import.meta.env.DEV;
   } else {
-    globalThis.__DEV__ = false;
+    try {
+      const { meta } = new Function("return import.meta")();
+      globalThis.__DEV__ = meta.env.DEV;
+    } catch (e) {
+      globalThis.__DEV__ = false;
+    }
   }
 })();
 
@@ -18,6 +21,6 @@ export * from "./hooks/index.js";
 export * from "./message.js";
 export * from "./node.js";
 export * from "./render.js";
-export * from "./performer.js";
+export * from "./generative.js";
 export * from "./components/index.js";
 export * from "./tool.js";

@@ -2,10 +2,10 @@
 import { expect, test } from "vitest";
 import {
   Assistant,
-  Generative,
+  GenerativeProvider,
   Message,
-  Performer,
-  PerformerMessage,
+  Generative,
+  GenerativeMessage,
   readTextContent,
   Repeat,
   resolveMessages,
@@ -14,7 +14,7 @@ import {
 } from "../../src/index.js";
 import { sleep } from "../../src/util/sleep.js";
 import { render } from "@testing-library/react";
-import { getPerformer, UsePerformer } from "../util/UsePerformer.js";
+import { getGenerative, UseGenerative } from "../util/UseGenerative.js";
 
 function Async({ children }: any) {
   return (
@@ -30,8 +30,8 @@ function Async({ children }: any) {
 
 test("should support nested repeat", async () => {
   const app = (
-    <Generative>
-      <UsePerformer />
+    <GenerativeProvider>
+      <UseGenerative />
       <System content="-1">{readTextContent}</System>
       <Repeat limit={2}>
         <System content="0">{readTextContent}</System>
@@ -48,14 +48,14 @@ test("should support nested repeat", async () => {
         <System content="3">{readTextContent}</System>
       </Repeat>
       <System content="4">{readTextContent}</System>
-    </Generative>
+    </GenerativeProvider>
   );
   const {} = render(app);
-  const performer = getPerformer()!;
-  await performer.waitUntilSettled();
+  const generative = getGenerative()!;
+  await generative.waitUntilSettled();
 
-  const messages = performer.getAllMessages();
-  const countOccurrence = (list: PerformerMessage[], content: string) =>
+  const messages = generative.getAllMessages();
+  const countOccurrence = (list: GenerativeMessage[], content: string) =>
     list.filter((m) => m.content === content).length;
   expect(countOccurrence(messages, "-1")).toEqual(1);
   expect(countOccurrence(messages, "0")).toEqual(2);
@@ -67,12 +67,12 @@ test("should support nested repeat", async () => {
 
 test("should render all iterations before next message", async () => {
   const app = (
-    <Generative options={{ logLevel: "info" }}>
+    <GenerativeProvider options={{ logLevel: "info" }}>
       <Repeat limit={2}>
         <System content="A">{readTextContent}</System>
       </Repeat>
       <System content="B">{readTextContent}</System>
-    </Generative>
+    </GenerativeProvider>
   );
 
   const { findByText, container, queryAllByText } = render(app);
@@ -83,13 +83,13 @@ test("should render all iterations before next message", async () => {
 
 test("should not repeat when stopped", async () => {
   const renderApp = (stopped: boolean) => (
-    <Generative>
+    <GenerativeProvider>
       <System content="0">{readTextContent}</System>
       <Repeat stopped={stopped}>
         <System content="2">{readTextContent}</System>
       </Repeat>
       <System content="1">{readTextContent}</System>
-    </Generative>
+    </GenerativeProvider>
   );
   const { findByText, queryAllByText } = render(renderApp(true));
   await findByText("1");

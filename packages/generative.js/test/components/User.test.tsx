@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 import { expect, test } from "vitest";
 import {
-  Generative,
+  GenerativeProvider,
   readTextContent,
   User,
   useSubmit,
@@ -15,19 +15,19 @@ test("should receive user message via useSubmit", async () => {
     return null;
   }
   const { findByText } = render(
-    <Generative options={{ logLevel: "debug" }}>
+    <GenerativeProvider options={{ logLevel: "debug" }}>
       <User>{readTextContent}</User>
       <UserInput />
-    </Generative>,
+    </GenerativeProvider>,
   );
   await findByText("A");
 });
 
 test("should set user message via content", async () => {
   const { findByText } = render(
-    <Generative options={{ logLevel: "debug" }}>
+    <GenerativeProvider options={{ logLevel: "debug" }}>
       <User content="A">{readTextContent}</User>
-    </Generative>,
+    </GenerativeProvider>,
   );
   await findByText("A");
 });

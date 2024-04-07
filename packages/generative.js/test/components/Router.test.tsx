@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 import {
   Append,
   Decision,
-  Generative,
+  GenerativeProvider,
   Goto,
   Message,
   readTextContent,
@@ -13,7 +13,7 @@ import {
   useRouteData,
 } from "../../src/index.js";
 import { render } from "@testing-library/react";
-import { getPerformer, UsePerformer } from "../util/UsePerformer.js";
+import { getGenerative, UseGenerative } from "../util/UseGenerative.js";
 import { sleep } from "../../src/util/sleep.js";
 
 test("should display / then goto /second", async () => {
@@ -41,15 +41,15 @@ test("should display / then goto /second", async () => {
     { path: "/second", component: <Second /> },
   ];
   const { findByText, container } = render(
-    <Generative>
-      <UsePerformer />
+    <GenerativeProvider>
+      <UseGenerative />
       <Router routes={routes} />
-    </Generative>,
+    </GenerativeProvider>,
   );
   await findByText("A");
   await findByText("B");
   // only B should be visible
-  const elements = container.querySelectorAll("[data-performer-id]");
+  const elements = container.querySelectorAll("[data-generative-id]");
   expect(elements).toHaveLength(1);
 });
 
@@ -78,16 +78,16 @@ test("should display / then append /second", async () => {
     { path: "/second", component: <Second /> },
   ];
   const { findByText, container } = render(
-    <Generative>
-      <UsePerformer />
+    <GenerativeProvider>
+      <UseGenerative />
       <Router routes={routes} />
-    </Generative>,
+    </GenerativeProvider>,
   );
   await findByText("A");
   await findByText("B");
   // both A and B should be visible
   console.log(container.innerHTML);
-  const elements = container.querySelectorAll("[data-performer-id]");
+  const elements = container.querySelectorAll("[data-generative-id]");
   expect(elements).toHaveLength(3); // 3 including async Message
 });
 
@@ -115,13 +115,13 @@ test("should display / and then use Decision to append /second", async () => {
     { path: "/second", component: <Second /> },
   ];
   const { findByText, container } = render(
-    <Generative>
-      <UsePerformer />
+    <GenerativeProvider>
+      <UseGenerative />
       <Router routes={routes} />
-    </Generative>,
+    </GenerativeProvider>,
   );
-  const performer = getPerformer()!;
-  await performer.waitUntilSettled();
+  const generative = getGenerative()!;
+  await generative.waitUntilSettled();
   await findByText("A");
   await findByText("B");
 });

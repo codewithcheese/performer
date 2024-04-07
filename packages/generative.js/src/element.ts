@@ -1,18 +1,18 @@
 import { ActionType } from "./action.js";
-import { PerformerNode } from "./node.js";
-import { PerformerMessage } from "./message.js";
+import { GenerativeNode } from "./node.js";
+import { GenerativeMessage } from "./message.js";
 
-export type PerformerElement = {
+export type GenerativeElement = {
   id: string;
-  type: ActionType | "LISTENER" | PerformerMessage;
+  type: ActionType | "LISTENER" | GenerativeMessage;
   typeName: string;
   props: { afterChildren?: () => void };
-  onResolved: (node: PerformerNode) => void;
-  onStreaming: (node: PerformerNode) => void;
+  onResolved: (node: GenerativeNode) => void;
+  onStreaming: (node: GenerativeNode) => void;
   onError: (error: unknown) => void;
   // links
-  parent?: PerformerElement;
-  child?: PerformerElement;
-  sibling?: PerformerElement;
-  node?: PerformerNode;
+  parent?: GenerativeElement;
+  child?: GenerativeElement;
+  sibling?: GenerativeElement;
+  node?: GenerativeNode;
 };

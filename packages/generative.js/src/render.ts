@@ -1,20 +1,20 @@
-import { type PerformerElement } from "./element.js";
+import { type GenerativeElement } from "./element.js";
 import {
   createNode,
-  type PerformerNode,
+  type GenerativeNode,
   setNodeError,
   setNodeListening,
   setNodeResolved,
   setNodeStreaming,
 } from "./node.js";
-import type { Performer } from "./performer.js";
+import type { Generative } from "./generative.js";
 import {
   AssistantMessage,
   concatDelta,
   isMessage,
   isMessageDelta,
   MessageDelta,
-  PerformerMessage,
+  GenerativeMessage,
 } from "./message.js";
 import { isEqualWith } from "lodash-es";
 import { getLogger } from "./util/log.js";
@@ -23,25 +23,25 @@ type CreateOp = {
   type: "CREATE";
   payload: {
     // threadId: string;
-    element: PerformerElement;
-    parent?: PerformerNode;
-    prevSibling?: PerformerNode;
-    nextSibling?: PerformerNode;
-    child?: PerformerNode;
+    element: GenerativeElement;
+    parent?: GenerativeNode;
+    prevSibling?: GenerativeNode;
+    nextSibling?: GenerativeNode;
+    child?: GenerativeNode;
   };
 };
 
 type ResumeOp = {
   type: "RESUME";
   payload: {
-    node: PerformerNode;
+    node: GenerativeNode;
   };
 };
 
 type PausedOp = {
   type: "PAUSED";
   payload: {
-    node: PerformerNode;
+    node: GenerativeNode;
   };
 };
 
@@ -49,14 +49,14 @@ type PausedOp = {
 type ListeningOp = {
   type: "LISTENING";
   payload: {
-    node: PerformerNode;
+    node: GenerativeNode;
   };
 };
 
 type AfterChildrenOp = {
   type: "AFTER_CHILDREN";
   payload: {
-    node: PerformerNode;
+    node: GenerativeNode;
   };
 };
 
@@ -77,30 +77,30 @@ function noOps(ops: Record<string, RenderOp>) {
 
 let renderCount = 0;
 
-export async function render(performer: Performer, reason: string) {
-  if (!performer.app) {
+export async function render(generative: Generative, reason: string) {
+  if (!generative.app) {
     throw Error("Cannot render before app is assigned");
   }
   getLogger("render").debug(`start=${++renderCount} reason=${reason} `);
   try {
     const ops = evaluateRenderOps(
       // "root",
-      performer.app!,
-      performer.root,
+      generative.app!,
+      generative.root,
       undefined,
       undefined,
     );
     for (const [_, op] of Object.entries(ops)) {
       switch (op.type) {
         case "CREATE":
-          await performOp(performer, op);
+          await performOp(generative, op);
           continue;
         case "RESUME":
-          await performOp(performer, op);
+          await performOp(generative, op);
           continue;
         case "LISTENING":
-          if (performer.inputQueue.length) {
-            op.payload.node.state.message = performer.inputQueue.shift();
+          if (generative.inputQueue.length) {
+            op.payload.node.state.message = generative.inputQueue.shift();
             setNodeResolved(op.payload.node);
           }
           continue;
@@ -108,16 +108,16 @@ export async function render(performer: Performer, reason: string) {
           op.payload.node.element.props.afterChildren!();
           setNodeResolved(op.payload.node);
           // ensure that render is queue at least once if afterChildren has no effect
-          performer.queueRender("after children effect");
+          generative.queueRender("after children effect");
       }
     }
-    if (noOps(ops) && !performer.renderQueued) {
-      performer.setFinished();
-    } else if (onlyListening(ops) && !performer.renderQueued) {
-      performer.setListening();
+    if (noOps(ops) && !generative.renderQueued) {
+      generative.setFinished();
+    } else if (onlyListening(ops) && !generative.renderQueued) {
+      generative.setListening();
     }
   } catch (error) {
-    performer.onError("root", error);
+    generative.onError("root", error);
   } finally {
     getLogger("render").debug(`end=${renderCount}`);
   }
@@ -128,10 +128,10 @@ export async function render(performer: Performer, reason: string) {
  */
 export function evaluateRenderOps(
   // threadId: string,
-  element: PerformerElement,
-  node?: PerformerNode,
-  parent?: PerformerNode,
-  prevSibling?: PerformerNode,
+  element: GenerativeElement,
+  node?: GenerativeNode,
+  parent?: GenerativeNode,
+  prevSibling?: GenerativeNode,
 ): Record<string, RenderOp> {
   // todo when does a node need to be re-created
   if (!node || !nodeMatchesElement(node, element)) {
@@ -188,9 +188,9 @@ export function evaluateRenderOps(
   let ops: Record<string, RenderOp> = {};
   let index = 0;
   // let childThreadId = node.hooks.thread?.id ? node.hooks.thread.id : threadId;
-  let childNode: PerformerNode | undefined = node.child;
-  let childPrevSibling: PerformerNode | undefined = undefined;
-  let childElement: PerformerElement | undefined = element.child;
+  let childNode: GenerativeNode | undefined = node.child;
+  let childPrevSibling: GenerativeNode | undefined = undefined;
+  let childElement: GenerativeElement | undefined = element.child;
   while (childElement || childNode) {
     if (!childElement) {
       break;
@@ -244,9 +244,9 @@ export function evaluateRenderOps(
 }
 
 export async function performOp(
-  performer: Performer,
+  generative: Generative,
   op: CreateOp | ResumeOp,
-): Promise<PerformerNode> {
+): Promise<GenerativeNode> {
   let node;
   if (op.type === "CREATE") {
     const { element, parent, prevSibling, nextSibling, child } = op.payload;
@@ -258,7 +258,7 @@ export async function performOp(
       child,
     });
     if (!parent) {
-      performer.root = node;
+      generative.root = node;
     }
     // link node in place
     if (prevSibling) {
@@ -278,43 +278,43 @@ export async function performOp(
   } else {
     node = op.payload.node;
   }
-  await renderComponent(performer, node);
+  await renderComponent(generative, node);
   // if (node.type instanceof Function) {
-  //   await renderComponent(performer, node);
+  //   await renderComponent(generative, node);
   // } else {
-  //   await renderIntrinsic(performer, node);
+  //   await renderIntrinsic(generative, node);
   // }
   return node;
 }
 
-async function renderComponent(performer: Performer, node: PerformerNode) {
+async function renderComponent(generative: Generative, node: GenerativeNode) {
   try {
     const type = node.element.type;
     if (type instanceof Function) {
-      const messages = resolveMessages(performer.root, node);
+      const messages = resolveMessages(generative.root, node);
       let result = await type({
         messages,
-        signal: performer.abortController.signal,
+        signal: generative.abortController.signal,
       });
       if (result instanceof ReadableStream) {
         node.state.stream = result;
         node.status = "PAUSED";
         node.state.message = await consumeDeltaStream(
-          performer,
+          generative,
           node,
           node.state.stream,
         );
         setNodeResolved(node);
-        performer.queueRender("stream resolved");
+        generative.queueRender("stream resolved");
       } else if (result && typeof result === "object") {
         if (Array.isArray(result)) {
           throw Error(
-            `Invalid Message action return value. Expected object type PerformerMessage. Received array: ${JSON.stringify(result)}`,
+            `Invalid Message action return value. Expected object type GenerativeMessage. Received array: ${JSON.stringify(result)}`,
           );
         }
         if (!isMessage(result)) {
           throw Error(
-            `Invalid Message action return value. Expected type PerformerMessage. Received ${JSON.stringify(result)}.`,
+            `Invalid Message action return value. Expected type GenerativeMessage. Received ${JSON.stringify(result)}.`,
           );
         }
         node.state.message = result;
@@ -328,12 +328,12 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
         );
       }
     } else if (type === "LISTENER") {
-      if (performer.inputQueue.length) {
-        node.state.message = performer.inputQueue.shift();
+      if (generative.inputQueue.length) {
+        node.state.message = generative.inputQueue.shift();
         setNodeResolved(node);
       } else if (node.status !== "LISTENING") {
         setNodeListening(node);
-        performer.setListening();
+        generative.setListening();
       }
     } else if (isMessage(type)) {
       node.state.message = type;
@@ -356,7 +356,7 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   // if (results !== null) {
   //   for (const result of results) {
   //     const id = nanoid();
-  //     performer.insert({
+  //     generative.insert({
   //       id,
   //       type: result.role,
   //       props: result,
@@ -376,7 +376,7 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   //   );
   // }
 
-  // registerView(performer, node, view);
+  // registerView(generative, node, view);
   // } catch (e) {
   //   if (e instanceof DeferResource) {
   //     node.status = "PAUSED";
@@ -384,117 +384,25 @@ async function renderComponent(performer: Performer, node: PerformerNode) {
   //     e.cause.promise
   //       .then(() => {
   //         node.status = "PENDING";
-  //         performer.queueRender("deferred resolved");
+  //         generative.queueRender("deferred resolved");
   //       })
-  //       .catch((error) => performer.onError("root", error));
+  //       .catch((error) => generative.onError("root", error));
   //   } else if (e instanceof DeferInput) {
   //     node.status = "LISTENING";
   //     logPaused(node, "resource");
-  //     performer.setInputNode(node);
-  //     performer.queueRender("set input");
+  //     generative.setInputNode(node);
+  //     generative.queueRender("set input");
   //   } else {
   //     throw e;
   //   }
   // }
 }
 
-// async function renderIntrinsic(performer: Performer, node: PerformerNode) {
-//   if (typeof node.type !== "string") {
-//     throw new Error(
-//       `Invalid node type: renderIntrinsic() expects 'node.type' to be a string`,
-//     );
-//   }
-//
-//   if (!isRawNode(node)) {
-//     node.status = "RESOLVED";
-//     logMessageResolved(node);
-//     if (!node.isHydrating) {
-//       dispatchMessageElement(performer, node);
-//       performer.queueRender("message resolved");
-//     }
-//     return;
-//   }
-//
-//   if (!node.props.stream && !node.props.message) {
-//     throw Error("`raw` element requires `stream` OR `message` prop");
-//   }
-//
-//   if (node.props.message != null) {
-//     node.status = "RESOLVED";
-//     logMessageResolved(node);
-//     if (!node.isHydrating) {
-//       dispatchMessageElement(performer, node);
-//       performer.queueRender("raw resolved");
-//     }
-//     return;
-//   }
-//
-//   if (node.props.stream != null) {
-//     node.status = "PAUSED";
-//     const messagePromised = consumeDeltaStream(
-//       performer,
-//       node,
-//       node.props.stream,
-//     )
-//       .then(async (message) => {
-//         node.hooks.message = message;
-//         if (node.props.onResolved) {
-//           await node.props.onResolved(message);
-//         }
-//         node.status = "RESOLVED";
-//         logMessageResolved(node);
-//         if (!node.isHydrating) {
-//           dispatchMessageElement(performer, node, message);
-//           performer.queueRender("raw stream resolved");
-//         }
-//       })
-//       .catch((error) => performer.onError(node.threadId, error));
-//
-//     // process stream
-//     if (node.isHydrating) {
-//       await messagePromised;
-//     }
-//   }
-// }
-
-// function registerView(
-//   performer: Performer,
-//   node: PerformerNode,
-//   view: Function,
-// ) {
-//   node.disposeView = effect(() => {
-//     const viewUpdate = view();
-//     node.childElements = normalizeChildren(viewUpdate);
-//     if (!node.isHydrating) {
-//       performer.queueRender("view updated");
-//     }
-//   });
-// }
-
-// function dispatchMessageElement(
-//   performer: Performer,
-//   node: PerformerNode,
-//   message?: PerformerMessage,
-// ) {
-//   if (!message) {
-//     message = nodeToMessage(node);
-//   }
-//   performer.dispatchEvent(
-//     createMessageEvent(node.threadId, {
-//       uid: node.uid,
-//       message: structuredClone(message),
-//     }),
-//   );
-//   if (node.props.onMessage && node.props.onMessage instanceof Function) {
-//     node.props.onMessage(message);
-//   }
-// }
-
 async function consumeDeltaStream(
-  performer: Performer,
-  node: PerformerNode,
+  generative: Generative,
+  node: GenerativeNode,
   stream: ReadableStream<MessageDelta>,
-): Promise<PerformerMessage> {
+): Promise<GenerativeMessage> {
   // let chunks: MessageDelta[] = [];
   const message: AssistantMessage = { role: "assistant", content: null };
   for await (const chunk of stream) {
@@ -507,33 +415,11 @@ async function consumeDeltaStream(
     // rerender after each delta update
     node.state.message = message;
     setNodeStreaming(node);
-
-    // performer.dispatchEvent(
-    //   // clone chunk so event consumers mutations don't modify this chunk
-    //   createDeltaEvent("root", {
-    //     uid: node.uid,
-    //     delta: structuredClone(chunk),
-    //   }),
-    // );
-    // chunks.push(chunk);
   }
-  // if (chunks.length === 0) {
-  //   throw Error("Message stream empty");
-  // }
-  // const message = structuredClone(chunks[0]) as AssistantMessage;
-  // if (!message.role) {
-  //   throw Error("First chunk in stream does not contain message role.");
-  // }
-  // let index = 1;
-  // while (index < chunks.length) {
-  //   const delta = chunks[index];
-  //   concatDelta(message as MessageDelta, delta);
-  //   index += 1;
-  // }
   return message;
 }
 
-export function freeElement(element: PerformerElement) {
+export function freeElement(element: GenerativeElement) {
   getLogger("render:freeElement").debug(`id=${element.id}`);
   const parent = element.parent!;
   // find previous sibling
@@ -559,8 +445,8 @@ export function freeElement(element: PerformerElement) {
 }
 
 function freeNode(
-  node: PerformerNode,
-  parent?: PerformerNode,
+  node: GenerativeNode,
+  parent?: GenerativeNode,
   freeRemaining: boolean = false,
 ) {
   try {
@@ -599,12 +485,12 @@ function freeNode(
 }
 
 export function resolveMessages(
-  from: PerformerNode | undefined,
-  to?: PerformerNode,
-): PerformerMessage[] {
-  let messages: PerformerMessage[] = [];
+  from: GenerativeNode | undefined,
+  to?: GenerativeNode,
+): GenerativeMessage[] {
+  let messages: GenerativeMessage[] = [];
 
-  let cursor: PerformerNode | undefined = from;
+  let cursor: GenerativeNode | undefined = from;
   while (cursor) {
     // too noisy for now
     // const pairs: [string, any][] = [
@@ -665,49 +551,7 @@ export function resolveMessages(
   return messages;
 }
 
-// export function nodeToMessage(node: PerformerNode): PerformerMessage {
-//   if (typeof node.type !== "string") {
-//     throw Error(
-//       "Cannot convert component to messages, must use intrinsic elements to represent messages",
-//     );
-//   }
-//   if (node.type === "raw") {
-//     if (!node.hooks.message && !node.props.message) {
-//       throw Error("`message` element not resolved.");
-//     }
-//     return node.hooks.message || node.props.message;
-//   }
-//   // fixme refactor without branching
-//   else if (node.type === "tool") {
-//     return {
-//       tool_call_id: node.props.tool_call_id,
-//       role: node.type,
-//       content: childrenToContent(node.props.children) || node.props.content,
-//     };
-//   } else if (node.type === "assistant") {
-//     return {
-//       role: node.type,
-//       content: childrenToContent(node.props.children) || node.props.content,
-//       ...(node.props.tool_calls ? { tool_calls: node.props.tool_calls } : {}),
-//       ...(node.props.function_call
-//         ? { function_call: node.props.function_call }
-//         : {}),
-//     };
-//   } else if (node.type === "system") {
-//     return {
-//       role: node.type,
-//       content: childrenToContent(node.props.children) || node.props.content,
-//     };
-//   } else if (node.type === "user") {
-//     return {
-//       role: node.type,
-//       content: childrenToContent(node.props.children) || node.props.content,
-//     };
-//   }
-//   throw Error(`Unexpected message element ${node.type}`);
-// }
-
-function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
+function nodeMatchesElement(node: GenerativeNode, element: GenerativeElement) {
   // todo create test cases for when nodes should be recreated
   // try dedupe anonymous function props
   // compare function props by string value
@@ -734,25 +578,3 @@ function nodeMatchesElement(node: PerformerNode, element: PerformerElement) {
     isEqualWith(node.element.props, element.props, functionComparison)
   );
 }
-
-// function childrenToContent(children: unknown): string {
-//   if (!children) {
-//     return "";
-//   } else if (Array.isArray(children)) {
-//     return children.flat(99).map(String).join("");
-//   } else {
-//     return String(children);
-//   }
-// }
-//
-// function normalizeChildren(
-//   children: ReturnType<ComponentReturn>,
-// ): PerformerElement[] {
-//   if (!children || typeof children === "string") {
-//     return [];
-//   } else if (Array.isArray(children)) {
-//     return children.flat(10).filter(Boolean);
-//   } else {
-//     return [children];
-//   }
-// }

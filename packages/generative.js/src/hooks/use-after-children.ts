@@ -1,8 +1,8 @@
 import { useContext, useEffect, useMemo } from "react";
-import { GenerativeContext, PerformerElement } from "../index.js";
+import { GenerativeContext, GenerativeElement } from "../index.js";
 
 export function useAfterChildren(
-  element: PerformerElement | null,
+  element: GenerativeElement | null,
   callback: () => void,
 ) {
   element && (element.props.afterChildren = callback);

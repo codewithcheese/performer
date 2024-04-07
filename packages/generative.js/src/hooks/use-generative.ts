@@ -7,16 +7,16 @@ import {
   useRef,
   useState,
 } from "react";
-import { PerformerElement } from "../element.js";
-import { GenerativeContext, NodeStatus, PerformerNode } from "../index.js";
+import { GenerativeElement } from "../element.js";
+import { GenerativeContext, NodeStatus, GenerativeNode } from "../index.js";
 import { getLogger } from "../util/log.js";
-import { PerformerMessage } from "../message.js";
+import { GenerativeMessage } from "../message.js";
 
 type AncestorRecord = { id: string; type: "parent" | "sibling" };
 
 export function findDOMAncestor(
   element: HTMLElement,
-  attrName: string = "data-performer-id",
+  attrName: string = "data-generative-id",
 ): AncestorRecord {
   // Check previous siblings
   let sibling = element.previousElementSibling;
@@ -42,25 +42,25 @@ export function findDOMAncestor(
   return { id: "root", type: "parent" };
 }
 
-export type useGenerativeProps<MessageType extends PerformerMessage> = {
-  type: PerformerElement["type"];
+export type useGenerativeProps<MessageType extends GenerativeMessage> = {
+  type: GenerativeElement["type"];
   typeName?: string;
   deps?: DependencyList;
   onBeforeResolved?: (message: MessageType) => void;
   onBeforeFinalized?: (message: MessageType) => void;
 };
 
-export type useGenerativeReturnType<MessageType extends PerformerMessage> = {
+export type useGenerativeReturnType<MessageType extends GenerativeMessage> = {
   id: string;
   ref: MutableRefObject<any>;
-  element: PerformerElement | null;
+  element: GenerativeElement | null;
   message: MessageType | null;
   status: NodeStatus;
   ready: boolean; // message ready for children to consume (streaming|resolved|finalized)
   complete: boolean; // message complete (resolve|finalized)
 };
 
-export function useGenerative<MessageType extends PerformerMessage>({
+export function useGenerative<MessageType extends GenerativeMessage>({
   type,
   typeName = "anonymous",
   deps = [],
@@ -72,7 +72,7 @@ export function useGenerative<MessageType extends PerformerMessage>({
   const ref = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<NodeStatus>("PENDING");
   const [ancestor, setAncestor] = useState<AncestorRecord | null>(null);
-  const [element, setElement] = useState<PerformerElement | null>(null);
+  const [element, setElement] = useState<GenerativeElement | null>(null);
   const [error, setError] = useState<unknown | null>(null);
   const [_, setNonce] = useState(0);
   const [message, setMessage] = useState<MessageType | null>(null);
@@ -82,25 +82,25 @@ export function useGenerative<MessageType extends PerformerMessage>({
       "Generative context missing. Generative components must be wrapped with `<Generative>` provider.",
     );
   }
-  const { performer } = context;
+  const { generative } = context;
 
   useLayoutEffect(() => {
     // fixme use internal status
     // if deps change then may need to regenerate node
     setStatus("PENDING");
     if (!ref.current) {
-      throw Error("usePerformer: ref not set");
+      throw Error("useGenerative: ref not set");
     }
-    if (!ref.current.getAttribute("data-performer-id")) {
+    if (!ref.current.getAttribute("data-generative-id")) {
       console.error(
-        "usePerformer: data-performer-id attribute not set",
+        "useGenerative: data-generative-id attribute not set",
         ref.current,
       );
-      throw Error("usePerformer: data-performer-id attribute not set");
+      throw Error("useGenerative: data-generative-id attribute not set");
     }
     const ancestor = findDOMAncestor(ref.current);
     setAncestor(ancestor);
-    const element = performer.upsert({
+    const element = generative.upsert({
       id,
       type,
       typeName,
@@ -135,7 +135,7 @@ export function useGenerative<MessageType extends PerformerMessage>({
     });
     setElement(element);
     return () => {
-      performer.remove(id);
+      generative.remove(id);
     };
   }, deps);
 
@@ -143,7 +143,7 @@ export function useGenerative<MessageType extends PerformerMessage>({
   useLayoutEffect(() => {
     if (status === "RESOLVED") {
       onBeforeFinalized && onBeforeFinalized(message as MessageType);
-      performer.finalize(id);
+      generative.finalize(id);
       setStatus("FINALIZED");
     }
   }, [status]);
@@ -151,7 +151,7 @@ export function useGenerative<MessageType extends PerformerMessage>({
   const renderCount = useRef(0);
   useLayoutEffect(() => {
     if (!ref.current) {
-      throw Error("usePerformer: ref not set");
+      throw Error("useGenerative: ref not set");
     }
     if (!ancestor) {
       return;
@@ -159,7 +159,7 @@ export function useGenerative<MessageType extends PerformerMessage>({
     const currentAncestor = findDOMAncestor(ref.current);
     if (currentAncestor.id !== ancestor.id) {
       setAncestor(currentAncestor);
-      performer.updateAncestor(id, currentAncestor, ancestor);
+      generative.updateAncestor(id, currentAncestor, ancestor);
     }
     renderCount.current++;
     // console.log(

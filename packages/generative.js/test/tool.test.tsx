@@ -4,7 +4,7 @@ import { z } from "zod";
 import {
   Assistant,
   createTool,
-  Generative,
+  GenerativeProvider,
   getToolCall,
   System,
   User,
@@ -12,7 +12,7 @@ import {
 import { useState } from "react";
 import { ErrorBoundary } from "./util/ErrorBoundary.js";
 import { render } from "@testing-library/react";
-import { getPerformer, UsePerformer } from "./util/UsePerformer.js";
+import { getGenerative, UseGenerative } from "./util/UseGenerative.js";
 
 test("should use tool", async () => {
   function UseTool() {
@@ -47,17 +47,17 @@ test("should use tool", async () => {
     return <div>...</div>;
   }
   const app = (
-    <Generative>
-      <UsePerformer />
+    <GenerativeProvider>
+      <UseGenerative />
       <ErrorBoundary>
         <System content="Say hello to world" />
         <UseTool />
       </ErrorBoundary>
-    </Generative>
+    </GenerativeProvider>
   );
   const { container, findByText } = render(app);
-  const performer = getPerformer()!;
-  await performer.waitUntilSettled();
+  const generative = getGenerative()!;
+  await generative.waitUntilSettled();
   const result = await findByText("Success");
   console.log(container.innerHTML);
 });
@@ -77,8 +77,8 @@ test("should use multiple tools", async () => {
     const countTool = createTool("extractCount", WidgetCountSchema);
     const nameTool = createTool("extractName", WidgetNameSchema);
     return (
-      <Generative>
-        <UsePerformer />
+      <GenerativeProvider>
+        <UseGenerative />
         <System content=">Use tools to extract widget information." />
         <User
           content={`
@@ -92,11 +92,11 @@ test("should use multiple tools", async () => {
             return message.tool_calls?.length;
           }}
         </Assistant>
-      </Generative>
+      </GenerativeProvider>
     );
   }
   const { findByText } = render(<App />);
-  const performer = getPerformer()!;
-  await performer.waitUntilSettled();
+  const generative = getGenerative()!;
+  await generative.waitUntilSettled();
   await findByText("2");
 });

@@ -1,33 +1,37 @@
-import type { PerformerElement } from "./element.js";
-import { PerformerNode, setNodeFinalized } from "./node.js";
+import type { GenerativeElement } from "./element.js";
+import { GenerativeNode, setNodeFinalized } from "./node.js";
 import { freeElement, render, resolveMessages } from "./render.js";
-import type { PerformerMessage } from "./message.js";
+import type { GenerativeMessage } from "./message.js";
 import { getLogger, logger, setLogLevel } from "./util/log.js";
 import { getEnv } from "./util/env.js";
 import { type LogType } from "consola";
 import { assertExists } from "./util/assert.js";
 import { withResolvers } from "./util/with-resolvers.js";
 
-export type PerformerOptions = {
+export type GenerativeOptions = {
   throwOnError?: boolean;
   logLevel?: LogType;
 };
 
-export type PerformerState = "pending" | "listening" | "rendering" | "finished";
+export type GenerativeState =
+  | "pending"
+  | "listening"
+  | "rendering"
+  | "finished";
 
-export class Performer {
+export class Generative {
   #uid: string;
 
-  app: PerformerElement;
-  root?: PerformerNode;
-  options: PerformerOptions;
-  #state: PerformerState = "pending";
-  #statePromises: Map<PerformerState, () => void> = new Map();
+  app: GenerativeElement;
+  root?: GenerativeNode;
+  options: GenerativeOptions;
+  #state: GenerativeState = "pending";
+  #statePromises: Map<GenerativeState, () => void> = new Map();
 
-  elementMap: Map<string, PerformerElement> = new Map();
+  elementMap: Map<string, GenerativeElement> = new Map();
 
   // todo add deadline
-  inputQueue: PerformerMessage[] = [];
+  inputQueue: GenerativeMessage[] = [];
 
   abortController = new AbortController();
 
@@ -35,7 +39,7 @@ export class Performer {
   renderQueuedReason: string = "";
   renderInProgress: boolean = false;
 
-  constructor(options: PerformerOptions = {}) {
+  constructor(options: GenerativeOptions = {}) {
     this.#uid = crypto.randomUUID();
     // this.app = app;
     this.options = options;
@@ -86,15 +90,15 @@ export class Performer {
     onError,
   }: {
     id: string;
-    type: PerformerElement["type"];
+    type: GenerativeElement["type"];
     typeName: string;
     props?: Record<string, any>;
     ancestor: { id: string; type: "parent" | "sibling" };
-    onResolved: (node: PerformerNode) => void;
-    onStreaming: (node: PerformerNode) => void;
+    onResolved: (node: GenerativeNode) => void;
+    onStreaming: (node: GenerativeNode) => void;
     onError: (error: unknown) => void;
   }) {
-    const logger = getLogger("Performer:upsert");
+    const logger = getLogger("Generative:upsert");
     let element = this.elementMap.get(id);
     if (!element) {
       // insert element
@@ -132,7 +136,7 @@ export class Performer {
     newAncestor: { id: string; type: "parent" | "sibling" },
     oldAncestor?: { id: string; type: "parent" | "sibling" },
   ) {
-    const logger = getLogger("Performer:updateAncestor");
+    const logger = getLogger("Generative:updateAncestor");
     const element = this.elementMap.get(id)!;
     // unlink old ancestor
     if (oldAncestor) {
@@ -157,7 +161,7 @@ export class Performer {
       const parent = this.elementMap.get(newAncestor.id);
       if (!parent) {
         throw Error(
-          `Failed to insert Performer element ${id}. Parent not registered`,
+          `Failed to insert Generative element ${id}. Parent not registered`,
         );
       }
       element.parent = parent;
@@ -167,7 +171,7 @@ export class Performer {
       const sibling = this.elementMap.get(newAncestor.id);
       if (!sibling) {
         throw Error(
-          `Failed to insert Performer element ${id}. Sibling not registered`,
+          `Failed to insert Generative element ${id}. Sibling not registered`,
         );
       }
       sibling.sibling = element;
@@ -180,7 +184,7 @@ export class Performer {
   }
 
   remove(id: string) {
-    const logger = getLogger("Performer:remove");
+    const logger = getLogger("Generative:remove");
     logger.debug(`id=${id}`);
     freeElement(this.elementMap.get(id)!);
     this.elementMap.delete(id);
@@ -198,7 +202,7 @@ export class Performer {
   }
 
   getElement(id: string) {
-    let cursor: PerformerElement | undefined = this.app;
+    let cursor: GenerativeElement | undefined = this.app;
     while (cursor) {
       if (cursor.id === id) {
         return cursor;
@@ -245,7 +249,7 @@ export class Performer {
   }
 
   queueRender(reason: string) {
-    getLogger("Performer:queueRender").debug(`reason=${reason}`);
+    getLogger("Generative:queueRender").debug(`reason=${reason}`);
     if (!this.renderInProgress) {
       this.renderInProgress = true;
       requestIdleCallback(() => this.start(reason));
@@ -255,40 +259,7 @@ export class Performer {
     }
   }
 
-  /**
-   * Inputs
-   */
-
-  // todo how to set input?
-  // setInputNode(node: PerformerNode) {
-  //   logger.debug(
-  //     toLogFmt([
-  //       ["input", "pending"],
-  //       ["node", nodeToStr(node)],
-  //     ]),
-  //   );
-  //   // if input already queue then deliver to node immediately
-  //   const inputNode = node;
-  //   if (!inputNode.hooks.input) {
-  //     throw Error("Unable to set input node. Node does not have input hook.");
-  //   }
-  //   if (inputNode.hooks.input.state !== "pending") {
-  //     throw Error("Unable to set input node. Input hook state not pending.");
-  //   }
-  //   if (this.inputQueue.length) {
-  //     inputNode.hooks.input = {
-  //       state: "fulfilled",
-  //       value: [...this.inputQueue],
-  //     };
-  //     inputNode.status = "PENDING";
-  //     this.inputQueue = [];
-  //     this.queueRender("input fulfilled");
-  //   } else {
-  //     this.inputNode = inputNode;
-  //   }
-  // }
-
-  submit(message: PerformerMessage) {
+  submit(message: GenerativeMessage) {
     this.inputQueue.push(message);
     this.queueRender("input fulfilled");
   }
@@ -297,13 +268,13 @@ export class Performer {
     return this.#state;
   }
 
-  set state(value: PerformerState) {
+  set state(value: GenerativeState) {
     this.#state = value;
-    logger.withTag("Performer").debug(`state=${this.state}`);
+    logger.withTag("Generative").debug(`state=${this.state}`);
     this.resolveStatePromise(value);
   }
 
-  private resolveStatePromise(state: PerformerState) {
+  private resolveStatePromise(state: GenerativeState) {
     const resolve = this.#statePromises.get(state);
     if (resolve) {
       resolve();
@@ -311,7 +282,7 @@ export class Performer {
     }
   }
 
-  async waitForState(state: PerformerState, signal?: AbortSignal) {
+  async waitForState(state: GenerativeState, signal?: AbortSignal) {
     if (this.state === state) {
       return;
     }

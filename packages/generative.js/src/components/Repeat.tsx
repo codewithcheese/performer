@@ -56,7 +56,7 @@ export function Repeat({ limit, stopped = false, children }: RepeatProps) {
   });
 
   return (
-    <div ref={ref} data-performer-id={id}>
+    <div ref={ref} data-generative-id={id}>
       {ready &&
         Array(iteration)
           .fill(true)
