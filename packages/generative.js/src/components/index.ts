@@ -5,3 +5,4 @@ export * from "./User.js";
 export * from "./System.js";
 export * from "./GenerativeProvider.js";
 export * from "./Message.js";
+export * from "./Fallback.js";

@@ -11,7 +11,7 @@ import { render } from "@testing-library/react";
 test("should receive user message via useSubmit", async () => {
   function UserInput() {
     const submit = useSubmit();
-    submit("A");
+    submit("user", "A");
     return null;
   }
   const { findByText } = render(

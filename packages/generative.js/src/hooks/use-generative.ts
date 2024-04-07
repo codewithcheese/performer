@@ -79,7 +79,7 @@ export function useGenerative<MessageType extends GenerativeMessage>({
   const context = useContext(GenerativeContext);
   if (!context) {
     throw Error(
-      "Generative context missing. Generative components must be wrapped with `<Generative>` provider.",
+      `Generative context missing for ${typeName} ${id}. Generative component must be wrapped with \`<GenerativeProvider>\`.`,
     );
   }
   const { generative } = context;
@@ -92,10 +92,7 @@ export function useGenerative<MessageType extends GenerativeMessage>({
       throw Error("useGenerative: ref not set");
     }
     if (!ref.current.getAttribute("data-generative-id")) {
-      console.error(
-        "useGenerative: data-generative-id attribute not set",
-        ref.current,
-      );
+      logger.error("data-generative-id attribute not set", ref.current);
       throw Error("useGenerative: data-generative-id attribute not set");
     }
     const ancestor = findDOMAncestor(ref.current);
@@ -159,7 +156,7 @@ export function useGenerative<MessageType extends GenerativeMessage>({
     const currentAncestor = findDOMAncestor(ref.current);
     if (currentAncestor.id !== ancestor.id) {
       setAncestor(currentAncestor);
-      generative.updateAncestor(id, currentAncestor, ancestor);
+      generative.updateAncestor(id, typeName, currentAncestor, ancestor);
     }
     renderCount.current++;
     // console.log(

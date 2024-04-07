@@ -105,7 +105,9 @@ export async function render(generative: Generative, reason: string) {
           }
           continue;
         case "AFTER_CHILDREN":
-          op.payload.node.element.props.afterChildren!();
+          op.payload.node.element.props.afterChildren!(
+            generative.getAllMessages(),
+          );
           setNodeResolved(op.payload.node);
           // ensure that render is queue at least once if afterChildren has no effect
           generative.queueRender("after children effect");
@@ -335,6 +337,8 @@ async function renderComponent(generative: Generative, node: GenerativeNode) {
         setNodeListening(node);
         generative.setListening();
       }
+    } else if (type === "NOOP") {
+      setNodeResolved(node);
     } else if (isMessage(type)) {
       node.state.message = type;
       setNodeResolved(node);

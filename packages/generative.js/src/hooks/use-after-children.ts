@@ -1,9 +1,11 @@
-import { useContext, useEffect, useMemo } from "react";
-import { GenerativeContext, GenerativeElement } from "../index.js";
+import { useMemo } from "react";
+import { GenerativeElement, GenerativeMessage } from "../index.js";
 
 export function useAfterChildren(
   element: GenerativeElement | null,
-  callback: () => void,
+  callback: (messages: GenerativeMessage[]) => void,
 ) {
-  element && (element.props.afterChildren = callback);
+  useMemo(() => {
+    element && (element.props.afterChildren = callback);
+  }, [element, callback]);
 }

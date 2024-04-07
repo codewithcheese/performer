@@ -55,9 +55,10 @@ export class Generative {
     // insert a noop root
     this.app = {
       id: "root",
-      type: () => {},
+      type: "NOOP",
       typeName: "root",
       props: {},
+      // finalize manually since has no hook
       onResolved: () => this.finalize("root"),
       onStreaming: () => {},
       onError: () => {},
@@ -126,13 +127,14 @@ export class Generative {
     }
 
     this.elementMap.set(id, element);
-    this.updateAncestor(id, ancestor);
+    this.updateAncestor(id, typeName, ancestor);
 
     return element;
   }
 
   updateAncestor(
     id: string,
+    typeName: string,
     newAncestor: { id: string; type: "parent" | "sibling" },
     oldAncestor?: { id: string; type: "parent" | "sibling" },
   ) {
@@ -161,7 +163,7 @@ export class Generative {
       const parent = this.elementMap.get(newAncestor.id);
       if (!parent) {
         throw Error(
-          `Failed to insert Generative element ${id}. Parent not registered`,
+          `Failed to insert generative element ${typeName} ${id}. Parent not registered`,
         );
       }
       element.parent = parent;
@@ -171,7 +173,7 @@ export class Generative {
       const sibling = this.elementMap.get(newAncestor.id);
       if (!sibling) {
         throw Error(
-          `Failed to insert Generative element ${id}. Sibling not registered`,
+          `Failed to insert generative element ${typeName} ${id}. Sibling not registered`,
         );
       }
       sibling.sibling = element;

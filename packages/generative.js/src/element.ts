@@ -4,9 +4,9 @@ import { GenerativeMessage } from "./message.js";
 
 export type GenerativeElement = {
   id: string;
-  type: ActionType | "LISTENER" | GenerativeMessage;
+  type: ActionType | "LISTENER" | "NOOP" | GenerativeMessage;
   typeName: string;
-  props: { afterChildren?: () => void };
+  props: { afterChildren?: (messages: GenerativeMessage[]) => void };
   onResolved: (node: GenerativeNode) => void;
   onStreaming: (node: GenerativeNode) => void;
   onError: (error: unknown) => void;

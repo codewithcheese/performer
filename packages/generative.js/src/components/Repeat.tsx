@@ -1,29 +1,26 @@
-import { useAfterChildren } from "../hooks/index.js";
-import {
-  Children,
-  cloneElement,
-  Fragment,
-  ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { useGenerative } from "../hooks/use-generative.js";
+import { useAfterChildren, useGenerative } from "../hooks/index.js";
+import { Fragment, ReactNode, useEffect, useRef, useState } from "react";
 import { getLogger } from "../util/log.js";
 
 type RepeatProps = {
   limit?: number;
   stopped?: boolean;
+  className?: string;
   children?: ReactNode;
 };
 
 /**
  *	Repeat the children indefinitely or until stopped or limit is reached if set.
  */
-export function Repeat({ limit, stopped = false, children }: RepeatProps) {
+export function Repeat({
+  limit,
+  stopped = false,
+  className,
+  children,
+}: RepeatProps) {
   const logger = getLogger("Repeat");
   const { id, ref, element, ready, complete } = useGenerative({
-    type: () => {},
+    type: "NOOP",
     typeName: "Repeat",
   });
   const [iteration, setIteration] = useState(1);
@@ -56,7 +53,7 @@ export function Repeat({ limit, stopped = false, children }: RepeatProps) {
   });
 
   return (
-    <div ref={ref} data-generative-id={id}>
+    <div data-generative-id={id} ref={ref} className={className}>
       {ready &&
         Array(iteration)
           .fill(true)
