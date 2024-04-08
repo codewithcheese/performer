@@ -6,6 +6,7 @@ import {
   Message,
   readTextContent,
   System,
+  withMessage,
 } from "../src/index.js";
 import { render } from "@testing-library/react";
 import { getGenerative, UseGenerative } from "./util/UseGenerative.js";
@@ -29,7 +30,7 @@ test("should use 3 works concurrently and display `Done` when all finished", asy
     </>
   );
 
-  function Concurrently() {
+  const Concurrently = withMessage("NOOP")(function Concurrently() {
     const workers = [
       createWorker(workerApp("A", "B"), "1"),
       createWorker(workerApp("C", "D"), "2"),
@@ -54,13 +55,13 @@ test("should use 3 works concurrently and display `Done` when all finished", asy
     );
 
     return (
-      <Message type="NOOP">
+      <>
         {workers.map(([worker]) => worker)}
         {/* use promise action to wait for all workers */}
         <Message type={() => promise}>Done.</Message>
-      </Message>
+      </>
     );
-  }
+  });
 
   const app = (
     <GenerativeProvider>
@@ -68,7 +69,7 @@ test("should use 3 works concurrently and display `Done` when all finished", asy
       <Concurrently />
     </GenerativeProvider>
   );
-  const { container, findByText } = render(app);
+  const { findByText } = render(app);
   const generative = getGenerative()!;
   await generative.waitUntilSettled();
   await findByText("Done.");

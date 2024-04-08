@@ -1,4 +1,4 @@
-import { DependencyList, ReactNode, useEffect } from "react";
+import { DependencyList, FC, ReactNode, useEffect } from "react";
 import { useGenerative } from "../hooks/index.js";
 import { AssistantMessage, GenerativeMessage } from "../message.js";
 import { GenerativeElement } from "../element.js";
@@ -50,4 +50,22 @@ export function Message<MessageType extends GenerativeMessage>({
           : children)}
     </div>
   );
+}
+
+/**
+ * Wraps a component with a Message component.
+ * For when the component should render in turn.
+ */
+export function withMessage<Props extends Record<string, any>>(
+  type: GenerativeElement["type"],
+) {
+  return function (Component: FC<Props>) {
+    return function (props: Props) {
+      return (
+        <Message type={type}>
+          <Component {...props} />
+        </Message>
+      );
+    };
+  };
 }
