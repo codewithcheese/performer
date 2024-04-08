@@ -13,6 +13,10 @@ export type GenerativeOptions = {
   logLevel?: LogType;
 };
 
+export type GenerativeHandlers = {
+  onFinished?: (messages: GenerativeMessage[]) => void;
+};
+
 export type GenerativeState =
   | "pending"
   | "listening"
@@ -24,7 +28,10 @@ export class Generative {
 
   app: GenerativeElement;
   root?: GenerativeNode;
+
   options: GenerativeOptions;
+  handlers: GenerativeHandlers;
+
   #state: GenerativeState = "pending";
   #statePromises: Map<GenerativeState, () => void> = new Map();
 
@@ -39,9 +46,12 @@ export class Generative {
   renderQueuedReason: string = "";
   renderInProgress: boolean = false;
 
-  constructor(options: GenerativeOptions = {}) {
+  constructor(
+    options: GenerativeOptions = {},
+    handlers: GenerativeHandlers = {},
+  ) {
     this.#uid = crypto.randomUUID();
-    // this.app = app;
+    // options
     this.options = options;
     const logLevel: LogType =
       (getEnv("LOGLEVEL") as LogType) ||
@@ -52,6 +62,8 @@ export class Generative {
     if (this.options.throwOnError === undefined && getEnv("VITEST") != null) {
       this.options.throwOnError = true;
     }
+    // handlers
+    this.handlers = handlers;
     // insert a noop root
     this.app = {
       id: "root",
@@ -232,6 +244,7 @@ export class Generative {
 
   setFinished() {
     this.state = "finished";
+    this.handlers.onFinished && this.handlers.onFinished(this.getAllMessages());
   }
 
   setRendering() {

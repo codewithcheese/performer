@@ -14,6 +14,7 @@ import { Tool } from "../index.js";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 export function Assistant({
+  content,
   className,
   model = "gpt-3.5-turbo",
   toolChoice = "auto",
@@ -24,6 +25,7 @@ export function Assistant({
   onBeforeResolved,
   onBeforeFinalized,
 }: {
+  content?: string; // set content to use Assistant as literal, no completion will be requested
   className?: string;
   model?: string;
   toolChoice?: "auto" | "none" | Tool<any>;
@@ -50,7 +52,7 @@ export function Assistant({
   return (
     <Message<AssistantMessage>
       className={className}
-      type={action}
+      type={content ? { role: "assistant", content } : action}
       typeName="Assistant"
       onBeforeResolved={onBeforeResolved}
       onBeforeFinalized={onBeforeFinalized}

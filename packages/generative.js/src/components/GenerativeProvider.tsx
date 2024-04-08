@@ -1,5 +1,6 @@
 import { createContext, ReactNode, useState } from "react";
 import { Generative, GenerativeOptions } from "../generative.js";
+import { GenerativeMessage } from "../message.js";
 
 export type GenerativeContextType = {
   generative: Generative;
@@ -11,13 +12,15 @@ export const GenerativeContext = createContext<GenerativeContextType>(null!);
 export function GenerativeProvider({
   children,
   options = {},
+  handlers = {},
 }: {
   children?: ReactNode;
   options?: GenerativeOptions;
+  handlers?: { onFinished?: (messages: GenerativeMessage[]) => void };
 }) {
   const [abortController] = useState(new AbortController());
   const [context] = useState<GenerativeContextType>({
-    generative: new Generative(options),
+    generative: new Generative(options, handlers),
     signal: abortController.signal,
   });
   return (

@@ -24,3 +24,4 @@ export * from "./render.js";
 export * from "./generative.js";
 export * from "./components/index.js";
 export * from "./tool.js";
+export * from "./worker.js";
