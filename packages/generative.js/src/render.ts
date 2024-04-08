@@ -494,30 +494,6 @@ export function resolveMessages(
 
   let cursor: GenerativeNode | undefined = from;
   while (cursor) {
-    // too noisy for now
-    // const pairs: [string, any][] = [
-    //   ["resolve", "cursor"],
-    //   ["threadId", cursor.threadId],
-    //   ["node", nodeToStr(cursor)],
-    // ];
-    // if (typeof cursor.props.children === "string") {
-    //   pairs.push(["content", cursor.props.children]);
-    // }
-    // log.debug(toLogFmt(pairs));
-
-    // clear all messages if `to` belongs to cursor thread, and thread is isolated
-    // if (
-    //   to &&
-    //   cursor.hooks.thread &&
-    //   to.threadId === cursor.hooks.thread.id &&
-    //   cursor.hooks.thread.isolated
-    // ) {
-    //   messages = [];
-    // }
-
-    // if (typeof cursor.type === "string") {
-    //   messages.push(nodeToMessage(cursor));
-    // }
     if (cursor.state.message && cursor.status === "FINALIZED") {
       messages.push(cursor.state.message);
     }
@@ -526,23 +502,14 @@ export function resolveMessages(
     if (exit) {
       break;
     }
-    // thread props is a hierarchical id
-    // parent threads are substring of the child thread
-    // e.g. root/0 is parent of root/0/1, root/0 is not a parent of root/2/3
-    // to.threadId.includes(cursor.child.threadId))
-    // checks if child belongs to `to` thread or its parent
-    if (
-      cursor.child /* && (!to || to.threadId.includes(cursor.child.threadId))*/
-    ) {
+
+    if (cursor.child) {
       cursor = cursor.child;
       continue;
     }
 
     while (cursor) {
-      if (
-        cursor.nextSibling // &&
-        // (!to || to.threadId.includes(cursor.nextSibling.threadId))
-      ) {
+      if (cursor.nextSibling) {
         cursor = cursor.nextSibling;
         break;
       }

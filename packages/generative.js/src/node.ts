@@ -21,7 +21,6 @@ export type GenerativeNode = {
   };
   element: GenerativeElement;
   status: NodeStatus;
-  isHydrating: boolean;
 
   // linked tree
   parent: GenerativeNode | undefined;
@@ -107,7 +106,6 @@ export function createNode({
     },
     // hooks: serialized ? hydrateHooks(serialized.hooks) : {},
     status: "PENDING",
-    isHydrating: false,
     parent,
     child,
     prevSibling,
