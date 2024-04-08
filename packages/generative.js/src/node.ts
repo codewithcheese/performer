@@ -10,6 +10,7 @@ export type NodeStatus =
   | "STREAMING" // message streaming
   | "RESOLVED" // message value resolved
   | "FINALIZED" // message acked by flow control
+  | "AFTER_CHILDREN" // children rendered
   | "ERROR";
 
 export type GenerativeNode = {
@@ -75,29 +76,4 @@ export function setNodeListening(node: GenerativeNode) {
     .debug(
       `id=${node.element.id}  type=${node.element.typeName}status=${node.status}`,
     );
-}
-
-export function createNode({
-  element,
-  parent,
-  prevSibling,
-  child,
-}: {
-  element: GenerativeElement;
-  parent?: GenerativeNode;
-  prevSibling?: GenerativeNode;
-  child?: GenerativeNode;
-}): GenerativeNode {
-  return {
-    id: `${element.id}:${nanoid()}`,
-    element,
-    state: {
-      childRenderCount: 0,
-    },
-    status: "PENDING",
-    parent,
-    child,
-    prevSibling,
-    nextSibling: undefined,
-  };
 }

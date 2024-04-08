@@ -1,6 +1,5 @@
 import { type GenerativeElement } from "./element.js";
 import {
-  createNode,
   type GenerativeNode,
   setNodeError,
   setNodeListening,
@@ -11,64 +10,13 @@ import type { Generative } from "./generative.js";
 import {
   AssistantMessage,
   concatDelta,
+  GenerativeMessage,
   isMessage,
   isMessageDelta,
   MessageDelta,
-  GenerativeMessage,
 } from "./message.js";
-import { isEqualWith } from "lodash-es";
 import { getLogger } from "./util/log.js";
-
-type CreateOp = {
-  type: "CREATE";
-  payload: {
-    node: GenerativeNode;
-  };
-};
-
-type ResumeOp = {
-  type: "RESUME";
-  payload: {
-    node: GenerativeNode;
-  };
-};
-
-type PausedOp = {
-  type: "PAUSED";
-  payload: {
-    node: GenerativeNode;
-  };
-};
-
-// like paused by explicitly marked as requiring external input to continue
-type ListeningOp = {
-  type: "LISTENING";
-  payload: {
-    node: GenerativeNode;
-  };
-};
-
-type AfterChildrenOp = {
-  type: "AFTER_CHILDREN";
-  payload: {
-    node: GenerativeNode;
-  };
-};
-
-export type RenderOp =
-  | CreateOp
-  | ResumeOp
-  | PausedOp
-  | AfterChildrenOp
-  | ListeningOp;
-
-function onlyListening(ops: Record<string, RenderOp>) {
-  return Object.values(ops).every((op) => op.type === "LISTENING");
-}
-
-function noOps(ops: Record<string, RenderOp>) {
-  return Object.keys(ops).length === 0;
-}
+import { nanoid } from "nanoid";
 
 let renderCount = 0;
 
@@ -78,39 +26,46 @@ export async function render(generative: Generative, reason: string) {
   }
   getLogger("render").debug(`start=${++renderCount} reason=${reason} `);
   try {
-    const ops = evaluateRenderOps(
+    const node = findNext(
       generative,
       generative.app!,
       generative.root,
       undefined,
       undefined,
     );
-    for (const [_, op] of Object.entries(ops)) {
-      switch (op.type) {
-        case "CREATE":
-          await performOp(generative, op);
-          continue;
-        case "RESUME":
-          await performOp(generative, op);
-          continue;
+    if (node) {
+      switch (node.status) {
+        case "PENDING":
+          await resolve(generative, node);
+          break;
         case "LISTENING":
           if (generative.inputQueue.length) {
-            op.payload.node.state.message = generative.inputQueue.shift();
-            setNodeResolved(op.payload.node);
+            node.state.message = generative.inputQueue.shift();
+            setNodeResolved(node);
+          } else {
+            generative.setListening();
           }
-          continue;
+          break;
         case "AFTER_CHILDREN":
-          op.payload.node.element.props.afterChildren!(
-            generative.getAllMessages(),
-          );
-          setNodeResolved(op.payload.node);
+          node.element.props.afterChildren!(generative.getAllMessages());
+          setNodeResolved(node);
           // ensure that render is queue at least once if afterChildren has no effect
           generative.queueRender("after children effect");
+          break;
+        case "PAUSED":
+          // wait for resume
+          break;
+        case "RESOLVED":
+          // wait for finalized
+          break;
+        default:
+          throw Error(`Unexpected node status: ${node.status}.`);
       }
     }
-    if (noOps(ops) && !generative.renderQueued) {
+
+    if (!node && !generative.renderQueued) {
       generative.setFinished();
-    } else if (onlyListening(ops) && !generative.renderQueued) {
+    } else if (node?.status === "LISTENING" && !generative.renderQueued) {
       generative.setListening();
     }
   } catch (error) {
@@ -120,39 +75,48 @@ export async function render(generative: Generative, reason: string) {
   }
 }
 
-/**
- *
- */
-export function evaluateRenderOps(
-  // threadId: string,
+export function findNext(
   generative: Generative,
   element: GenerativeElement,
   node?: GenerativeNode,
   parent?: GenerativeNode,
   prevSibling?: GenerativeNode,
-): Record<string, RenderOp> {
-  // todo when does a node need to be re-created
-  if (!node || !nodeMatchesElement(node, element)) {
-    const nextSibling = node?.nextSibling;
-    const child = node?.child;
-
+): GenerativeNode | null {
+  if (
+    !node ||
+    !(
+      Object.is(element, node.element) &&
+      Object.is(element.type, node.element.type)
+    )
+  ) {
+    // unlink existing node
     if (node) {
-      // do not free children, the new node will be linked in place and then children
-      // re-evaluated on next renders
-      freeNode(node, parent, false);
+      if (node.prevSibling?.nextSibling === node) {
+        node.prevSibling.nextSibling = undefined;
+      }
+
+      if (node.parent?.child === node) {
+        node.parent.child = undefined;
+      }
     }
 
-    const newNode = createNode({
-      // threadId,
+    const newNode: GenerativeNode = {
+      id: `${element.id}#${nanoid()}`,
       element,
+      state: {
+        childRenderCount: 0,
+      },
+      status: "PENDING",
       parent,
       prevSibling,
-      child,
-    });
+      nextSibling: undefined,
+      child: undefined,
+    };
 
     if (!parent) {
       generative.root = newNode;
     }
+
     // link node in place
     if (prevSibling) {
       prevSibling.nextSibling = newNode;
@@ -160,59 +124,32 @@ export function evaluateRenderOps(
       // if no prevSibling then must be first child
       parent.child = newNode;
     }
-    if (nextSibling) {
-      newNode.nextSibling = nextSibling;
-      nextSibling.prevSibling = newNode;
-    }
-    if (child) {
-      child.parent = newNode;
-    }
     element.node = newNode;
 
-    const op: CreateOp = {
-      type: "CREATE",
-      payload: {
-        node: newNode,
-      },
-    };
-
-    return { ["root"]: op };
+    return newNode;
   }
 
   if (node.status === "PENDING") {
-    return {
-      ["root"]: {
-        type: "RESUME",
-        payload: { node },
-      } satisfies ResumeOp,
-    };
+    return node;
   }
 
   if (node.status === "LISTENING") {
-    return {
-      ["root"]: { type: "LISTENING", payload: { node } } satisfies ListeningOp,
-    };
+    return node;
   }
 
   if (node.status === "PAUSED") {
-    return {
-      ["root"]: { type: "PAUSED", payload: { node } } satisfies PausedOp,
-    };
+    return node;
   }
 
   if (node.status === "RESOLVED") {
-    return {
-      ["root"]: { type: "PAUSED", payload: { node } } satisfies PausedOp,
-    };
+    return node;
   }
 
   if (node.status === "ERROR") {
-    return {};
+    return null;
   }
 
-  let ops: Record<string, RenderOp> = {};
   let index = 0;
-  // let childThreadId = node.hooks.thread?.id ? node.hooks.thread.id : threadId;
   let childNode: GenerativeNode | undefined = node.child;
   let childPrevSibling: GenerativeNode | undefined = undefined;
   let childElement: GenerativeElement | undefined = element.child;
@@ -220,27 +157,27 @@ export function evaluateRenderOps(
     if (!childElement) {
       break;
     }
-    const childOps = evaluateRenderOps(
+    const next = findNext(
       generative,
       childElement,
       childNode,
       node,
       childPrevSibling,
     );
-    Object.assign(ops, childOps);
-    // increment childRenderCount if render op
+
     if (
-      Object.values(childOps).find(
-        (op) => op.type === "CREATE" || op.type === "RESUME",
-      )
+      // fixme remove some?
+      next &&
+      (next.status === "PENDING" ||
+        next.status === "LISTENING" ||
+        next.status === "PAUSED")
     ) {
       node.state.childRenderCount += 1;
     }
-    // return if op for current thread otherwise continue
-    // if (childThreadId in childOps) {
-    if (Object.keys(childOps).length) {
-      return ops;
+    if (next) {
+      return next;
     }
+
     if (childPrevSibling) {
       childPrevSibling.nextSibling = childNode;
     }
@@ -256,38 +193,16 @@ export function evaluateRenderOps(
     freeNode(childNode, node, true);
   }
 
-  // todo rethink afterChildren for Repeat
   if (node.state.childRenderCount > 0 && node.element.props.afterChildren) {
-    ops["root"] = {
-      type: "AFTER_CHILDREN",
-      payload: { node },
-    };
+    node.status = "AFTER_CHILDREN";
+    node.state.childRenderCount = 0;
+    return node;
   }
-  node.state.childRenderCount = 0;
 
-  return ops;
+  return null;
 }
 
-export async function performOp(
-  generative: Generative,
-  op: CreateOp | ResumeOp,
-): Promise<GenerativeNode> {
-  let node;
-  if (op.type === "CREATE") {
-    node = op.payload.node;
-  } else {
-    node = op.payload.node;
-  }
-  await renderComponent(generative, node);
-  // if (node.type instanceof Function) {
-  //   await renderComponent(generative, node);
-  // } else {
-  //   await renderIntrinsic(generative, node);
-  // }
-  return node;
-}
-
-async function renderComponent(generative: Generative, node: GenerativeNode) {
+async function resolve(generative: Generative, node: GenerativeNode) {
   try {
     const type = node.element.type;
     if (type instanceof Function) {
@@ -518,32 +433,4 @@ export function resolveMessages(
   }
 
   return messages;
-}
-
-function nodeMatchesElement(node: GenerativeNode, element: GenerativeElement) {
-  // todo create test cases for when nodes should be recreated
-  // try dedupe anonymous function props
-  // compare function props by string value
-  const functionComparison = (
-    value: unknown,
-    other: unknown,
-    indexOrKey: string | number | symbol | undefined,
-    parent: any,
-  ) => {
-    if (
-      typeof value === "function" &&
-      typeof other === "function" &&
-      !(indexOrKey === "type" && "props" in parent) && // exclude component type functions
-      value !== other // if not already equal
-    ) {
-      return value.toString() === other.toString();
-    }
-    return undefined;
-  };
-  // React compat Fragment type is Symbol(react.fragment)
-  return (
-    (node.element.type === element.type ||
-      typeof element.type === "symbol") /*&& node.type === Fragment*/ &&
-    isEqualWith(node.element.props, element.props, functionComparison)
-  );
 }

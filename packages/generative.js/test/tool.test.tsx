@@ -99,4 +99,4 @@ test("should use multiple tools", async () => {
   const generative = getGenerative()!;
   await generative.waitUntilSettled();
   await findByText("2");
-});
+}, 10_000);

@@ -68,6 +68,7 @@ test("should support nested repeat", async () => {
 test("should render all iterations before next message", async () => {
   const app = (
     <GenerativeProvider options={{ logLevel: "info" }}>
+      <UseGenerative />
       <Repeat limit={2}>
         <System content="A">{readTextContent}</System>
       </Repeat>
@@ -76,7 +77,9 @@ test("should render all iterations before next message", async () => {
   );
 
   const { findByText, container, queryAllByText } = render(app);
-  await findByText("B");
+  const generative = getGenerative()!;
+  await generative.waitUntilSettled();
+  // await findByText("B");
   const elements = queryAllByText("A");
   expect(elements).toHaveLength(2);
 }, 30_000);

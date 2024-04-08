@@ -442,7 +442,7 @@ test("should wait for async message actions depth first", async () => {
   ]);
   messages = generative.getAllMessages();
   expect(messages.map((m) => m.content)).toEqual(["A", "B", "C"]);
-}, 30_000);
+}, 10_000);
 
 test("should bubble message action exceptions", async () => {
   vi.spyOn(console, "error").mockImplementation(() => {});
