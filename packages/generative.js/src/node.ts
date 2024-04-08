@@ -5,7 +5,6 @@ import { logger } from "./util/log.js";
 
 export type NodeStatus =
   | "PENDING" // initial state
-  | "PAUSED" // waiting for data
   | "LISTENING" // waiting for message input
   | "STREAMING" // message streaming
   | "RESOLVED" // message value resolved

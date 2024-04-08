@@ -52,9 +52,6 @@ export async function render(generative: Generative, reason: string) {
           // ensure that render is queue at least once if afterChildren has no effect
           generative.queueRender("after children effect");
           break;
-        case "PAUSED":
-          // wait for resume
-          break;
         case "RESOLVED":
           // wait for finalized
           break;
@@ -137,10 +134,6 @@ export function findNext(
     return node;
   }
 
-  if (node.status === "PAUSED") {
-    return node;
-  }
-
   if (node.status === "RESOLVED") {
     return node;
   }
@@ -165,13 +158,7 @@ export function findNext(
       childPrevSibling,
     );
 
-    if (
-      // fixme remove some?
-      next &&
-      (next.status === "PENDING" ||
-        next.status === "LISTENING" ||
-        next.status === "PAUSED")
-    ) {
+    if (next && next.status === "PENDING") {
       node.state.childRenderCount += 1;
     }
     if (next) {
@@ -190,7 +177,7 @@ export function findNext(
 
   // detach remaining node siblings and their children
   if (childNode) {
-    freeNode(childNode, node, true);
+    freeRemaining(childNode, node);
   }
 
   if (node.state.childRenderCount > 0 && node.element.props.afterChildren) {
@@ -213,12 +200,7 @@ async function resolve(generative: Generative, node: GenerativeNode) {
       });
       if (result instanceof ReadableStream) {
         node.state.stream = result;
-        node.status = "PAUSED";
-        node.state.message = await consumeDeltaStream(
-          generative,
-          node,
-          node.state.stream,
-        );
+        node.state.message = await consumeDeltaStream(node, node.state.stream);
         setNodeResolved(node);
         generative.queueRender("stream resolved");
       } else if (result && typeof result === "object") {
@@ -261,62 +243,9 @@ async function resolve(generative: Generative, node: GenerativeNode) {
   } catch (e) {
     setNodeError(node, e);
   }
-
-  // if (!Array.isArray(results)) {
-  //   results = [results];
-  // }
-  // let previous: { id: string; type: "parent" | "sibling" } = {
-  //   id: node.element.id,
-  //   type: "parent",
-  // };
-  //
-  // if (results !== null) {
-  //   for (const result of results) {
-  //     const id = nanoid();
-  //     generative.insert({
-  //       id,
-  //       type: result.role,
-  //       props: result,
-  //       previous,
-  //     });
-  //     previous = { id, type: "sibling" };
-  //   }
-  // }
-  // } finally {
-  // clearRenderScope();
-  // }
-  // if (typeof view !== "function") {
-  //   const returnType = view instanceof Promise ? "Promise" : typeof view;
-  //   throw Error(
-  //     `Component "${nodeToStr(node)}" returned invalid type: ${returnType}. Components must not be an async function, and must return a non-async function when using JSX.\n` +
-  //       `To make async calls in your component use the \`useResource\` hook`,
-  //   );
-  // }
-
-  // registerView(generative, node, view);
-  // } catch (e) {
-  //   if (e instanceof DeferResource) {
-  //     node.status = "PAUSED";
-  //     logPaused(node, "resource");
-  //     e.cause.promise
-  //       .then(() => {
-  //         node.status = "PENDING";
-  //         generative.queueRender("deferred resolved");
-  //       })
-  //       .catch((error) => generative.onError("root", error));
-  //   } else if (e instanceof DeferInput) {
-  //     node.status = "LISTENING";
-  //     logPaused(node, "resource");
-  //     generative.setInputNode(node);
-  //     generative.queueRender("set input");
-  //   } else {
-  //     throw e;
-  //   }
-  // }
 }
 
 async function consumeDeltaStream(
-  generative: Generative,
   node: GenerativeNode,
   stream: ReadableStream<MessageDelta>,
 ): Promise<GenerativeMessage> {
@@ -361,25 +290,16 @@ export function freeElement(element: GenerativeElement) {
   element.child = undefined;
 }
 
-function freeNode(
-  node: GenerativeNode,
-  parent?: GenerativeNode,
-  freeRemaining: boolean = false,
-) {
+function freeRemaining(node: GenerativeNode, parent?: GenerativeNode) {
   try {
-    getLogger("render:freeNode").debug(`id=${node.element.id}`);
-    // dispose view so that its no longer reactive
-    // if (node.disposeView) {
-    //   node.disposeView();
-    // }
-    if (!freeRemaining) {
-      return;
-    }
+    getLogger("render:freeRemaining").debug(`id=${node.element.id}`);
+
+    // free depth first
     if (freeRemaining && node.child) {
-      freeNode(node.child, node, freeRemaining);
+      freeRemaining(node.child, node);
     }
     if (freeRemaining && node.nextSibling) {
-      freeNode(node.nextSibling, node, freeRemaining);
+      freeRemaining(node.nextSibling, node);
     }
   } finally {
     // unlink node
