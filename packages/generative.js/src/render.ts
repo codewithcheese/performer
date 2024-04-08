@@ -22,12 +22,7 @@ import { getLogger } from "./util/log.js";
 type CreateOp = {
   type: "CREATE";
   payload: {
-    // threadId: string;
-    element: GenerativeElement;
-    parent?: GenerativeNode;
-    prevSibling?: GenerativeNode;
-    nextSibling?: GenerativeNode;
-    child?: GenerativeNode;
+    node: GenerativeNode;
   };
 };
 
@@ -84,7 +79,7 @@ export async function render(generative: Generative, reason: string) {
   getLogger("render").debug(`start=${++renderCount} reason=${reason} `);
   try {
     const ops = evaluateRenderOps(
-      // "root",
+      generative,
       generative.app!,
       generative.root,
       undefined,
@@ -130,6 +125,7 @@ export async function render(generative: Generative, reason: string) {
  */
 export function evaluateRenderOps(
   // threadId: string,
+  generative: Generative,
   element: GenerativeElement,
   node?: GenerativeNode,
   parent?: GenerativeNode,
@@ -137,22 +133,49 @@ export function evaluateRenderOps(
 ): Record<string, RenderOp> {
   // todo when does a node need to be re-created
   if (!node || !nodeMatchesElement(node, element)) {
-    const op: CreateOp = {
-      type: "CREATE",
-      payload: {
-        // threadId,
-        element,
-        parent: parent,
-        prevSibling: prevSibling,
-        nextSibling: node?.nextSibling,
-        child: node?.child,
-      },
-    };
+    const nextSibling = node?.nextSibling;
+    const child = node?.child;
+
     if (node) {
       // do not free children, the new node will be linked in place and then children
       // re-evaluated on next renders
       freeNode(node, parent, false);
     }
+
+    const newNode = createNode({
+      // threadId,
+      element,
+      parent,
+      prevSibling,
+      child,
+    });
+
+    if (!parent) {
+      generative.root = newNode;
+    }
+    // link node in place
+    if (prevSibling) {
+      prevSibling.nextSibling = newNode;
+    } else if (parent) {
+      // if no prevSibling then must be first child
+      parent.child = newNode;
+    }
+    if (nextSibling) {
+      newNode.nextSibling = nextSibling;
+      nextSibling.prevSibling = newNode;
+    }
+    if (child) {
+      child.parent = newNode;
+    }
+    element.node = newNode;
+
+    const op: CreateOp = {
+      type: "CREATE",
+      payload: {
+        node: newNode,
+      },
+    };
+
     return { ["root"]: op };
   }
 
@@ -198,7 +221,7 @@ export function evaluateRenderOps(
       break;
     }
     const childOps = evaluateRenderOps(
-      // childThreadId,
+      generative,
       childElement,
       childNode,
       node,
@@ -251,32 +274,7 @@ export async function performOp(
 ): Promise<GenerativeNode> {
   let node;
   if (op.type === "CREATE") {
-    const { element, parent, prevSibling, nextSibling, child } = op.payload;
-    node = createNode({
-      // threadId,
-      element,
-      parent,
-      prevSibling,
-      child,
-    });
-    if (!parent) {
-      generative.root = node;
-    }
-    // link node in place
-    if (prevSibling) {
-      prevSibling.nextSibling = node;
-    } else if (parent) {
-      // if no prevSibling then must be first child
-      parent.child = node;
-    }
-    if (nextSibling) {
-      node.nextSibling = nextSibling;
-      nextSibling.prevSibling = node;
-    }
-    if (child) {
-      child.parent = node;
-    }
-    element.node = node;
+    node = op.payload.node;
   } else {
     node = op.payload.node;
   }
