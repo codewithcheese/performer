@@ -13,7 +13,7 @@ export type NodeStatus =
   | "ERROR";
 
 export type GenerativeNode = {
-  uid: string;
+  id: string;
   state: {
     stream?: ReadableStream;
     message?: GenerativeMessage;
@@ -78,33 +78,22 @@ export function setNodeListening(node: GenerativeNode) {
 }
 
 export function createNode({
-  // threadId,
   element,
   parent,
   prevSibling,
   child,
-  // serialized,
 }: {
-  // threadId: string;
   element: GenerativeElement;
   parent?: GenerativeNode;
   prevSibling?: GenerativeNode;
   child?: GenerativeNode;
-  // serialized?: SerializedNode;
 }): GenerativeNode {
-  // validateElement(element, parent);
-  // React compat Fragment type is Symbol(react.fragment)
-  // const type = typeof element.type === "symbol" ? Fragment : element.type;
   return {
-    // _typeName: typeof type === "string" ? type : type.name,
-    // threadId,
-    uid: nanoid(),
-    // props: element.props,
+    id: `${element.id}:${nanoid()}`,
     element,
     state: {
       childRenderCount: 0,
     },
-    // hooks: serialized ? hydrateHooks(serialized.hooks) : {},
     status: "PENDING",
     parent,
     child,
