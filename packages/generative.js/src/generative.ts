@@ -345,6 +345,5 @@ export class Generative {
     if (this.options.throwOnError) {
       throw error;
     }
-    return Promise.resolve();
   }
 }

@@ -79,7 +79,7 @@ test("should render all iterations before next message", async () => {
   const { findByText, container, queryAllByText } = render(app);
   const generative = getGenerative()!;
   await generative.waitUntilSettled();
-  // await findByText("B");
+  await findByText("B");
   const elements = queryAllByText("A");
   expect(elements).toHaveLength(2);
 }, 30_000);

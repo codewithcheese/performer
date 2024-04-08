@@ -17,6 +17,7 @@ import {
 } from "./message.js";
 import { getLogger } from "./util/log.js";
 import { nanoid } from "nanoid";
+import { useAfterChildren } from "./hooks/index.js";
 
 let renderCount = 0;
 
@@ -33,36 +34,32 @@ export async function render(generative: Generative, reason: string) {
       undefined,
       undefined,
     );
-    if (node) {
-      switch (node.status) {
-        case "PENDING":
-          await resolve(generative, node);
-          break;
-        case "LISTENING":
-          if (generative.inputQueue.length) {
-            node.state.message = generative.inputQueue.shift();
-            setNodeResolved(node);
-          } else {
-            generative.setListening();
-          }
-          break;
-        case "AFTER_CHILDREN":
-          node.element.props.afterChildren!(generative.getAllMessages());
-          setNodeResolved(node);
-          // ensure that render is queue at least once if afterChildren has no effect
-          generative.queueRender("after children effect");
-          break;
-        case "RESOLVED":
-          // wait for finalized
-          break;
-        default:
-          throw Error(`Unexpected node status: ${node.status}.`);
+
+    if (!node) {
+      if (!generative.renderQueued) {
+        generative.setFinished();
       }
+      return;
     }
 
-    if (!node && !generative.renderQueued) {
-      generative.setFinished();
-    } else if (node?.status === "LISTENING" && !generative.renderQueued) {
+    switch (node.status) {
+      case "PENDING":
+        await resolve(generative, node);
+        break;
+      case "LISTENING":
+        listen(generative, node);
+        break;
+      case "AFTER_CHILDREN":
+        afterChildren(generative, node);
+        break;
+      case "RESOLVED":
+        // wait for finalized
+        break;
+      default:
+        throw Error(`Unexpected node status: ${node.status}.`);
+    }
+
+    if (node.status === "LISTENING" && !generative.renderQueued) {
       generative.setListening();
     }
   } catch (error) {
@@ -97,7 +94,8 @@ export function findNext(
       }
     }
 
-    const newNode: GenerativeNode = {
+    // create new node
+    node = {
       id: `${element.id}#${nanoid()}`,
       element,
       state: {
@@ -111,30 +109,20 @@ export function findNext(
     };
 
     if (!parent) {
-      generative.root = newNode;
+      generative.root = node;
     }
 
     // link node in place
     if (prevSibling) {
-      prevSibling.nextSibling = newNode;
+      prevSibling.nextSibling = node;
     } else if (parent) {
       // if no prevSibling then must be first child
-      parent.child = newNode;
+      parent.child = node;
     }
-    element.node = newNode;
-
-    return newNode;
+    element.node = node;
   }
 
-  if (node.status === "PENDING") {
-    return node;
-  }
-
-  if (node.status === "LISTENING") {
-    return node;
-  }
-
-  if (node.status === "RESOLVED") {
+  if (["PENDING", "LISTENING", "RESOLVED"].includes(node.status)) {
     return node;
   }
 
@@ -177,7 +165,7 @@ export function findNext(
 
   // detach remaining node siblings and their children
   if (childNode) {
-    freeRemaining(childNode, node);
+    freeRemainingNodes(childNode, node);
   }
 
   if (node.state.childRenderCount > 0 && node.element.props.afterChildren) {
@@ -245,6 +233,22 @@ async function resolve(generative: Generative, node: GenerativeNode) {
   }
 }
 
+function listen(generative: Generative, node: GenerativeNode) {
+  if (generative.inputQueue.length) {
+    node.state.message = generative.inputQueue.shift();
+    setNodeResolved(node);
+  } else {
+    generative.setListening();
+  }
+}
+
+function afterChildren(generative: Generative, node: GenerativeNode) {
+  node.element.props.afterChildren!(generative.getAllMessages());
+  setNodeResolved(node);
+  // ensure that render is queue at least once if afterChildren has no effect
+  generative.queueRender("after children effect");
+}
+
 async function consumeDeltaStream(
   node: GenerativeNode,
   stream: ReadableStream<MessageDelta>,
@@ -290,16 +294,17 @@ export function freeElement(element: GenerativeElement) {
   element.child = undefined;
 }
 
-function freeRemaining(node: GenerativeNode, parent?: GenerativeNode) {
+function freeRemainingNodes(node: GenerativeNode, parent?: GenerativeNode) {
   try {
-    getLogger("render:freeRemaining").debug(`id=${node.element.id}`);
+    getLogger("render:freeRemainingNodes").debug(`id=${node.element.id}`);
 
     // free depth first
-    if (freeRemaining && node.child) {
-      freeRemaining(node.child, node);
+    if (freeRemainingNodes && node.child) {
+      freeRemainingNodes(node.child, node);
     }
-    if (freeRemaining && node.nextSibling) {
-      freeRemaining(node.nextSibling, node);
+    // free in reverse order
+    if (freeRemainingNodes && node.nextSibling) {
+      freeRemainingNodes(node.nextSibling, node);
     }
   } finally {
     // unlink node
